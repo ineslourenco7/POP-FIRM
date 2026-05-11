@@ -1,7 +1,7 @@
 import { useListChallenges } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { Infinity, Star, Zap, TrendingUp, Shield, Clock, BarChart2, Layers, CheckCircle, ArrowRight } from "lucide-react";
+import { Infinity, Star, Zap, TrendingUp, Shield, Clock, BarChart2, Layers, CheckCircle } from "lucide-react";
 
 type Challenge = {
   id: number;
@@ -16,40 +16,50 @@ type Challenge = {
 };
 
 type TierConfig = {
+  tierName: string;
+  tierLabel: string;
   gradient: string;
   accent: string;
   accentText: string;
   accentBg: string;
   ring: string;
-  popular?: boolean;
-  legend?: boolean;
+  badge?: { label: string; color: string; textColor: string; icon: React.ElementType };
 };
 
 function getTierConfig(accountSize: number): TierConfig {
   if (accountSize >= 1_000_000) return {
+    tierName: "Legend",
+    tierLabel: "O máximo. Para os melhores do mundo.",
     gradient: "from-yellow-950/60 via-yellow-900/20 to-transparent",
     accent: "border-yellow-500/50",
     accentText: "text-yellow-400",
     accentBg: "bg-yellow-500/10",
     ring: "ring-yellow-500/20",
-    legend: true,
+    badge: { label: "Legend", color: "bg-yellow-500/15 border border-yellow-500/40", textColor: "text-yellow-400", icon: Zap },
   };
   if (accountSize >= 200_000) return {
+    tierName: "Elite",
+    tierLabel: "Para traders experientes e consistentes.",
     gradient: "from-purple-950/60 via-purple-900/20 to-transparent",
     accent: "border-purple-500/40",
     accentText: "text-purple-400",
     accentBg: "bg-purple-500/10",
     ring: "ring-purple-500/10",
+    badge: { label: "Elite", color: "bg-purple-500/15 border border-purple-500/30", textColor: "text-purple-400", icon: Star },
   };
   if (accountSize >= 100_000) return {
+    tierName: "Pro",
+    tierLabel: "O mais escolhido pelos nossos traders.",
     gradient: "from-blue-950/60 via-blue-900/20 to-transparent",
     accent: "border-blue-500/40",
     accentText: "text-blue-400",
     accentBg: "bg-blue-500/10",
     ring: "ring-blue-500/10",
-    popular: true,
+    badge: { label: "Mais Popular", color: "bg-blue-500", textColor: "text-white", icon: Star },
   };
   if (accountSize >= 50_000) return {
+    tierName: "Trader",
+    tierLabel: "Para quem já tem estratégia definida.",
     gradient: "from-cyan-950/60 via-cyan-900/20 to-transparent",
     accent: "border-cyan-500/30",
     accentText: "text-cyan-400",
@@ -57,6 +67,8 @@ function getTierConfig(accountSize: number): TierConfig {
     ring: "ring-cyan-500/10",
   };
   if (accountSize >= 25_000) return {
+    tierName: "Explorer",
+    tierLabel: "Dá o próximo passo na tua carreira.",
     gradient: "from-emerald-950/60 via-emerald-900/20 to-transparent",
     accent: "border-emerald-500/30",
     accentText: "text-emerald-400",
@@ -64,6 +76,8 @@ function getTierConfig(accountSize: number): TierConfig {
     ring: "ring-emerald-500/10",
   };
   return {
+    tierName: "Starter",
+    tierLabel: "O ponto de partida ideal para começar.",
     gradient: "from-slate-800/60 via-slate-800/20 to-transparent",
     accent: "border-slate-600/40",
     accentText: "text-slate-400",
@@ -104,18 +118,9 @@ function FeatureRow({
   );
 }
 
-function PhaseBadge({ phase, label, target }: { phase: 1 | 2; label: string; target: string }) {
-  return (
-    <div className="flex-1 rounded-lg bg-white/[0.04] border border-white/10 p-2.5 text-center min-w-0">
-      <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Fase {phase}</div>
-      <div className="text-xs font-semibold text-foreground truncate">{label}</div>
-      <div className="text-[10px] text-muted-foreground mt-0.5">{target}</div>
-    </div>
-  );
-}
-
 function ChallengeCard({ plan }: { plan: Challenge }) {
   const tier = getTierConfig(plan.accountSize);
+  const BadgeIcon = tier.badge?.icon;
 
   return (
     <div
@@ -124,48 +129,23 @@ function ChallengeCard({ plan }: { plan: Challenge }) {
       {/* Top gradient band */}
       <div className={`absolute top-0 inset-x-0 h-28 bg-gradient-to-b ${tier.gradient} pointer-events-none`} />
 
-      {/* Popular / Legend badge */}
-      {tier.popular && (
-        <div className="absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg z-10">
-          <Star className="w-2.5 h-2.5" />
-          Mais Popular
-        </div>
-      )}
-      {tier.legend && (
-        <div className="absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-full bg-yellow-500/20 text-[10px] font-bold uppercase tracking-wider text-yellow-400 border border-yellow-500/40 z-10">
-          <Zap className="w-2.5 h-2.5" />
-          Legend
+      {/* Badge */}
+      {tier.badge && BadgeIcon && (
+        <div className={`absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm z-10 ${tier.badge.color} ${tier.badge.textColor}`}>
+          <BadgeIcon className="w-2.5 h-2.5" />
+          {tier.badge.label}
         </div>
       )}
 
       {/* Header */}
-      <div className="relative px-5 pt-5 pb-4">
-        <p className={`text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5 ${tier.accentText}`}>
-          {plan.name.replace(" Challenge", "")}
-        </p>
-        <div className={`text-4xl font-black tabular-nums leading-none mb-0.5 ${tier.legend ? "text-yellow-400" : ""}`}>
+      <div className="relative px-5 pt-5 pb-3">
+        <div className={`text-[10px] font-black uppercase tracking-[0.2em] mb-1 ${tier.accentText}`}>
+          {tier.tierName}
+        </div>
+        <div className={`text-4xl font-black tabular-nums leading-none mb-1 ${tier.accentText === "text-yellow-400" ? "text-yellow-400" : ""}`}>
           {formatAccountSize(plan.accountSize)}
         </div>
-        <p className="text-xs text-muted-foreground">Capital virtual simulado</p>
-      </div>
-
-      {/* Phase progression */}
-      <div className="px-5 pb-3">
-        <div className="flex items-stretch gap-1.5">
-          <PhaseBadge phase={1} label="Avaliação" target={`${plan.profitTarget}% lucro`} />
-          <div className="flex items-center text-muted-foreground/40 shrink-0">
-            <ArrowRight className="w-3 h-3" />
-          </div>
-          <PhaseBadge phase={2} label="Verificação" target="5% lucro" />
-          <div className="flex items-center text-muted-foreground/40 shrink-0">
-            <ArrowRight className="w-3 h-3" />
-          </div>
-          <div className="flex-1 rounded-lg bg-primary/10 border border-primary/20 p-2.5 text-center min-w-0">
-            <div className="text-[10px] font-bold uppercase tracking-widest text-primary mb-1">Funded</div>
-            <div className="text-xs font-semibold text-foreground">Conta Real</div>
-            <div className="text-[10px] text-muted-foreground mt-0.5">até 90%</div>
-          </div>
-        </div>
+        <p className="text-xs text-muted-foreground leading-snug">{tier.tierLabel}</p>
       </div>
 
       {/* Divider */}
@@ -175,7 +155,7 @@ function ChallengeCard({ plan }: { plan: Challenge }) {
       <div className="px-5 py-3 flex-1">
         <FeatureRow
           icon={TrendingUp}
-          label="Obj. de Lucro (Fase 1)"
+          label="Objetivo de Lucro"
           value={`${plan.profitTarget}%`}
           accentText={tier.accentText}
         />
@@ -217,13 +197,13 @@ function ChallengeCard({ plan }: { plan: Challenge }) {
         <Link href={`/checkout/${plan.id}`} className="block">
           <Button
             className={`w-full font-semibold h-10 text-sm ${
-              tier.popular
+              tier.accentText === "text-blue-400"
                 ? "bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/30 shadow-lg"
-                : tier.legend
+                : tier.accentText === "text-yellow-400"
                 ? "bg-yellow-500/15 hover:bg-yellow-500/25 text-yellow-400 border border-yellow-500/40"
                 : ""
             }`}
-            variant={tier.popular ? "default" : tier.legend ? "outline" : "default"}
+            variant={tier.accentText === "text-blue-400" ? "default" : tier.accentText === "text-yellow-400" ? "outline" : "default"}
           >
             Começar Agora
           </Button>
@@ -242,31 +222,14 @@ export default function Challenges() {
       <div className="px-6 pt-10 pb-8 text-center">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs font-semibold text-primary uppercase tracking-widest mb-4">
           <Zap className="w-3 h-3" />
-          Avaliação em 2 Fases
+          Avaliação de 1 Fase
         </div>
         <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-3 leading-tight">
-          Escolhe o Teu Desafio
+          Escolhe o Teu Tier
         </h1>
         <p className="text-muted-foreground text-base max-w-xl mx-auto leading-relaxed">
-          Demonstra as tuas capacidades num ambiente 100% simulado. Passa as 2 fases, torna-te trader financiado e fica com até <strong className="text-foreground">90% dos lucros</strong>.
+          Uma única fase de avaliação. Passa, torna-te trader financiado e fica com até <strong className="text-foreground">90% dos lucros</strong>.
         </p>
-      </div>
-
-      {/* How phases work */}
-      <div className="px-6 pb-8 max-w-3xl mx-auto">
-        <div className="grid grid-cols-3 gap-3 text-center">
-          {[
-            { step: "Fase 1", title: "Avaliação", desc: "Atinge o objetivo de lucro respeitando os limites de risco", color: "text-primary", bg: "bg-primary/10 border-primary/20" },
-            { step: "Fase 2", title: "Verificação", desc: "Confirma a consistência da tua estratégia (5% de lucro)", color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20" },
-            { step: "Funded", title: "Conta Financiada", desc: "Opera com capital real simulado e recebe até 90% dos lucros", color: "text-yellow-400", bg: "bg-yellow-500/10 border-yellow-500/20" },
-          ].map(({ step, title, desc, color, bg }) => (
-            <div key={step} className={`rounded-xl border p-4 ${bg}`}>
-              <div className={`text-xs font-bold uppercase tracking-widest mb-1 ${color}`}>{step}</div>
-              <div className="text-sm font-bold text-foreground mb-1">{title}</div>
-              <div className="text-[11px] text-muted-foreground leading-snug">{desc}</div>
-            </div>
-          ))}
-        </div>
       </div>
 
       {/* Cards grid */}
@@ -274,7 +237,7 @@ export default function Challenges() {
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map(i => (
-              <div key={i} className="h-[500px] rounded-2xl bg-card border border-border animate-pulse" />
+              <div key={i} className="h-[420px] rounded-2xl bg-card border border-border animate-pulse" />
             ))}
           </div>
         ) : (
@@ -291,7 +254,7 @@ export default function Challenges() {
         <div className="max-w-4xl mx-auto flex flex-wrap justify-center gap-6 text-xs text-muted-foreground">
           {[
             { icon: CheckCircle, text: "Pagamento único, sem mensalidades" },
-            { icon: Zap, text: "Conta ativada em minutos" },
+            { icon: Zap, text: "Avaliação em 1 única fase" },
             { icon: Shield, text: "100% simulado, sem risco real" },
             { icon: Star, text: "Até 90% de divisão de lucros" },
           ].map(({ icon: Icon, text }) => (
