@@ -166,7 +166,16 @@ function ClerkProviderWithRoutes() {
             <Route path="/sign-up/*?" component={SignUpPage} />
             
             <Route path="/dashboard" component={() => <ProtectedRoute component={Dashboard} />} />
-            <Route path="/trade/:accountId" component={() => <ProtectedRoute component={Trade} />} />
+            <Route path="/trade/:accountId" component={() => (
+              <>
+                <Show when="signed-in">
+                  <Trade />
+                </Show>
+                <Show when="signed-out">
+                  <Redirect to="/" />
+                </Show>
+              </>
+            )} />
             <Route path="/challenges" component={() => (
               <>
                 <Show when="signed-in">

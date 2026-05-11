@@ -168,8 +168,8 @@ router.post("/accounts/:accountId/orders/:orderId/close", requireAuth, async (re
 
   const closePrice = getCurrentPrice(order.symbol);
   const pnl = order.side === "buy"
-    ? (closePrice - order.openPrice) * order.size
-    : (order.openPrice - closePrice) * order.size;
+    ? (closePrice - order.openPrice) * order.size * 1000
+    : (order.openPrice - closePrice) * order.size * 1000;
 
   const [challenge] = await db.select().from(challengesTable).where(eq(challengesTable.id, account.challengeId));
 
