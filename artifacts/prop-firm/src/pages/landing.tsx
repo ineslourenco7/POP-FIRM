@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, BarChart3, ShieldCheck, Trophy, Zap } from "lucide-react";
+import { ArrowRight, BarChart3, ShieldCheck, Trophy, Zap, BadgeCheck } from "lucide-react";
 
 export default function Landing() {
   return (
@@ -37,11 +37,25 @@ export default function Landing() {
             </div>
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6">
               Prove your edge. <br />
-              <span className="text-primary">Trade up to $200k.</span>
+              <span className="text-primary">Trade up to $3M.</span>
             </h1>
-            <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
+            <p className="text-xl text-muted-foreground mb-6 max-w-2xl mx-auto">
               Pass our evaluation and get funded. Keep up to 90% of your profits with institutional-grade trading conditions and simulated liquidity.
             </p>
+            <div className="flex flex-wrap justify-center gap-4 mb-10">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <BadgeCheck className="w-4 h-4 text-primary" /> Zero fees
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <BadgeCheck className="w-4 h-4 text-primary" /> No hidden costs
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <BadgeCheck className="w-4 h-4 text-primary" /> Instant account activation
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <BadgeCheck className="w-4 h-4 text-primary" /> Keep up to 90% profits
+              </div>
+            </div>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/sign-up">
                 <Button size="lg" className="text-base px-8 h-14 w-full sm:w-auto">

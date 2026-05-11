@@ -5,8 +5,8 @@ import { createChart, ColorType, CandlestickSeries, IChartApi } from 'lightweigh
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import PriceTicker from "@/components/PriceTicker";
 
 export default function Trade() {
   const { accountId } = useParams();
@@ -92,6 +92,7 @@ export default function Trade() {
 
   return (
     <div className="h-screen flex flex-col bg-[#050a14] overflow-hidden">
+      <PriceTicker />
       {/* Top Bar */}
       <div className="h-14 border-b border-[#1e2a3a] flex items-center px-4 justify-between bg-[#0a0e1a]">
         <div className="flex items-center gap-6">

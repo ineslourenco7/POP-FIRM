@@ -27,7 +27,6 @@ export default function Challenges() {
               </div>
               <CardHeader>
                 <CardTitle className="text-2xl">{plan.name}</CardTitle>
-                <CardDescription>Simulated funding</CardDescription>
                 <div className="mt-4">
                   <span className="text-4xl font-bold">${plan.accountSize.toLocaleString()}</span>
                 </div>
