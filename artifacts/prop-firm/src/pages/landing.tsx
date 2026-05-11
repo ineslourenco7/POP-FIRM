@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, BarChart3, ShieldCheck, Trophy, Zap, BadgeCheck, Star, HeadphonesIcon, FileText, ChevronDown, ClipboardList, UserCheck, Wallet } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-const LICENSE_NUMBER = "QF-" + Math.random().toString(36).substring(2, 6).toUpperCase() + "-" + Math.random().toString(36).substring(2, 6).toUpperCase() + "-" + Math.random().toString(36).substring(2, 5).toUpperCase();
+import { LICENSE_NUMBER } from "@/lib/constants";
 
 const FAQS = [
   {
