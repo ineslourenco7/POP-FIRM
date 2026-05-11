@@ -302,7 +302,7 @@ export default function Landing() {
             <span>&copy; {new Date().getFullYear()} QuantFund</span>
           </div>
           <p className="text-[11px] text-muted-foreground/50 leading-relaxed max-w-3xl mx-auto text-center">
-            A QuantFund fornece desafios de trading simulado apenas para fins de entretenimento, educação e treino. Nenhuma informação disponibilizada constitui aconselhamento de investimento, oferta ou solicitação de compra/venda de qualquer instrumento financeiro. Todos os desafios e contas são 100% simulados — nenhuma ordem é executada em mercados reais nem envolve capital real. Os resultados simulados não são indicativos de resultados futuros.
+            A QuantFund fornece desafios de trading simulado. Nenhuma informação disponibilizada constitui aconselhamento de investimento, oferta ou solicitação de compra/venda de qualquer instrumento financeiro. Os resultados simulados não são indicativos de resultados futuros.
           </p>
         </div>
       </footer>

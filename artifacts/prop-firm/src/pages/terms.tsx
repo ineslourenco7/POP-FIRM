@@ -29,7 +29,7 @@ export default function Terms() {
 
           <section>
             <h2 className="text-lg font-semibold text-foreground mb-3">2. Natureza dos Serviços</h2>
-            <p>A QuantFund é uma plataforma de desafios de trading simulado, fornecida exclusivamente para fins de entretenimento, educação e treino. Todos os desafios e contas de trading operados através da plataforma são <strong className="text-foreground">100% simulados</strong> e não envolvem execução de ordens em mercados reais, nem capital real de terceiros.</p>
+            <p>A QuantFund é uma plataforma de desafios de trading simulado. Todos os desafios e contas de trading operados através da plataforma são <strong className="text-foreground">100% simulados</strong> e não envolvem execução de ordens em mercados reais, nem capital real de terceiros.</p>
             <p className="mt-2">Os resultados de trading simulado não representam resultados de trading real. A Empresa não oferece serviços de investimento, gestão de ativos, nem qualquer forma de assessoria financeira regulada, nos termos da Singapore Securities and Futures Act 2001 ou legislação equivalente de outros países.</p>
           </section>
 
@@ -112,7 +112,7 @@ export default function Terms() {
           <section className="border-t border-border pt-8">
             <div className="p-4 bg-card border border-border rounded-lg text-xs text-muted-foreground/70 leading-relaxed">
               <p className="font-semibold text-muted-foreground mb-2">Aviso Legal / Legal Disclaimer</p>
-              <p>A QuantFund (operada pela ECI Ventures Pte. Ltd. – UEN 202329954C) fornece desafios de trading simulado exclusivamente para fins de entretenimento, educação e treino. Os resultados passados não são indicativos de resultados futuros. Os resultados hipotéticos ou simulados têm limitações inerentes e não representam trading real, uma vez que as ordens não são executadas em contrapartes reais de mercado. Nenhuma representação é feita de que qualquer utilizador irá ou poderá obter lucros ou perdas semelhantes aos apresentados no ambiente simulado.</p>
+              <p>A QuantFund (operada pela ECI Ventures Pte. Ltd. – UEN 202329954C) fornece desafios de trading simulado. Os resultados passados não são indicativos de resultados futuros. Os resultados hipotéticos ou simulados têm limitações inerentes e não representam trading real, uma vez que as ordens não são executadas em contrapartes reais de mercado. Nenhuma representação é feita de que qualquer utilizador irá ou poderá obter lucros ou perdas semelhantes aos apresentados no ambiente simulado.</p>
               <p className="mt-2">Nenhuma informação disponibilizada pela Empresa constitui aconselhamento de investimento, oferta ou solicitação de compra/venda, recomendação, endosso ou patrocínio de qualquer produto financeiro ou de investimento. Os serviços prestados não são serviços de investimento nem aconselhamento financeiro regulado, nos termos da Singapore Securities and Futures Act 2001 ou legislação equivalente de outros países. A utilização das informações é da exclusiva responsabilidade do utilizador.</p>
             </div>
           </section>

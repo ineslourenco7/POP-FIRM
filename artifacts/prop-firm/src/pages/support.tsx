@@ -188,7 +188,7 @@ export default function Support() {
         {/* Legal note */}
         <div className="mt-12 p-4 border border-border rounded-xl text-xs text-muted-foreground/70 leading-relaxed">
           <p className="font-semibold text-muted-foreground mb-1">Aviso Legal</p>
-          <p>A QuantFund (operada pela ECI Ventures Pte. Ltd. – UEN 202329954C) fornece desafios de trading simulado exclusivamente para fins de entretenimento, educação e treino. Nenhum dos serviços prestados constitui serviços de investimento ou aconselhamento financeiro. A utilização das informações é da exclusiva responsabilidade do utilizador.</p>
+          <p>A QuantFund (operada pela ECI Ventures Pte. Ltd. – UEN 202329954C) fornece desafios de trading simulado. Nenhum dos serviços prestados constitui serviços de investimento ou aconselhamento financeiro. A utilização das informações é da exclusiva responsabilidade do utilizador.</p>
         </div>
       </main>
 
