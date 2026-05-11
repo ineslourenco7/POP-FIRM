@@ -3,20 +3,38 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: PropFirm Platform API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: users
+    description: User profile operations
+  - name: challenges
+    description: Challenge plan operations
+  - name: accounts
+    description: Virtual trading account operations
+  - name: orders
+    description: Virtual trading order operations
+  - name: payments
+    description: Payment and proof operations
+  - name: payouts
+    description: Payout request operations
+  - name: leaderboard
+    description: Leaderboard operations
+  - name: admin
+    description: Admin operations
+  - name: market
+    description: Market data operations
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +42,918 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ─── USER PROFILE ───────────────────────────────────────────────────────────
+  /users/me:
+    get:
+      operationId: getMe
+      tags: [users]
+      summary: Get current user profile
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          description: Not found
+
+  /users/me/stats:
+    get:
+      operationId: getMyStats
+      tags: [users]
+      summary: Get dashboard stats for current user
+      responses:
+        "200":
+          description: User stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserStats"
+
+  # ─── CHALLENGE PLANS ────────────────────────────────────────────────────────
+  /challenges:
+    get:
+      operationId: listChallenges
+      tags: [challenges]
+      summary: List all challenge plans
+      responses:
+        "200":
+          description: List of challenges
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Challenge"
+
+  /challenges/{id}:
+    get:
+      operationId: getChallenge
+      tags: [challenges]
+      summary: Get a challenge plan
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Challenge plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Challenge"
+        "404":
+          description: Not found
+
+  # ─── VIRTUAL ACCOUNTS ───────────────────────────────────────────────────────
+  /accounts:
+    get:
+      operationId: listAccounts
+      tags: [accounts]
+      summary: List my virtual trading accounts
+      responses:
+        "200":
+          description: List of virtual accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VirtualAccount"
+
+  /accounts/{id}:
+    get:
+      operationId: getAccount
+      tags: [accounts]
+      summary: Get a virtual account
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Virtual account
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VirtualAccount"
+        "404":
+          description: Not found
+
+  /accounts/{id}/performance:
+    get:
+      operationId: getAccountPerformance
+      tags: [accounts]
+      summary: Get account equity curve and daily performance
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Performance data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountPerformance"
+
+  # ─── VIRTUAL ORDERS ─────────────────────────────────────────────────────────
+  /accounts/{accountId}/orders:
+    get:
+      operationId: listOrders
+      tags: [orders]
+      summary: List orders for an account
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Order"
+    post:
+      operationId: createOrder
+      tags: [orders]
+      summary: Place a virtual order
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderInput"
+      responses:
+        "201":
+          description: Order placed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "400":
+          description: Bad request (rule violation)
+
+  /accounts/{accountId}/orders/{orderId}/close:
+    post:
+      operationId: closeOrder
+      tags: [orders]
+      summary: Close an open virtual order
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Order closed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "404":
+          description: Not found
+
+  # ─── PAYMENTS ───────────────────────────────────────────────────────────────
+  /payments:
+    get:
+      operationId: listMyPayments
+      tags: [payments]
+      summary: List my payment submissions
+      responses:
+        "200":
+          description: Payment list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Payment"
+    post:
+      operationId: submitPayment
+      tags: [payments]
+      summary: Submit a manual payment for a challenge
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentInput"
+      responses:
+        "201":
+          description: Payment submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+
+  /payments/{id}/proof:
+    post:
+      operationId: uploadPaymentProof
+      tags: [payments]
+      summary: Upload proof URL for a payment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProofUpload"
+      responses:
+        "200":
+          description: Proof uploaded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+
+  # ─── PAYOUT REQUESTS ────────────────────────────────────────────────────────
+  /payouts:
+    get:
+      operationId: listMyPayouts
+      tags: [payouts]
+      summary: List my payout requests
+      responses:
+        "200":
+          description: Payout list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PayoutRequest"
+    post:
+      operationId: requestPayout
+      tags: [payouts]
+      summary: Submit a payout request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PayoutInput"
+      responses:
+        "201":
+          description: Payout request submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PayoutRequest"
+
+  # ─── LEADERBOARD ────────────────────────────────────────────────────────────
+  /leaderboard:
+    get:
+      operationId: getLeaderboard
+      tags: [leaderboard]
+      summary: Get top traders leaderboard
+      responses:
+        "200":
+          description: Leaderboard
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LeaderboardEntry"
+
+  # ─── MARKET DATA ────────────────────────────────────────────────────────────
+  /market/candles:
+    get:
+      operationId: getMarketCandles
+      tags: [market]
+      summary: Get OHLC candle data for a symbol
+      parameters:
+        - name: symbol
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: interval
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Candle data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Candle"
+
+  /market/price:
+    get:
+      operationId: getMarketPrice
+      tags: [market]
+      summary: Get current price for a symbol
+      parameters:
+        - name: symbol
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Current price
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarketPrice"
+
+  # ─── ADMIN ──────────────────────────────────────────────────────────────────
+  /admin/users:
+    get:
+      operationId: adminListUsers
+      tags: [admin]
+      summary: List all users (admin)
+      responses:
+        "200":
+          description: All users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminUser"
+
+  /admin/payments:
+    get:
+      operationId: adminListPayments
+      tags: [admin]
+      summary: List all payments (admin)
+      responses:
+        "200":
+          description: All payments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Payment"
+
+  /admin/payments/{id}/approve:
+    post:
+      operationId: adminApprovePayment
+      tags: [admin]
+      summary: Approve a payment and create virtual account
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Payment approved and account created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VirtualAccount"
+
+  /admin/payments/{id}/reject:
+    post:
+      operationId: adminRejectPayment
+      tags: [admin]
+      summary: Reject a payment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RejectInput"
+      responses:
+        "200":
+          description: Payment rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+
+  /admin/payouts:
+    get:
+      operationId: adminListPayouts
+      tags: [admin]
+      summary: List all payout requests (admin)
+      responses:
+        "200":
+          description: All payouts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PayoutRequest"
+
+  /admin/payouts/{id}/approve:
+    post:
+      operationId: adminApprovePayout
+      tags: [admin]
+      summary: Approve a payout request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Payout approved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PayoutRequest"
+
+  /admin/payouts/{id}/reject:
+    post:
+      operationId: adminRejectPayout
+      tags: [admin]
+      summary: Reject a payout request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RejectInput"
+      responses:
+        "200":
+          description: Payout rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PayoutRequest"
+
+  /admin/challenges:
+    post:
+      operationId: adminCreateChallenge
+      tags: [admin]
+      summary: Create a challenge plan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChallengeInput"
+      responses:
+        "201":
+          description: Challenge created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Challenge"
+
+  /admin/stats:
+    get:
+      operationId: adminGetStats
+      tags: [admin]
+      summary: Get overall platform stats
+      responses:
+        "200":
+          description: Platform stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStats"
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
         status:
           type: string
-      required:
-        - status
 
+    User:
+      type: object
+      required: [id, clerkId, email, role, createdAt]
+      properties:
+        id:
+          type: integer
+        clerkId:
+          type: string
+        email:
+          type: string
+        displayName:
+          type: ["string", "null"]
+        role:
+          type: string
+          enum: [user, admin]
+        createdAt:
+          type: string
+
+    AdminUser:
+      type: object
+      required: [id, clerkId, email, role, createdAt, accountCount, totalPnl]
+      properties:
+        id:
+          type: integer
+        clerkId:
+          type: string
+        email:
+          type: string
+        displayName:
+          type: ["string", "null"]
+        role:
+          type: string
+        createdAt:
+          type: string
+        accountCount:
+          type: integer
+        totalPnl:
+          type: number
+
+    UserStats:
+      type: object
+      required: [totalAccounts, activeAccounts, totalPnl, bestAccount, passedAccounts]
+      properties:
+        totalAccounts:
+          type: integer
+        activeAccounts:
+          type: integer
+        totalPnl:
+          type: number
+        bestAccount:
+          type: ["string", "null"]
+        passedAccounts:
+          type: integer
+
+    Challenge:
+      type: object
+      required: [id, name, accountSize, price, profitTarget, maxDailyDrawdown, maxTotalDrawdown, minTradingDays, maxTradingDays, leverage, instruments, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        accountSize:
+          type: number
+        price:
+          type: number
+        profitTarget:
+          type: number
+        maxDailyDrawdown:
+          type: number
+        maxTotalDrawdown:
+          type: number
+        minTradingDays:
+          type: integer
+        maxTradingDays:
+          type: integer
+        leverage:
+          type: integer
+        instruments:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+
+    ChallengeInput:
+      type: object
+      required: [name, accountSize, price, profitTarget, maxDailyDrawdown, maxTotalDrawdown, minTradingDays, maxTradingDays, leverage, instruments]
+      properties:
+        name:
+          type: string
+        accountSize:
+          type: number
+        price:
+          type: number
+        profitTarget:
+          type: number
+        maxDailyDrawdown:
+          type: number
+        maxTotalDrawdown:
+          type: number
+        minTradingDays:
+          type: integer
+        maxTradingDays:
+          type: integer
+        leverage:
+          type: integer
+        instruments:
+          type: array
+          items:
+            type: string
+
+    VirtualAccount:
+      type: object
+      required: [id, userId, challengeId, status, initialBalance, currentBalance, equity, floatingPnl, totalPnl, dailyPnl, maxDrawdownReached, profitTargetReached, tradingDays, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        challengeId:
+          type: integer
+        challengeName:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [active, passed, failed, funded]
+        initialBalance:
+          type: number
+        currentBalance:
+          type: number
+        equity:
+          type: number
+        floatingPnl:
+          type: number
+        totalPnl:
+          type: number
+        dailyPnl:
+          type: number
+        maxDrawdownReached:
+          type: number
+        profitTargetReached:
+          type: boolean
+        tradingDays:
+          type: integer
+        createdAt:
+          type: string
+
+    AccountPerformance:
+      type: object
+      required: [accountId, equityCurve, dailyStats]
+      properties:
+        accountId:
+          type: integer
+        equityCurve:
+          type: array
+          items:
+            $ref: "#/components/schemas/EquityPoint"
+        dailyStats:
+          type: array
+          items:
+            $ref: "#/components/schemas/DailyStat"
+
+    EquityPoint:
+      type: object
+      required: [time, equity]
+      properties:
+        time:
+          type: string
+        equity:
+          type: number
+
+    DailyStat:
+      type: object
+      required: [date, pnl, trades]
+      properties:
+        date:
+          type: string
+        pnl:
+          type: number
+        trades:
+          type: integer
+
+    Order:
+      type: object
+      required: [id, accountId, symbol, side, size, openPrice, status, openedAt]
+      properties:
+        id:
+          type: integer
+        accountId:
+          type: integer
+        symbol:
+          type: string
+        side:
+          type: string
+          enum: [buy, sell]
+        size:
+          type: number
+        openPrice:
+          type: number
+        closePrice:
+          type: ["number", "null"]
+        currentPrice:
+          type: ["number", "null"]
+        stopLoss:
+          type: ["number", "null"]
+        takeProfit:
+          type: ["number", "null"]
+        pnl:
+          type: ["number", "null"]
+        status:
+          type: string
+          enum: [open, closed]
+        openedAt:
+          type: string
+        closedAt:
+          type: ["string", "null"]
+
+    OrderInput:
+      type: object
+      required: [symbol, side, size]
+      properties:
+        symbol:
+          type: string
+        side:
+          type: string
+          enum: [buy, sell]
+        size:
+          type: number
+        stopLoss:
+          type: ["number", "null"]
+        takeProfit:
+          type: ["number", "null"]
+
+    Payment:
+      type: object
+      required: [id, userId, challengeId, amount, status, method, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        challengeId:
+          type: integer
+        challengeName:
+          type: ["string", "null"]
+        userEmail:
+          type: ["string", "null"]
+        amount:
+          type: number
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+        method:
+          type: string
+        proofUrl:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    PaymentInput:
+      type: object
+      required: [challengeId, amount, method]
+      properties:
+        challengeId:
+          type: integer
+        amount:
+          type: number
+        method:
+          type: string
+
+    ProofUpload:
+      type: object
+      required: [proofUrl]
+      properties:
+        proofUrl:
+          type: string
+
+    PayoutRequest:
+      type: object
+      required: [id, userId, accountId, amount, walletAddress, status, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        accountId:
+          type: integer
+        userEmail:
+          type: ["string", "null"]
+        amount:
+          type: number
+        walletAddress:
+          type: string
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    PayoutInput:
+      type: object
+      required: [accountId, amount, walletAddress]
+      properties:
+        accountId:
+          type: integer
+        amount:
+          type: number
+        walletAddress:
+          type: string
+
+    RejectInput:
+      type: object
+      required: [notes]
+      properties:
+        notes:
+          type: string
+
+    LeaderboardEntry:
+      type: object
+      required: [rank, displayName, accountSize, totalPnl, pnlPercent, tradingDays, status]
+      properties:
+        rank:
+          type: integer
+        displayName:
+          type: string
+        accountSize:
+          type: number
+        totalPnl:
+          type: number
+        pnlPercent:
+          type: number
+        tradingDays:
+          type: integer
+        status:
+          type: string
+
+    Candle:
+      type: object
+      required: [time, open, high, low, close, volume]
+      properties:
+        time:
+          type: integer
+        open:
+          type: number
+        high:
+          type: number
+        low:
+          type: number
+        close:
+          type: number
+        volume:
+          type: number
+
+    MarketPrice:
+      type: object
+      required: [symbol, price, change, changePercent]
+      properties:
+        symbol:
+          type: string
+        price:
+          type: number
+        change:
+          type: number
+        changePercent:
+          type: number
+
+    AdminStats:
+      type: object
+      required: [totalUsers, totalAccounts, activeAccounts, totalRevenue, pendingPayments, pendingPayouts, passedAccounts, failedAccounts]
+      properties:
+        totalUsers:
+          type: integer
+        totalAccounts:
+          type: integer
+        activeAccounts:
+          type: integer
+        totalRevenue:
+          type: number
+        pendingPayments:
+          type: integer
+        pendingPayouts:
+          type: integer
+        passedAccounts:
+          type: integer
+        failedAccounts:
+          type: integer
