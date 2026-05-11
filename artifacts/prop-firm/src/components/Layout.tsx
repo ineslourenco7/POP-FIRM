@@ -3,6 +3,7 @@ import { useUser, useClerk } from "@clerk/react";
 import { Activity, LayoutDashboard, Trophy, Wallet, CreditCard, Shield, Menu, X, LogOut } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { useGetMe } from "@workspace/api-client-react";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -13,12 +14,13 @@ export default function Layout({ children }: LayoutProps) {
   const { user } = useUser();
   const { signOut } = useClerk();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { data: me } = useGetMe();
 
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location]);
 
-  const isAdmin = user?.publicMetadata?.role === "admin";
+  const isAdmin = me?.role === "admin";
 
   const navItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
