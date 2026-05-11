@@ -108,6 +108,7 @@ export default function Trade() {
   const [showSymbolDropdown, setShowSymbolDropdown] = useState(false);
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState<"positions" | "history">("positions");
+  const [showTicker, setShowTicker] = useState(true);
 
   const { data: marketPrice } = useGetMarketPrice(
     { symbol },
@@ -194,6 +195,21 @@ export default function Trade() {
     );
   };
 
+  const handleCloseAll = () => {
+    const open = orders?.filter((o) => o.status === "open") ?? [];
+    open.forEach((o) => {
+      closeOrderMut.mutate(
+        { accountId: id, orderId: o.id },
+        {
+          onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: getListOrdersQueryKey(id) });
+            queryClient.invalidateQueries({ queryKey: getGetAccountQueryKey(id) });
+          },
+        }
+      );
+    });
+  };
+
   const openOrders = orders?.filter((o) => o.status === "open") || [];
   const closedOrders = orders?.filter((o) => o.status === "closed") || [];
   const currentPrice = marketPrice?.price ?? 0;
@@ -215,7 +231,7 @@ export default function Trade() {
 
   return (
     <div className="h-screen flex flex-col bg-[#050a14] overflow-hidden">
-      <PriceTicker />
+      <PriceTicker visible={showTicker} onToggle={() => setShowTicker(v => !v)} />
 
       {/* Top Bar */}
       <div className="h-14 border-b border-[#1e2a3a] flex items-center px-4 justify-between bg-[#0a0e1a] shrink-0">
@@ -333,13 +349,22 @@ export default function Trade() {
                 Histórico ({closedOrders.length})
               </button>
               {activeTab === "positions" && openOrders.length > 0 && (
-                <span
-                  className={`ml-auto text-xs font-mono font-semibold ${
-                    totalFloatingPnl >= 0 ? "text-green-400" : "text-red-400"
-                  }`}
-                >
-                  Float: {totalFloatingPnl >= 0 ? "+" : ""}${totalFloatingPnl.toFixed(2)}
-                </span>
+                <div className="ml-auto flex items-center gap-3">
+                  <span
+                    className={`text-xs font-mono font-semibold ${
+                      totalFloatingPnl >= 0 ? "text-green-400" : "text-red-400"
+                    }`}
+                  >
+                    Float: {totalFloatingPnl >= 0 ? "+" : ""}${totalFloatingPnl.toFixed(2)}
+                  </span>
+                  <button
+                    onClick={handleCloseAll}
+                    disabled={closeOrderMut.isPending}
+                    className="text-[10px] px-2.5 py-1 rounded border border-red-500/40 text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50 font-semibold uppercase tracking-wide"
+                  >
+                    Fechar Tudo
+                  </button>
+                </div>
               )}
             </div>
 
