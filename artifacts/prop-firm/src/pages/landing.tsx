@@ -148,6 +148,9 @@ export default function Landing() {
             <a href="#testimonials" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Testemunhos</a>
           </nav>
           <div className="flex items-center gap-4">
+            <Link href="/demo">
+              <Button variant="ghost" className="text-sm text-primary hover:text-primary/80">Experimentar Demo</Button>
+            </Link>
             <Link href="/sign-in">
               <Button variant="ghost" className="text-sm">Entrar</Button>
             </Link>
@@ -193,9 +196,9 @@ export default function Landing() {
                   Iniciar Desafio <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
-              <Link href="/sign-in">
-                <Button size="lg" variant="outline" className="text-base px-8 h-14 w-full sm:w-auto">
-                  Aceder ao Terminal
+              <Link href="/demo">
+                <Button size="lg" variant="outline" className="text-base px-8 h-14 w-full sm:w-auto border-primary/40 text-primary hover:bg-primary/10 hover:text-primary">
+                  Experimentar Demo Grátis
                 </Button>
               </Link>
             </div>

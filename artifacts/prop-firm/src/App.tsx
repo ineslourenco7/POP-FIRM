@@ -9,6 +9,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 import Landing from "@/pages/landing";
+import Demo from "@/pages/demo";
 import Dashboard from "@/pages/dashboard";
 import Trade from "@/pages/trade";
 import Challenges from "@/pages/challenges";
@@ -162,6 +163,7 @@ function ClerkProviderWithRoutes() {
           <ClerkQueryClientCacheInvalidator />
           <Switch>
             <Route path="/" component={HomeRedirect} />
+            <Route path="/demo" component={Demo} />
             <Route path="/sign-in/*?" component={SignInPage} />
             <Route path="/sign-up/*?" component={SignUpPage} />
             
