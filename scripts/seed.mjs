@@ -16,7 +16,8 @@ await client.query(`
     ('25K Challenge',  25000,  197,  8, 5, 10, 5, 30, 100, ARRAY['EURUSD','GBPUSD','USDJPY','XAUUSD']),
     ('50K Challenge',  50000,  297,  8, 5, 10, 5, 30, 100, ARRAY['EURUSD','GBPUSD','USDJPY','XAUUSD']),
     ('100K Challenge', 100000, 497,  8, 5, 10, 5, 30, 100, ARRAY['EURUSD','GBPUSD','USDJPY','XAUUSD']),
-    ('200K Challenge', 200000, 997,  8, 5, 10, 5, 30, 100, ARRAY['EURUSD','GBPUSD','USDJPY','XAUUSD'])
+    ('200K Challenge', 200000, 997,  8, 5, 10, 5, 30, 100, ARRAY['EURUSD','GBPUSD','USDJPY','XAUUSD']),
+    ('1M Challenge',  1000000, 4997, 8, 5, 10, 5, 30, 100, ARRAY['EURUSD','GBPUSD','USDJPY','XAUUSD'])
   ON CONFLICT DO NOTHING;
 `);
 
