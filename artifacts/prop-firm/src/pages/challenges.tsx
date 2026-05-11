@@ -1,7 +1,7 @@
 import { useListChallenges } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { Infinity, Star, Zap, TrendingUp, Shield, Clock, BarChart2, Layers, CheckCircle } from "lucide-react";
+import { Infinity, Star, Zap, TrendingUp, Shield, Clock, BarChart2, Layers, CheckCircle, Flame } from "lucide-react";
 
 type Challenge = {
   id: number;
@@ -27,6 +27,16 @@ type TierConfig = {
 };
 
 function getTierConfig(accountSize: number): TierConfig {
+  if (accountSize >= 3_000_000) return {
+    tierName: "Instant",
+    tierLabel: "Conta financiada de imediato. Sem avaliação.",
+    gradient: "from-orange-950/80 via-red-900/30 to-transparent",
+    accent: "border-orange-500/60",
+    accentText: "text-orange-400",
+    accentBg: "bg-orange-500/10",
+    ring: "ring-orange-500/30",
+    badge: { label: "Instant Funded", color: "bg-orange-500", textColor: "text-white", icon: Flame },
+  };
   if (accountSize >= 1_000_000) return {
     tierName: "Legend",
     tierLabel: "O máximo. Para os melhores do mundo.",
@@ -121,6 +131,7 @@ function FeatureRow({
 function ChallengeCard({ plan }: { plan: Challenge }) {
   const tier = getTierConfig(plan.accountSize);
   const BadgeIcon = tier.badge?.icon;
+  const isInstant = plan.profitTarget === 0;
 
   return (
     <div
@@ -153,39 +164,25 @@ function ChallengeCard({ plan }: { plan: Challenge }) {
 
       {/* Features */}
       <div className="px-5 py-3 flex-1">
-        <FeatureRow
-          icon={TrendingUp}
-          label="Objetivo de Lucro"
-          value={`${plan.profitTarget}%`}
-          accentText={tier.accentText}
-        />
-        <FeatureRow
-          icon={Infinity}
-          label="Perda Diária Máx."
-          value="Sem limite"
-          highlight
-        />
-        <FeatureRow
-          icon={Shield}
-          label="Perda Total Máx."
-          value={`${plan.maxTotalDrawdown}%`}
-        />
-        <FeatureRow
-          icon={Clock}
-          label="Dias Mín. de Trading"
-          value={`${plan.minTradingDays} dias`}
-        />
-        <FeatureRow
-          icon={BarChart2}
-          label="Alavancagem"
-          value={`1:${plan.leverage}`}
-        />
-        <FeatureRow
-          icon={Layers}
-          label="Divisão de Lucros"
-          value="até 90%"
-          accentText={tier.accentText}
-        />
+        {isInstant ? (
+          <>
+            <FeatureRow icon={CheckCircle} label="Avaliação" value="Sem avaliação" highlight />
+            <FeatureRow icon={Flame} label="Conta Ativa" value="Imediatamente" highlight />
+            <FeatureRow icon={Infinity} label="Perda Diária Máx." value="Sem limite" highlight />
+            <FeatureRow icon={Shield} label="Perda Total Máx." value={`${plan.maxTotalDrawdown}%`} />
+            <FeatureRow icon={BarChart2} label="Alavancagem" value={`1:${plan.leverage}`} accentText={tier.accentText} />
+            <FeatureRow icon={Layers} label="Divisão de Lucros" value="até 90%" accentText={tier.accentText} />
+          </>
+        ) : (
+          <>
+            <FeatureRow icon={TrendingUp} label="Objetivo de Lucro" value={`${plan.profitTarget}%`} accentText={tier.accentText} />
+            <FeatureRow icon={Infinity} label="Perda Diária Máx." value="Sem limite" highlight />
+            <FeatureRow icon={Shield} label="Perda Total Máx." value={`${plan.maxTotalDrawdown}%`} />
+            <FeatureRow icon={Clock} label="Dias Mín. de Trading" value={`${plan.minTradingDays} dias`} />
+            <FeatureRow icon={BarChart2} label="Alavancagem" value={`1:${plan.leverage}`} />
+            <FeatureRow icon={Layers} label="Divisão de Lucros" value="até 90%" accentText={tier.accentText} />
+          </>
+        )}
       </div>
 
       {/* Footer / CTA */}
@@ -197,15 +194,17 @@ function ChallengeCard({ plan }: { plan: Challenge }) {
         <Link href={`/checkout/${plan.id}`} className="block">
           <Button
             className={`w-full font-semibold h-10 text-sm ${
-              tier.accentText === "text-blue-400"
+              isInstant
+                ? "bg-orange-500 hover:bg-orange-400 text-white shadow-orange-900/40 shadow-lg"
+                : tier.accentText === "text-blue-400"
                 ? "bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/30 shadow-lg"
                 : tier.accentText === "text-yellow-400"
                 ? "bg-yellow-500/15 hover:bg-yellow-500/25 text-yellow-400 border border-yellow-500/40"
                 : ""
             }`}
-            variant={tier.accentText === "text-blue-400" ? "default" : tier.accentText === "text-yellow-400" ? "outline" : "default"}
+            variant={isInstant || tier.accentText === "text-blue-400" ? "default" : tier.accentText === "text-yellow-400" ? "outline" : "default"}
           >
-            Começar Agora
+            {isInstant ? "Obter Conta Agora" : "Começar Agora"}
           </Button>
         </Link>
       </div>
