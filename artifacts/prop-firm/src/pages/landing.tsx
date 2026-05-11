@@ -19,6 +19,14 @@ const FAQS = [
     a: "Cada conta tem um limite de drawdown diário e um limite de drawdown total. Se qualquer um dos limites for atingido, a conta é encerrada automaticamente. Consulta a página de Desafios para ver os limites exatos de cada plano.",
   },
   {
+    q: "Posso operar durante a noite ou ao fim de semana?",
+    a: "Sim. Podes operar a qualquer hora do dia ou da noite, incluindo sessões asiáticas, europeias e americanas. Não existem restrições de horário — a plataforma está disponível 24 horas por dia.",
+  },
+  {
+    q: "Posso deixar posições abertas de um dia para o outro?",
+    a: "Sim, podes. Não há obrigatoriedade de fechar posições no final do dia. Podes manter trades abertos overnight ou ao longo do fim de semana, desde que respeites os limites de drawdown em vigor.",
+  },
+  {
     q: "Como e quando posso solicitar um pagamento?",
     a: "Após seres financiado, podes solicitar pagamentos quinzenais. Os pagamentos são processados via criptomoeda ou transferência bancária em até 24 horas.",
   },
@@ -251,6 +259,34 @@ export default function Landing() {
           </div>
         </section>
 
+        {/* Competitive claim strip */}
+        <div className="bg-primary/5 border-y border-primary/20 py-5">
+          <div className="container mx-auto px-4">
+            <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-12 text-center">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                  <Zap className="w-4 h-4 text-primary" />
+                </div>
+                <span className="text-sm font-semibold text-foreground">Aprovação <span className="text-primary">2× mais rápida</span> que a concorrência</span>
+              </div>
+              <div className="hidden md:block w-px h-6 bg-border" />
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                  <BadgeCheck className="w-4 h-4 text-primary" />
+                </div>
+                <span className="text-sm font-semibold text-foreground">Preços até <span className="text-primary">40% mais baixos</span> do que as líderes do mercado</span>
+              </div>
+              <div className="hidden md:block w-px h-6 bg-border" />
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                  <Trophy className="w-4 h-4 text-primary" />
+                </div>
+                <span className="text-sm font-semibold text-foreground">Capital até <span className="text-primary">$3.000.000</span> — o maior do mercado</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Payment Methods Banner */}
         <PaymentBanner />
 
@@ -375,6 +411,55 @@ export default function Landing() {
                 <div className="text-center">
                   <div className="text-3xl font-bold text-primary">24h</div>
                   <div className="text-sm text-muted-foreground">Tempo Médio de Pagamento</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 3M Instant Challenge spotlight */}
+        <section className="py-16 relative overflow-hidden border-y border-primary/20">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/15 via-background to-background" />
+          <div className="container mx-auto px-4 relative z-10">
+            <div className="max-w-4xl mx-auto rounded-3xl border border-primary/30 bg-card/80 backdrop-blur-sm p-8 md:p-12 flex flex-col md:flex-row items-center gap-8">
+              {/* Left */}
+              <div className="flex-1 text-center md:text-left">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold mb-4 border border-primary/30 tracking-widest uppercase">
+                  <Zap className="w-3 h-3" /> Exclusivo QuantFund
+                </div>
+                <h2 className="text-3xl md:text-4xl font-black tracking-tight mb-3">
+                  Desafio <span className="text-primary">$3.000.000</span><br />Instant Funded
+                </h2>
+                <p className="text-muted-foreground text-sm leading-relaxed mb-6 max-w-md">
+                  O maior desafio do mercado. Passa a avaliação e opera com três milhões de dólares em capital. Fica com até 90% dos lucros, sem limites de crescimento.
+                </p>
+                <div className="flex flex-wrap gap-3 justify-center md:justify-start mb-6">
+                  {[
+                    { label: "Capital", value: "$3.000.000" },
+                    { label: "Lucro partilhado", value: "até 90%" },
+                    { label: "Meta de lucro", value: "8%" },
+                  ].map((s) => (
+                    <div key={s.label} className="bg-background border border-border rounded-xl px-4 py-2 text-center">
+                      <div className="text-lg font-black text-primary leading-tight">{s.value}</div>
+                      <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{s.label}</div>
+                    </div>
+                  ))}
+                </div>
+                <Link href="/challenges">
+                  <Button size="lg" className="text-sm px-8 h-11">
+                    Ver Detalhes do $3M <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </Link>
+              </div>
+              {/* Right — price callout */}
+              <div className="shrink-0 flex flex-col items-center justify-center bg-primary/10 border border-primary/30 rounded-2xl px-10 py-8 text-center">
+                <div className="text-xs text-muted-foreground uppercase tracking-widest mb-1 font-semibold">Taxa de avaliação</div>
+                <div className="text-5xl font-black text-foreground leading-tight">$7.497</div>
+                <div className="text-xs text-muted-foreground mt-1">pagamento único</div>
+                <div className="mt-4 flex flex-col gap-1.5 text-xs text-muted-foreground text-left">
+                  <div className="flex items-center gap-2"><BadgeCheck className="w-3.5 h-3.5 text-primary shrink-0" /> Sem mensalidades</div>
+                  <div className="flex items-center gap-2"><BadgeCheck className="w-3.5 h-3.5 text-primary shrink-0" /> Overnight permitido</div>
+                  <div className="flex items-center gap-2"><BadgeCheck className="w-3.5 h-3.5 text-primary shrink-0" /> EAs permitidos</div>
                 </div>
               </div>
             </div>

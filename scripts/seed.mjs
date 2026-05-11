@@ -23,7 +23,8 @@ await client.query(`
     ('50K Challenge',   50000,  199, 8, 5, 10, 2, 30, 100, ARRAY['EURUSD','GBPUSD','USDJPY','XAUUSD']),
     ('100K Challenge', 100000,  329, 8, 5, 10, 2, 30, 100, ARRAY['EURUSD','GBPUSD','USDJPY','XAUUSD']),
     ('200K Challenge', 200000,  667, 8, 5, 10, 2, 30, 100, ARRAY['EURUSD','GBPUSD','USDJPY','XAUUSD']),
-    ('1M Challenge',  1000000, 2997, 8, 5, 10, 2, 30, 100, ARRAY['EURUSD','GBPUSD','USDJPY','XAUUSD'])
+    ('1M Challenge',  1000000, 2997, 8, 5, 10, 2, 30, 100, ARRAY['EURUSD','GBPUSD','USDJPY','XAUUSD']),
+    ('3M Instant',   3000000, 7497, 8, 5, 10, 2, 30, 100, ARRAY['EURUSD','GBPUSD','USDJPY','XAUUSD'])
   ON CONFLICT DO NOTHING;
 `);
 
