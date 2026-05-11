@@ -1,6 +1,5 @@
-import { Link } from "wouter";
-import { ArrowLeft, HeadphonesIcon, Mail, MessageSquare, BookOpen, Clock, ChevronDown, ChevronUp } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { HeadphonesIcon, Mail, MessageSquare, BookOpen, Clock, ChevronDown, ChevronUp } from "lucide-react";
+import TopBar from "@/components/TopBar";
 import { useState } from "react";
 
 const FAQS = [
@@ -77,20 +76,10 @@ function FAQItem({ faq }: { faq: typeof FAQS[0] }) {
 export default function Support() {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Header */}
-      <header className="border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 h-16 flex items-center gap-4">
-          <Link href="/">
-            <Button variant="ghost" size="sm" className="gap-2">
-              <ArrowLeft className="w-4 h-4" /> Voltar
-            </Button>
-          </Link>
-          <div className="flex items-center gap-2">
-            <HeadphonesIcon className="w-4 h-4 text-muted-foreground" />
-            <span className="font-semibold">Suporte</span>
-          </div>
-        </div>
-      </header>
+      <TopBar
+        title="Suporte"
+        right={<HeadphonesIcon className="w-4 h-4 text-muted-foreground" />}
+      />
 
       <main className="container mx-auto px-4 py-12 max-w-4xl">
         {/* Hero */}

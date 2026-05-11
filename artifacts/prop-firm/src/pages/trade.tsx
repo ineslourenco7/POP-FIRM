@@ -396,13 +396,22 @@ export default function Trade() {
       {/* Top Bar */}
       <div className="h-14 border-b border-[#1e2a3a] flex items-center px-4 justify-between bg-[#0a0e1a] shrink-0">
         <div className="flex items-center gap-4">
-          {/* Logo / Home */}
+          {/* Logo + back to dashboard */}
           <button
-            onClick={() => setLocation("/")}
-            className="flex items-center gap-2 hover:opacity-80 transition-opacity mr-2"
-            title="Voltar ao início"
+            onClick={() => setLocation("/dashboard")}
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity mr-1"
+            title="Voltar ao menu"
           >
             <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="QuantFund" className="w-7 h-7" />
+            <span className="font-bold text-sm text-white hidden sm:block">QuantFund</span>
+          </button>
+          <span className="text-[#1e2a3a] select-none">|</span>
+          <button
+            onClick={() => setLocation("/dashboard")}
+            className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+            Menu
           </button>
 
           {/* Symbol + Price */}
