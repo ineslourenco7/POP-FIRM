@@ -101,6 +101,10 @@ export interface VirtualAccount {
   maxDrawdownReached: number;
   profitTargetReached: boolean;
   tradingDays: number;
+  profitTarget: number;
+  maxDailyDrawdown: number;
+  maxTotalDrawdown: number;
+  minTradingDays: number;
   createdAt: string;
 }
 

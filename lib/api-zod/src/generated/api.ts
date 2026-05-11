@@ -96,6 +96,10 @@ export const ListAccountsResponseItem = zod.object({
   maxDrawdownReached: zod.number(),
   profitTargetReached: zod.boolean(),
   tradingDays: zod.number(),
+  profitTarget: zod.number(),
+  maxDailyDrawdown: zod.number(),
+  maxTotalDrawdown: zod.number(),
+  minTradingDays: zod.number(),
   createdAt: zod.string(),
 });
 export const ListAccountsResponse = zod.array(ListAccountsResponseItem);
@@ -122,6 +126,10 @@ export const GetAccountResponse = zod.object({
   maxDrawdownReached: zod.number(),
   profitTargetReached: zod.boolean(),
   tradingDays: zod.number(),
+  profitTarget: zod.number(),
+  maxDailyDrawdown: zod.number(),
+  maxTotalDrawdown: zod.number(),
+  minTradingDays: zod.number(),
   createdAt: zod.string(),
 });
 
@@ -394,6 +402,10 @@ export const AdminApprovePaymentResponse = zod.object({
   maxDrawdownReached: zod.number(),
   profitTargetReached: zod.boolean(),
   tradingDays: zod.number(),
+  profitTarget: zod.number(),
+  maxDailyDrawdown: zod.number(),
+  maxTotalDrawdown: zod.number(),
+  minTradingDays: zod.number(),
   createdAt: zod.string(),
 });
 

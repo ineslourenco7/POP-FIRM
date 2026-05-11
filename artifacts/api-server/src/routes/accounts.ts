@@ -53,6 +53,10 @@ async function enrichAccount(account: typeof virtualAccountsTable.$inferSelect) 
     maxDrawdownReached: account.maxDrawdownReached,
     profitTargetReached: account.profitTargetReached,
     tradingDays: account.tradingDays,
+    profitTarget: challenge?.profitTarget ?? 8,
+    maxDailyDrawdown: challenge?.maxDailyDrawdown ?? 5,
+    maxTotalDrawdown: challenge?.maxTotalDrawdown ?? 10,
+    minTradingDays: challenge?.minTradingDays ?? 5,
     createdAt: account.createdAt.toISOString(),
   };
 }

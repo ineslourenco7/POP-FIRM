@@ -144,7 +144,10 @@ export default function Trade() {
         toolbar_bg: "#0a0e1a",
         enable_publishing: false,
         hide_top_toolbar: false,
-        save_image: false,
+        hide_side_toolbar: false,
+        allow_symbol_change: true,
+        save_image: true,
+        drawings_access: { type: "all" },
         container_id: containerId,
       });
     };
@@ -217,6 +220,35 @@ export default function Trade() {
   const totalFloatingPnl = openOrders
     .filter((o) => o.symbol === symbol)
     .reduce((sum, o) => sum + calcLivePnl(o.side, o.openPrice, currentPrice, o.size), 0);
+
+  // Drawdown calculations (using real challenge limits from account)
+  const maxDailyDD  = account?.maxDailyDrawdown  ?? 5;
+  const maxTotalDD  = account?.maxTotalDrawdown   ?? 10;
+  const profitTarget = account?.profitTarget      ?? 8;
+
+  const totalDrawdownPct = account
+    ? ((account.initialBalance - account.currentBalance) / account.initialBalance) * 100
+    : 0;
+  const dailyDrawdownPct = account && account.dailyPnl < 0
+    ? (Math.abs(account.dailyPnl) / account.initialBalance) * 100
+    : 0;
+  const profitPct = account
+    ? ((account.currentBalance - account.initialBalance) / account.initialBalance) * 100
+    : 0;
+
+  const totalDDUsed  = Math.min((totalDrawdownPct / maxTotalDD) * 100, 100);
+  const dailyDDUsed  = Math.min((dailyDrawdownPct / maxDailyDD) * 100, 100);
+  const profitUsed   = Math.min((Math.max(profitPct, 0) / profitTarget) * 100, 100);
+
+  type Level = "safe" | "warn" | "danger";
+  function ddLevel(used: number): Level {
+    if (used >= 90) return "danger";
+    if (used >= 60) return "warn";
+    return "safe";
+  }
+  const totalDDLevel = ddLevel(totalDDUsed);
+  const dailyDDLevel = ddLevel(dailyDDUsed);
+  const hasWarning = totalDDLevel !== "safe" || dailyDDLevel !== "safe";
 
   const filteredSymbols = SYMBOLS.filter(
     (s) =>
@@ -316,6 +348,77 @@ export default function Trade() {
           </div>
         )}
       </div>
+
+      {/* Drawdown Warning Strip */}
+      {account && (
+        <div className={`shrink-0 border-b flex items-center gap-0 text-[11px] font-mono ${
+          hasWarning
+            ? totalDDLevel === "danger" || dailyDDLevel === "danger"
+              ? "border-red-500/40 bg-red-500/5"
+              : "border-yellow-500/30 bg-yellow-500/5"
+            : "border-[#1e2a3a] bg-[#050a14]"
+        }`}>
+          {/* Total Drawdown */}
+          <div className={`flex items-center gap-2 px-3 py-1.5 border-r border-[#1e2a3a] min-w-[170px]`}>
+            <span className="text-[#64748b] shrink-0">DD Total</span>
+            <div className="flex-1 h-1.5 bg-[#1e2a3a] rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${
+                  totalDDLevel === "danger" ? "bg-red-500" : totalDDLevel === "warn" ? "bg-yellow-500" : "bg-green-500"
+                }`}
+                style={{ width: `${totalDDUsed}%` }}
+              />
+            </div>
+            <span className={`tabular-nums shrink-0 ${totalDDLevel === "danger" ? "text-red-400" : totalDDLevel === "warn" ? "text-yellow-400" : "text-[#64748b]"}`}>
+              {totalDrawdownPct.toFixed(2)}% / {maxTotalDD}%
+            </span>
+            {totalDDLevel === "danger" && <span className="text-red-400 font-bold animate-pulse">⚠</span>}
+          </div>
+
+          {/* Daily Drawdown */}
+          <div className={`flex items-center gap-2 px-3 py-1.5 border-r border-[#1e2a3a] min-w-[170px]`}>
+            <span className="text-[#64748b] shrink-0">DD Diário</span>
+            <div className="flex-1 h-1.5 bg-[#1e2a3a] rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${
+                  dailyDDLevel === "danger" ? "bg-red-500" : dailyDDLevel === "warn" ? "bg-yellow-500" : "bg-green-500"
+                }`}
+                style={{ width: `${dailyDDUsed}%` }}
+              />
+            </div>
+            <span className={`tabular-nums shrink-0 ${dailyDDLevel === "danger" ? "text-red-400" : dailyDDLevel === "warn" ? "text-yellow-400" : "text-[#64748b]"}`}>
+              {dailyDrawdownPct.toFixed(2)}% / {maxDailyDD}%
+            </span>
+            {dailyDDLevel === "danger" && <span className="text-red-400 font-bold animate-pulse">⚠</span>}
+          </div>
+
+          {/* Profit Target */}
+          <div className="flex items-center gap-2 px-3 py-1.5 min-w-[170px]">
+            <span className="text-[#64748b] shrink-0">Lucro Alvo</span>
+            <div className="flex-1 h-1.5 bg-[#1e2a3a] rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full bg-blue-500 transition-all duration-500"
+                style={{ width: `${profitUsed}%` }}
+              />
+            </div>
+            <span className={`tabular-nums shrink-0 ${profitPct >= profitTarget ? "text-green-400" : "text-[#64748b]"}`}>
+              {profitPct.toFixed(2)}% / {profitTarget}%
+            </span>
+            {profitPct >= profitTarget && <span className="text-green-400">✓</span>}
+          </div>
+
+          {/* Account status badge if not active */}
+          {account.status !== "active" && (
+            <div className={`ml-auto px-3 py-1 text-xs font-bold uppercase tracking-wider ${
+              account.status === "passed" || account.status === "funded"
+                ? "text-green-400"
+                : "text-red-400"
+            }`}>
+              Conta {account.status === "passed" ? "APROVADA" : account.status === "funded" ? "FINANCIADA" : "FALHADA"}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="flex-1 flex overflow-hidden min-h-0">
         {/* Chart + Positions Area */}

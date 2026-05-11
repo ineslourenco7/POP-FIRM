@@ -680,7 +680,7 @@ components:
 
     VirtualAccount:
       type: object
-      required: [id, userId, challengeId, status, initialBalance, currentBalance, equity, floatingPnl, totalPnl, dailyPnl, maxDrawdownReached, profitTargetReached, tradingDays, createdAt]
+      required: [id, userId, challengeId, status, initialBalance, currentBalance, equity, floatingPnl, totalPnl, dailyPnl, maxDrawdownReached, profitTargetReached, tradingDays, createdAt, profitTarget, maxDailyDrawdown, maxTotalDrawdown, minTradingDays]
       properties:
         id:
           type: integer
@@ -710,6 +710,14 @@ components:
         profitTargetReached:
           type: boolean
         tradingDays:
+          type: integer
+        profitTarget:
+          type: number
+        maxDailyDrawdown:
+          type: number
+        maxTotalDrawdown:
+          type: number
+        minTradingDays:
           type: integer
         createdAt:
           type: string
