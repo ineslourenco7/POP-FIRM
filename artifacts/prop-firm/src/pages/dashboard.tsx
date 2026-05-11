@@ -16,8 +16,8 @@ function fmtK(n: number) {
 }
 
 export default function Dashboard() {
-  const { data: stats, isLoading: statsLoading } = useGetMyStats();
-  const { data: accounts, isLoading: accountsLoading } = useListAccounts();
+  const { data: stats, isLoading: statsLoading } = useGetMyStats({ query: { refetchInterval: 3000 } });
+  const { data: accounts, isLoading: accountsLoading } = useListAccounts({ query: { refetchInterval: 3000 } });
 
   const totalPnl = stats?.totalPnl ?? 0;
 

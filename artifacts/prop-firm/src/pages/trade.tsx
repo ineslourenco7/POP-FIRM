@@ -6,11 +6,13 @@ import {
   useCreateOrder,
   useCloseOrder,
   useGetMarketPrice,
+  getMarketPrice,
+  getGetMarketPriceQueryKey,
   getListOrdersQueryKey,
   getGetAccountQueryKey,
   type Order,
 } from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQueries } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -315,9 +317,25 @@ export default function Trade() {
   const closedOrders = (orders?.filter((o: Order) => o.status === "closed") || []) as Order[];
   const currentPrice = marketPrice?.price ?? 0;
 
-  const totalFloatingPnl = openOrders
-    .filter((o: Order) => o.symbol === symbol)
-    .reduce((sum: number, o: Order) => sum + calcLivePnl(o.side, o.openPrice, currentPrice, o.size), 0);
+  // Fetch live prices for all unique symbols in open orders (excluding current symbol already fetched above)
+  const openOrderSymbols = [...new Set(openOrders.map((o: Order) => o.symbol))].filter((s) => s !== symbol);
+  const extraPriceResults = useQueries({
+    queries: openOrderSymbols.map((sym) => ({
+      queryKey: getGetMarketPriceQueryKey({ symbol: sym }),
+      queryFn: () => getMarketPrice({ symbol: sym }),
+      refetchInterval: 1000,
+    })),
+  });
+  const livePrices: Record<string, number> = { [symbol]: currentPrice };
+  extraPriceResults.forEach((q, i) => {
+    if (q.data) livePrices[openOrderSymbols[i]] = q.data.price;
+  });
+
+  // Floating PnL for ALL open positions across all symbols
+  const totalFloatingPnl = openOrders.reduce((sum: number, o: Order) => {
+    const price = livePrices[o.symbol] ?? o.currentPrice ?? o.openPrice;
+    return sum + calcLivePnl(o.side, o.openPrice, price, o.size);
+  }, 0);
 
   // Drawdown calculations (using real challenge limits from account)
   const maxDailyDD  = account?.maxDailyDrawdown  ?? 5;
@@ -597,7 +615,7 @@ export default function Trade() {
                   </thead>
                   <tbody>
                     {openOrders.map((order: Order) => {
-                      const liveCurrent = order.symbol === symbol ? currentPrice : (order.currentPrice ?? order.openPrice);
+                      const liveCurrent = livePrices[order.symbol] ?? order.currentPrice ?? order.openPrice;
                       const livePnl = calcLivePnl(order.side, order.openPrice, liveCurrent, order.size);
                       const dec = priceDecimals(order.symbol);
                       return (
