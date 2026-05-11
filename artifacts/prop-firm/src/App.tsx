@@ -22,6 +22,8 @@ import Admin from "@/pages/admin";
 import Terms from "@/pages/terms";
 import Support from "@/pages/support";
 import Layout from "@/components/Layout";
+import TopBar from "@/components/TopBar";
+import SupportChat from "@/components/SupportChat";
 
 const clerkPubKey = publishableKeyFromHost(
   window.location.hostname,
@@ -81,16 +83,22 @@ const clerkAppearance = {
 
 function SignInPage() {
   return (
-    <div className="flex min-h-[100dvh] items-center justify-center bg-background px-4">
-      <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} />
+    <div className="min-h-[100dvh] bg-background flex flex-col">
+      <TopBar backHref="/" backLabel="Início" />
+      <div className="flex-1 flex items-center justify-center px-4 py-8">
+        <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} />
+      </div>
     </div>
   );
 }
 
 function SignUpPage() {
   return (
-    <div className="flex min-h-[100dvh] items-center justify-center bg-background px-4">
-      <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} />
+    <div className="min-h-[100dvh] bg-background flex flex-col">
+      <TopBar backHref="/" backLabel="Início" />
+      <div className="flex-1 flex items-center justify-center px-4 py-8">
+        <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} />
+      </div>
     </div>
   );
 }
@@ -185,7 +193,10 @@ function ClerkProviderWithRoutes() {
                   <Layout><Challenges /></Layout>
                 </Show>
                 <Show when="signed-out">
-                  <Challenges />
+                  <div className="min-h-screen bg-background text-foreground">
+                    <TopBar backHref="/" backLabel="Início" />
+                    <Challenges />
+                  </div>
                 </Show>
               </>
             )} />
@@ -203,6 +214,7 @@ function ClerkProviderWithRoutes() {
               </div>
             </Route>
           </Switch>
+          <SupportChat />
           <Toaster />
           <SonnerToaster position="bottom-right" theme="dark" richColors />
         </TooltipProvider>

@@ -241,8 +241,14 @@ export default function Demo() {
       {/* Top Bar */}
       <div className="h-14 border-b border-[#1e2a3a] flex items-center px-4 justify-between bg-[#0a0e1a] shrink-0">
         <div className="flex items-center gap-4">
-          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity mr-2">
+          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity mr-1">
             <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="QuantFund" className="w-7 h-7" />
+            <span className="font-bold text-sm text-white hidden sm:block">QuantFund</span>
+          </Link>
+          <span className="text-[#1e2a3a] select-none">|</span>
+          <Link href="/" className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            Início
           </Link>
           <div className="font-mono text-xl font-bold text-white">{symbol}</div>
           <div className={`font-mono text-lg font-semibold tabular-nums ${marketPrice && marketPrice.change >= 0 ? "text-green-400" : "text-red-400"}`}>

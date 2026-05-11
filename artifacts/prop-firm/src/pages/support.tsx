@@ -1,5 +1,7 @@
 import { HeadphonesIcon, Mail, MessageSquare, BookOpen, Clock, ChevronDown, ChevronUp } from "lucide-react";
+import { Link } from "wouter";
 import TopBar from "@/components/TopBar";
+import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
 const FAQS = [
@@ -49,7 +51,7 @@ const FAQS = [
   },
   {
     q: "Como posso cancelar a minha conta?",
-    a: "Podes cancelar a tua conta a qualquer momento através das Definições da conta ou enviando um e-mail para support@quantfund.io. Contas canceladas com payouts pendentes serão processados antes do encerramento."
+    a: "Podes cancelar a tua conta a qualquer momento através das Definições da conta ou enviando um e-mail para support@quantfund.pt. Contas canceladas com payouts pendentes serão processados antes do encerramento."
   },
 ];
 
@@ -99,8 +101,8 @@ export default function Support() {
             </div>
             <h3 className="font-semibold mb-2">E-mail</h3>
             <p className="text-sm text-muted-foreground mb-4">Resposta em até 24 horas úteis</p>
-            <a href="mailto:support@quantfund.io" className="text-primary text-sm font-medium hover:underline">
-              support@quantfund.io
+            <a href="mailto:support@quantfund.pt" className="text-primary text-sm font-medium hover:underline">
+              support@quantfund.pt
             </a>
           </div>
 

@@ -83,7 +83,7 @@ export default function Terms() {
           <section>
             <h2 className="text-lg font-semibold text-foreground mb-3">9. Política de Privacidade e Dados</h2>
             <p>A recolha e tratamento de dados pessoais é realizada em conformidade com o Regulamento Geral de Proteção de Dados (RGPD) e legislação aplicável. Os dados recolhidos são utilizados exclusivamente para prestação dos serviços e não são partilhados com terceiros sem consentimento, exceto quando exigido por lei.</p>
-            <p className="mt-2">O utilizador tem o direito de aceder, corrigir ou solicitar a eliminação dos seus dados pessoais através do e-mail: <a href="mailto:privacy@quantfund.io" className="text-primary hover:underline">privacy@quantfund.io</a></p>
+            <p className="mt-2">O utilizador tem o direito de aceder, corrigir ou solicitar a eliminação dos seus dados pessoais através do e-mail: <a href="mailto:support@quantfund.pt" className="text-primary hover:underline">support@quantfund.pt</a></p>
           </section>
 
           <section>
@@ -103,8 +103,8 @@ export default function Terms() {
             <div className="mt-2 p-4 bg-card border border-border rounded-lg">
               <p className="font-medium text-foreground">ECI Ventures Pte. Ltd.</p>
               <p>UEN: 202329954C</p>
-              <p>E-mail: <a href="mailto:legal@quantfund.io" className="text-primary hover:underline">legal@quantfund.io</a></p>
-              <p>Suporte: <a href="mailto:support@quantfund.io" className="text-primary hover:underline">support@quantfund.io</a></p>
+              <p>E-mail: <a href="mailto:support@quantfund.pt" className="text-primary hover:underline">support@quantfund.pt</a></p>
+              <p>Suporte: <a href="mailto:support@quantfund.pt" className="text-primary hover:underline">support@quantfund.pt</a></p>
             </div>
           </section>
 
