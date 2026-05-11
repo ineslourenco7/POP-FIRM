@@ -275,6 +275,40 @@ export interface MarketPrice {
   changePercent: number;
 }
 
+export interface DiscountCode {
+  id: number;
+  code: string;
+  discountPercent: number;
+  /** @nullable */
+  maxUses?: number | null;
+  usedCount: number;
+  /** @nullable */
+  expiresAt?: string | null;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface DiscountCodeInput {
+  code: string;
+  discountPercent: number;
+  /** @nullable */
+  maxUses?: number | null;
+  /** @nullable */
+  expiresAt?: string | null;
+}
+
+export interface DiscountCodeValidateInput {
+  code: string;
+}
+
+export interface DiscountCodeValidateResult {
+  valid: boolean;
+  code: string;
+  discountPercent: number;
+  /** @nullable */
+  message?: string | null;
+}
+
 export interface AdminStats {
   totalUsers: number;
   totalAccounts: number;

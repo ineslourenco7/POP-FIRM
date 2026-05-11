@@ -8,6 +8,65 @@
 import * as zod from "zod";
 
 /**
+ * @summary List all discount codes
+ */
+export const AdminListDiscountCodesResponseItem = zod.object({
+  id: zod.number(),
+  code: zod.string(),
+  discountPercent: zod.number(),
+  maxUses: zod.number().nullish(),
+  usedCount: zod.number(),
+  expiresAt: zod.string().nullish(),
+  active: zod.boolean(),
+  createdAt: zod.string(),
+});
+export const AdminListDiscountCodesResponse = zod.array(
+  AdminListDiscountCodesResponseItem,
+);
+
+/**
+ * @summary Create a discount code
+ */
+export const AdminCreateDiscountCodeBody = zod.object({
+  code: zod.string(),
+  discountPercent: zod.number(),
+  maxUses: zod.number().nullish(),
+  expiresAt: zod.string().nullish(),
+});
+
+/**
+ * @summary Deactivate a discount code
+ */
+export const AdminDeleteDiscountCodeParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const AdminDeleteDiscountCodeResponse = zod.object({
+  id: zod.number(),
+  code: zod.string(),
+  discountPercent: zod.number(),
+  maxUses: zod.number().nullish(),
+  usedCount: zod.number(),
+  expiresAt: zod.string().nullish(),
+  active: zod.boolean(),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary Validate a discount code
+ */
+export const ValidateDiscountCodeBody = zod.object({
+  code: zod.string(),
+});
+
+export const ValidateDiscountCodeResponse = zod.object({
+  valid: zod.boolean(),
+  code: zod.string(),
+  discountPercent: zod.number(),
+  message: zod.string().nullish(),
+});
+
+/**
  * @summary Health check
  */
 export const HealthCheckResponse = zod.object({

@@ -5,3 +5,4 @@ export * from "./virtual_accounts";
 export * from "./orders";
 export * from "./payout_requests";
 export * from "./equity_snapshots";
+export * from "./discount_codes";

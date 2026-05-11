@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, useLocation } from "wouter";
-import { useGetChallenge, useSubmitPayment, getGetChallengeQueryKey, getListMyPaymentsQueryKey } from "@workspace/api-client-react";
+import { useGetChallenge, useSubmitPayment, useValidateDiscountCode, getGetChallengeQueryKey, getListMyPaymentsQueryKey } from "@workspace/api-client-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,10 +9,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ShieldCheck, CreditCard, Bitcoin, Building2, CheckCircle2, Tag, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-
-const DISCOUNT_CODES: Record<string, number> = {
-  LEGEND: 80,
-};
 
 export default function Checkout() {
   const { challengeId } = useParams();
@@ -26,6 +22,7 @@ export default function Checkout() {
   });
 
   const submitPayment = useSubmitPayment();
+  const validateCode = useValidateDiscountCode();
 
   const [method, setMethod] = useState("crypto");
   const [submitted, setSubmitted] = useState(false);
@@ -41,20 +38,31 @@ export default function Checkout() {
   const handleApplyCode = () => {
     const code = discountCode.trim().toUpperCase();
     if (!code) return;
-    const percent = DISCOUNT_CODES[code];
-    if (percent !== undefined) {
-      setAppliedCode(code);
-      setDiscountPercent(percent);
-      setCodeError("");
-      toast({
-        title: "Código aplicado!",
-        description: `Desconto de ${percent}% aplicado com sucesso.`,
-      });
-    } else {
-      setCodeError("Código de desconto inválido.");
-      setAppliedCode(null);
-      setDiscountPercent(0);
-    }
+    validateCode.mutate(
+      { data: { code } },
+      {
+        onSuccess: (result) => {
+          if (result.valid) {
+            setAppliedCode(result.code);
+            setDiscountPercent(result.discountPercent);
+            setCodeError("");
+            toast({
+              title: "Código aplicado!",
+              description: `Desconto de ${result.discountPercent}% aplicado com sucesso.`,
+            });
+          } else {
+            setCodeError(result.message ?? "Código de desconto inválido.");
+            setAppliedCode(null);
+            setDiscountPercent(0);
+          }
+        },
+        onError: () => {
+          setCodeError("Erro ao validar o código. Tenta novamente.");
+          setAppliedCode(null);
+          setDiscountPercent(0);
+        },
+      }
+    );
   };
 
   const handleRemoveCode = () => {

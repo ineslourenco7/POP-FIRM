@@ -7,8 +7,9 @@ import {
   payoutRequestsTable,
   virtualAccountsTable,
   challengesTable,
+  discountCodesTable,
 } from "@workspace/db";
-import { requireAdmin } from "../middlewares/requireAuth";
+import { requireAdmin, requireAuth } from "../middlewares/requireAuth";
 import {
   AdminListUsersResponse,
   AdminListPaymentsResponse,
@@ -333,6 +334,102 @@ router.get("/admin/stats", requireAdmin, async (_req, res): Promise<void> => {
     passedAccounts: allAccounts.filter((a) => a.status === "passed" || a.status === "funded").length,
     failedAccounts: allAccounts.filter((a) => a.status === "failed").length,
   }));
+});
+
+// ─── DISCOUNT CODE VALIDATE (user-facing) ────────────────────────────────────
+router.post("/discount-codes/validate", requireAuth, async (req, res): Promise<void> => {
+  const { code } = req.body;
+  if (!code) {
+    res.status(400).json({ error: "code is required" });
+    return;
+  }
+  const [dc] = await db.select().from(discountCodesTable)
+    .where(eq(discountCodesTable.code, String(code).trim().toUpperCase()))
+    .limit(1);
+
+  if (!dc || !dc.active) {
+    res.json({ valid: false, code: String(code).toUpperCase(), discountPercent: 0, message: "Código inválido ou inativo" });
+    return;
+  }
+  if (dc.maxUses !== null && dc.usedCount >= dc.maxUses) {
+    res.json({ valid: false, code: dc.code, discountPercent: 0, message: "Código esgotado" });
+    return;
+  }
+  if (dc.expiresAt && dc.expiresAt < new Date()) {
+    res.json({ valid: false, code: dc.code, discountPercent: 0, message: "Código expirado" });
+    return;
+  }
+  res.json({ valid: true, code: dc.code, discountPercent: dc.discountPercent, message: null });
+});
+
+// ─── ADMIN DISCOUNT CODES ─────────────────────────────────────────────────────
+router.get("/admin/discount-codes", requireAdmin, async (_req, res): Promise<void> => {
+  const codes = await db.select().from(discountCodesTable).orderBy(discountCodesTable.createdAt);
+  res.json(codes.map((c) => ({
+    id: c.id,
+    code: c.code,
+    discountPercent: c.discountPercent,
+    maxUses: c.maxUses ?? null,
+    usedCount: c.usedCount,
+    expiresAt: c.expiresAt ? c.expiresAt.toISOString() : null,
+    active: c.active,
+    createdAt: c.createdAt.toISOString(),
+  })));
+});
+
+router.post("/admin/discount-codes", requireAdmin, async (req, res): Promise<void> => {
+  const { code, discountPercent, maxUses, expiresAt } = req.body;
+  if (!code || typeof discountPercent !== "number") {
+    res.status(400).json({ error: "code and discountPercent are required" });
+    return;
+  }
+  if (discountPercent < 1 || discountPercent > 100) {
+    res.status(400).json({ error: "discountPercent must be between 1 and 100" });
+    return;
+  }
+  try {
+    const [created] = await db.insert(discountCodesTable).values({
+      code: code.trim().toUpperCase(),
+      discountPercent,
+      maxUses: maxUses ?? null,
+      expiresAt: expiresAt ? new Date(expiresAt) : null,
+      active: true,
+    }).returning();
+    res.status(201).json({
+      id: created.id,
+      code: created.code,
+      discountPercent: created.discountPercent,
+      maxUses: created.maxUses ?? null,
+      usedCount: created.usedCount,
+      expiresAt: created.expiresAt ? created.expiresAt.toISOString() : null,
+      active: created.active,
+      createdAt: created.createdAt.toISOString(),
+    });
+  } catch {
+    res.status(409).json({ error: "Código já existe" });
+  }
+});
+
+router.delete("/admin/discount-codes/:id", requireAdmin, async (req, res): Promise<void> => {
+  const id = parseInt(String(req.params["id"]), 10);
+  const [updated] = await db.update(discountCodesTable)
+    .set({ active: false })
+    .where(eq(discountCodesTable.id, id))
+    .returning();
+  if (!updated) {
+    res.status(404).json({ error: "Código não encontrado" });
+    return;
+  }
+  res.json({
+    id: updated.id,
+    code: updated.code,
+    discountPercent: updated.discountPercent,
+    maxUses: updated.maxUses ?? null,
+    usedCount: updated.usedCount,
+    expiresAt: updated.expiresAt ? updated.expiresAt.toISOString() : null,
+    active: updated.active,
+    createdAt: updated.createdAt.toISOString(),
+  });
 });
 
 export default router;

@@ -28,8 +28,82 @@ tags:
     description: Admin operations
   - name: market
     description: Market data operations
+  - name: discounts
+    description: Discount code operations
 
 paths:
+  # ─── DISCOUNT CODES (admin) ─────────────────────────────────────────────────
+  /admin/discount-codes:
+    get:
+      operationId: adminListDiscountCodes
+      tags: [admin, discounts]
+      summary: List all discount codes
+      responses:
+        "200":
+          description: List of discount codes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DiscountCode"
+    post:
+      operationId: adminCreateDiscountCode
+      tags: [admin, discounts]
+      summary: Create a discount code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DiscountCodeInput"
+      responses:
+        "201":
+          description: Created discount code
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiscountCode"
+
+  /admin/discount-codes/{id}:
+    delete:
+      operationId: adminDeleteDiscountCode
+      tags: [admin, discounts]
+      summary: Deactivate a discount code
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deactivated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiscountCode"
+
+  # ─── DISCOUNT CODES (user) ───────────────────────────────────────────────────
+  /discount-codes/validate:
+    post:
+      operationId: validateDiscountCode
+      tags: [discounts]
+      summary: Validate a discount code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DiscountCodeValidateInput"
+      responses:
+        "200":
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiscountCodeValidateResult"
+
   /healthz:
     get:
       operationId: healthCheck
@@ -944,6 +1018,60 @@ components:
           type: number
         changePercent:
           type: number
+
+    DiscountCode:
+      type: object
+      required: [id, code, discountPercent, usedCount, active, createdAt]
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        discountPercent:
+          type: integer
+        maxUses:
+          type: ["integer", "null"]
+        usedCount:
+          type: integer
+        expiresAt:
+          type: ["string", "null"]
+        active:
+          type: boolean
+        createdAt:
+          type: string
+
+    DiscountCodeInput:
+      type: object
+      required: [code, discountPercent]
+      properties:
+        code:
+          type: string
+        discountPercent:
+          type: integer
+        maxUses:
+          type: ["integer", "null"]
+        expiresAt:
+          type: ["string", "null"]
+
+    DiscountCodeValidateInput:
+      type: object
+      required: [code]
+      properties:
+        code:
+          type: string
+
+    DiscountCodeValidateResult:
+      type: object
+      required: [valid, discountPercent, code]
+      properties:
+        valid:
+          type: boolean
+        code:
+          type: string
+        discountPercent:
+          type: integer
+        message:
+          type: ["string", "null"]
 
     AdminStats:
       type: object

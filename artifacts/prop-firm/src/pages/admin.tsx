@@ -9,11 +9,15 @@ import {
   useAdminApprovePayout,
   useAdminRejectPayout,
   useAdminCreateChallenge,
+  useAdminListDiscountCodes,
+  useAdminCreateDiscountCode,
+  useAdminDeleteDiscountCode,
   useListChallenges,
   getAdminGetStatsQueryKey,
   getAdminListPaymentsQueryKey,
   getAdminListPayoutsQueryKey,
   getListChallengesQueryKey,
+  getAdminListDiscountCodesQueryKey,
 } from "@workspace/api-client-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -34,7 +38,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import {
   Users, CreditCard, Wallet, Activity, Check, X,
-  ShieldCheck, ShieldX, Clock, DollarSign, Plus, Layers,
+  ShieldCheck, ShieldX, Clock, DollarSign, Plus, Layers, Tag, Trash2,
 } from "lucide-react";
 
 // ─── Stat Card ─────────────────────────────────────────────────────────────
@@ -92,17 +96,22 @@ export default function Admin() {
   const [showNewChallenge, setShowNewChallenge] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
 
+  const [dcForm, setDcForm] = useState({ code: "", discountPercent: "10", maxUses: "", expiresAt: "" });
+
   const { data: stats }    = useAdminGetStats();
   const { data: payments } = useAdminListPayments();
   const { data: payouts }  = useAdminListPayouts();
   const { data: users }    = useAdminListUsers();
   const { data: challenges } = useListChallenges();
+  const { data: discountCodes } = useAdminListDiscountCodes();
 
   const approvePayment    = useAdminApprovePayment();
   const rejectPayment     = useAdminRejectPayment();
   const approvePayout     = useAdminApprovePayout();
   const rejectPayout      = useAdminRejectPayout();
   const createChallenge   = useAdminCreateChallenge();
+  const createDiscountCode = useAdminCreateDiscountCode();
+  const deleteDiscountCode = useAdminDeleteDiscountCode();
 
   const handleApprovePayment = (id: number) => {
     approvePayment.mutate({ id }, {
@@ -174,6 +183,34 @@ export default function Admin() {
       setForm(f => ({ ...f, [key]: e.target.value })),
   });
 
+  const handleCreateDiscountCode = () => {
+    if (!dcForm.code.trim() || !dcForm.discountPercent) return;
+    createDiscountCode.mutate({
+      data: {
+        code: dcForm.code.trim().toUpperCase(),
+        discountPercent: Number(dcForm.discountPercent),
+        maxUses: dcForm.maxUses ? Number(dcForm.maxUses) : undefined,
+        expiresAt: dcForm.expiresAt ? new Date(dcForm.expiresAt).toISOString() : undefined,
+      },
+    }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getAdminListDiscountCodesQueryKey() });
+        toast({ title: "Código criado com sucesso" });
+        setDcForm({ code: "", discountPercent: "10", maxUses: "", expiresAt: "" });
+      },
+      onError: () => toast({ title: "Erro ao criar código", variant: "destructive" }),
+    });
+  };
+
+  const handleDeleteDiscountCode = (id: number) => {
+    deleteDiscountCode.mutate({ id }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getAdminListDiscountCodesQueryKey() });
+        toast({ title: "Código desativado" });
+      },
+    });
+  };
+
   const pendingPaymentsCount = payments?.filter(p => p.status === "pending").length ?? 0;
   const pendingPayoutsCount  = payouts?.filter(p => p.status === "pending").length ?? 0;
 
@@ -223,6 +260,10 @@ export default function Admin() {
           <TabsTrigger value="users">
             Utilizadores
             {users && <span className="ml-2 text-muted-foreground text-[10px]">{users.length}</span>}
+          </TabsTrigger>
+          <TabsTrigger value="discounts">
+            Descontos
+            {discountCodes && <span className="ml-2 text-muted-foreground text-[10px]">{discountCodes.length}</span>}
           </TabsTrigger>
         </TabsList>
 
@@ -410,6 +451,118 @@ export default function Admin() {
                         {(user.totalPnl ?? 0) >= 0 ? "+" : ""}${(user.totalPnl ?? 0).toFixed(2)}
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">{format(new Date(user.createdAt), "dd/MM/yy")}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </Card>
+        </TabsContent>
+
+        {/* ─── Discount Codes ─── */}
+        <TabsContent value="discounts" className="space-y-6">
+          {/* Create Form */}
+          <Card className="border-border">
+            <CardContent className="pt-5">
+              <p className="text-sm font-semibold mb-4 flex items-center gap-2"><Tag className="w-4 h-4" /> Criar Código de Desconto</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="space-y-1.5">
+                  <Label>Código</Label>
+                  <Input
+                    placeholder="Ex: VERAO25"
+                    value={dcForm.code}
+                    onChange={e => setDcForm(f => ({ ...f, code: e.target.value.toUpperCase() }))}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Desconto (%)</Label>
+                  <Input
+                    type="number" min="1" max="100"
+                    placeholder="10"
+                    value={dcForm.discountPercent}
+                    onChange={e => setDcForm(f => ({ ...f, discountPercent: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Usos Máximos <span className="text-muted-foreground">(opcional)</span></Label>
+                  <Input
+                    type="number" min="1"
+                    placeholder="Ilimitado"
+                    value={dcForm.maxUses}
+                    onChange={e => setDcForm(f => ({ ...f, maxUses: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Expira em <span className="text-muted-foreground">(opcional)</span></Label>
+                  <Input
+                    type="date"
+                    value={dcForm.expiresAt}
+                    onChange={e => setDcForm(f => ({ ...f, expiresAt: e.target.value }))}
+                  />
+                </div>
+              </div>
+              <Button
+                className="mt-4"
+                onClick={handleCreateDiscountCode}
+                disabled={createDiscountCode.isPending || !dcForm.code.trim() || !dcForm.discountPercent}
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                {createDiscountCode.isPending ? "A criar..." : "Criar Código"}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Existing Codes Table */}
+          <Card className="border-border">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-border hover:bg-transparent">
+                    <TableHead className="text-xs">#</TableHead>
+                    <TableHead className="text-xs">Código</TableHead>
+                    <TableHead className="text-xs">Desconto</TableHead>
+                    <TableHead className="text-xs">Usos</TableHead>
+                    <TableHead className="text-xs">Expira</TableHead>
+                    <TableHead className="text-xs">Estado</TableHead>
+                    <TableHead className="text-xs">Criado</TableHead>
+                    <TableHead className="text-xs text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {(!discountCodes || discountCodes.length === 0) && (
+                    <TableRow><TableCell colSpan={8} className="text-center py-10 text-muted-foreground text-sm">Sem códigos de desconto criados.</TableCell></TableRow>
+                  )}
+                  {discountCodes?.map(dc => (
+                    <TableRow key={dc.id} className="border-border">
+                      <TableCell className="font-mono text-xs text-muted-foreground">#{dc.id}</TableCell>
+                      <TableCell>
+                        <span className="font-mono font-bold text-sm tracking-widest text-primary">{dc.code}</span>
+                      </TableCell>
+                      <TableCell className="font-semibold text-green-400 text-sm">{dc.discountPercent}%</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {dc.usedCount}{dc.maxUses != null ? `/${dc.maxUses}` : ""}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {dc.expiresAt ? format(new Date(dc.expiresAt), "dd/MM/yy") : "—"}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={dc.active ? "bg-green-500/10 text-green-400 border-green-500/20 text-[10px]" : "bg-muted/40 text-muted-foreground text-[10px]"}>
+                          {dc.active ? "Ativo" : "Inativo"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{format(new Date(dc.createdAt), "dd/MM/yy")}</TableCell>
+                      <TableCell className="text-right">
+                        {dc.active && (
+                          <Button
+                            size="sm" variant="ghost"
+                            className="h-7 w-7 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                            onClick={() => handleDeleteDiscountCode(dc.id)}
+                            disabled={deleteDiscountCode.isPending}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        )}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

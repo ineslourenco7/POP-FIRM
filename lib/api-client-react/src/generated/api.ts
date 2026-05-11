@@ -23,6 +23,10 @@ import type {
   Candle,
   Challenge,
   ChallengeInput,
+  DiscountCode,
+  DiscountCodeInput,
+  DiscountCodeValidateInput,
+  DiscountCodeValidateResult,
   GetMarketCandlesParams,
   GetMarketPriceParams,
   HealthStatus,
@@ -49,6 +53,339 @@ type AwaitedInput<T> = PromiseLike<T> | T;
 type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+/**
+ * @summary List all discount codes
+ */
+export const getAdminListDiscountCodesUrl = () => {
+  return `/api/admin/discount-codes`;
+};
+
+export const adminListDiscountCodes = async (
+  options?: RequestInit,
+): Promise<DiscountCode[]> => {
+  return customFetch<DiscountCode[]>(getAdminListDiscountCodesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getAdminListDiscountCodesQueryKey = () => {
+  return [`/api/admin/discount-codes`] as const;
+};
+
+export const getAdminListDiscountCodesQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminListDiscountCodes>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof adminListDiscountCodes>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getAdminListDiscountCodesQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof adminListDiscountCodes>>
+  > = ({ signal }) => adminListDiscountCodes({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminListDiscountCodes>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type AdminListDiscountCodesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminListDiscountCodes>>
+>;
+export type AdminListDiscountCodesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List all discount codes
+ */
+
+export function useAdminListDiscountCodes<
+  TData = Awaited<ReturnType<typeof adminListDiscountCodes>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof adminListDiscountCodes>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getAdminListDiscountCodesQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create a discount code
+ */
+export const getAdminCreateDiscountCodeUrl = () => {
+  return `/api/admin/discount-codes`;
+};
+
+export const adminCreateDiscountCode = async (
+  discountCodeInput: DiscountCodeInput,
+  options?: RequestInit,
+): Promise<DiscountCode> => {
+  return customFetch<DiscountCode>(getAdminCreateDiscountCodeUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(discountCodeInput),
+  });
+};
+
+export const getAdminCreateDiscountCodeMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminCreateDiscountCode>>,
+    TError,
+    { data: BodyType<DiscountCodeInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminCreateDiscountCode>>,
+  TError,
+  { data: BodyType<DiscountCodeInput> },
+  TContext
+> => {
+  const mutationKey = ["adminCreateDiscountCode"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminCreateDiscountCode>>,
+    { data: BodyType<DiscountCodeInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return adminCreateDiscountCode(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminCreateDiscountCodeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminCreateDiscountCode>>
+>;
+export type AdminCreateDiscountCodeMutationBody = BodyType<DiscountCodeInput>;
+export type AdminCreateDiscountCodeMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Create a discount code
+ */
+export const useAdminCreateDiscountCode = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminCreateDiscountCode>>,
+    TError,
+    { data: BodyType<DiscountCodeInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof adminCreateDiscountCode>>,
+  TError,
+  { data: BodyType<DiscountCodeInput> },
+  TContext
+> => {
+  return useMutation(getAdminCreateDiscountCodeMutationOptions(options));
+};
+
+/**
+ * @summary Deactivate a discount code
+ */
+export const getAdminDeleteDiscountCodeUrl = (id: number) => {
+  return `/api/admin/discount-codes/${id}`;
+};
+
+export const adminDeleteDiscountCode = async (
+  id: number,
+  options?: RequestInit,
+): Promise<DiscountCode> => {
+  return customFetch<DiscountCode>(getAdminDeleteDiscountCodeUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getAdminDeleteDiscountCodeMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminDeleteDiscountCode>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminDeleteDiscountCode>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["adminDeleteDiscountCode"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminDeleteDiscountCode>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return adminDeleteDiscountCode(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminDeleteDiscountCodeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminDeleteDiscountCode>>
+>;
+
+export type AdminDeleteDiscountCodeMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Deactivate a discount code
+ */
+export const useAdminDeleteDiscountCode = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminDeleteDiscountCode>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof adminDeleteDiscountCode>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getAdminDeleteDiscountCodeMutationOptions(options));
+};
+
+/**
+ * @summary Validate a discount code
+ */
+export const getValidateDiscountCodeUrl = () => {
+  return `/api/discount-codes/validate`;
+};
+
+export const validateDiscountCode = async (
+  discountCodeValidateInput: DiscountCodeValidateInput,
+  options?: RequestInit,
+): Promise<DiscountCodeValidateResult> => {
+  return customFetch<DiscountCodeValidateResult>(getValidateDiscountCodeUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(discountCodeValidateInput),
+  });
+};
+
+export const getValidateDiscountCodeMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof validateDiscountCode>>,
+    TError,
+    { data: BodyType<DiscountCodeValidateInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof validateDiscountCode>>,
+  TError,
+  { data: BodyType<DiscountCodeValidateInput> },
+  TContext
+> => {
+  const mutationKey = ["validateDiscountCode"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof validateDiscountCode>>,
+    { data: BodyType<DiscountCodeValidateInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return validateDiscountCode(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ValidateDiscountCodeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof validateDiscountCode>>
+>;
+export type ValidateDiscountCodeMutationBody =
+  BodyType<DiscountCodeValidateInput>;
+export type ValidateDiscountCodeMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Validate a discount code
+ */
+export const useValidateDiscountCode = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof validateDiscountCode>>,
+    TError,
+    { data: BodyType<DiscountCodeValidateInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof validateDiscountCode>>,
+  TError,
+  { data: BodyType<DiscountCodeValidateInput> },
+  TContext
+> => {
+  return useMutation(getValidateDiscountCodeMutationOptions(options));
+};
 
 /**
  * @summary Health check
