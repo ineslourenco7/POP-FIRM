@@ -5,10 +5,7 @@ import path from "path";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 
-// Resolve pg from the db package's node_modules
-const pgPath = path.resolve(__dirname, "../lib/db/node_modules/pg");
-const { default: pg } = await import(pgPath);
-
+const pg = require(path.resolve(__dirname, "../lib/db/node_modules/pg/lib/index.js"));
 const { Client } = pg;
 
 if (!process.env.DATABASE_URL) {
