@@ -256,106 +256,83 @@ export default function Landing() {
 
         {/* How It Works */}
         <section id="how-it-works" className="py-24 bg-card border-y border-border">
-          <div className="container mx-auto px-4">
+          <div className="container mx-auto px-4 max-w-6xl">
             <div className="text-center mb-16">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4 border border-primary/20">
                 <Zap className="w-3.5 h-3.5" /> Processo Simples
               </div>
-              <h2 className="text-4xl font-bold mb-4">Torna-te um Trader Financiado</h2>
-              <p className="text-muted-foreground max-w-xl mx-auto">Quatro passos simples para teres acesso a capital real e começares a receber os teus lucros.</p>
+              <h2 className="text-4xl font-bold mb-3">Torna-te um Trader Financiado</h2>
+              <p className="text-muted-foreground max-w-lg mx-auto text-base">Quatro passos simples para teres acesso a capital e começares a receber os teus lucros.</p>
             </div>
 
-            {/* Steps */}
-            <div className="relative">
-              {/* Connector line */}
-              <div className="hidden lg:block absolute top-16 left-[calc(12.5%+2rem)] right-[calc(12.5%+2rem)] h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                {/* Step 1 */}
-                <div className="relative flex flex-col items-center text-center group">
-                  <div className="relative mb-6">
-                    <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                      <ClipboardList className="w-7 h-7 text-primary" />
+            {/* Steps grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
+              {[
+                {
+                  num: "01",
+                  icon: <ClipboardList className="w-6 h-6 text-primary" />,
+                  title: "Escolhe o Desafio",
+                  desc: "Seleciona um plano de capital entre $10K e $1M. Paga a taxa única de avaliação e começa de imediato.",
+                  points: ["Ativação instantânea", "Taxa única, sem mensalidades"],
+                },
+                {
+                  num: "02",
+                  icon: <BarChart3 className="w-6 h-6 text-primary" />,
+                  title: "Completa a Avaliação",
+                  desc: "Opera no nosso webtrader com gráficos TradingView, atinge a meta de lucro e respeita os drawdowns.",
+                  points: ["Meta de lucro: 8%", "Até 30 dias para completar"],
+                },
+                {
+                  num: "03",
+                  icon: <UserCheck className="w-6 h-6 text-primary" />,
+                  title: "Conta Financiada",
+                  desc: "Após aprovação a tua conta é ativada com capital total. Opera livremente e fica com até 90% dos lucros.",
+                  points: ["Aprovação em 24h", "Até 90% profit split"],
+                },
+                {
+                  num: "04",
+                  icon: <Wallet className="w-6 h-6 text-primary" />,
+                  title: "Recebe os Lucros",
+                  desc: "Solicita pagamentos quinzenais via cripto ou transferência bancária. Processados em até 24 horas.",
+                  points: ["Cripto ou wire transfer", "Pagamento em 24h"],
+                },
+              ].map((step, i, arr) => (
+                <div key={i} className="relative flex">
+                  {/* Card */}
+                  <div className="flex-1 flex flex-col bg-background border border-border rounded-2xl p-6 hover:border-primary/40 transition-colors">
+                    {/* Number + Icon row */}
+                    <div className="flex items-center gap-3 mb-5">
+                      <span className="text-4xl font-black text-primary/20 leading-none select-none">{step.num}</span>
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                        {step.icon}
+                      </div>
                     </div>
-                    <div className="absolute -top-3 -right-3 w-7 h-7 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold shadow-lg">01</div>
+                    {/* Text */}
+                    <h3 className="text-base font-bold mb-2 leading-snug">{step.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed mb-5 flex-1">{step.desc}</p>
+                    {/* Points */}
+                    <div className="flex flex-col gap-1.5 mt-auto">
+                      {step.points.map((pt, j) => (
+                        <div key={j} className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <BadgeCheck className="w-3.5 h-3.5 text-primary shrink-0" />
+                          <span>{pt}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <h3 className="text-lg font-bold mb-2">Escolhe o teu Desafio</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">Seleciona um plano de capital entre $10K e $1M. Paga a taxa de avaliação única e começa imediatamente.</p>
-                  <div className="mt-4 flex flex-col gap-1.5 w-full">
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground bg-background rounded-lg px-3 py-1.5 border border-border">
-                      <BadgeCheck className="w-3.5 h-3.5 text-primary shrink-0" /> Ativação instantânea
+                  {/* Arrow connector (desktop only, not after last) */}
+                  {i < arr.length - 1 && (
+                    <div className="hidden lg:flex items-center justify-center w-0 overflow-visible z-10">
+                      <ArrowRight className="w-4 h-4 text-primary/40 absolute -right-3" />
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground bg-background rounded-lg px-3 py-1.5 border border-border">
-                      <BadgeCheck className="w-3.5 h-3.5 text-primary shrink-0" /> Taxa única, sem mensalidades
-                    </div>
-                  </div>
+                  )}
                 </div>
-
-                {/* Step 2 */}
-                <div className="relative flex flex-col items-center text-center group">
-                  <div className="relative mb-6">
-                    <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                      <BarChart3 className="w-7 h-7 text-primary" />
-                    </div>
-                    <div className="absolute -top-3 -right-3 w-7 h-7 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold shadow-lg">02</div>
-                  </div>
-                  <h3 className="text-lg font-bold mb-2">Completa a Avaliação</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">Opera no nosso webtrader, atinge a meta de lucro e respeita os limites de drawdown. Tens até 30 dias.</p>
-                  <div className="mt-4 flex flex-col gap-1.5 w-full">
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground bg-background rounded-lg px-3 py-1.5 border border-border">
-                      <BadgeCheck className="w-3.5 h-3.5 text-primary shrink-0" /> Meta de lucro: 8%
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground bg-background rounded-lg px-3 py-1.5 border border-border">
-                      <BadgeCheck className="w-3.5 h-3.5 text-primary shrink-0" /> Gráficos TradingView
-                    </div>
-                  </div>
-                </div>
-
-                {/* Step 3 */}
-                <div className="relative flex flex-col items-center text-center group">
-                  <div className="relative mb-6">
-                    <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                      <UserCheck className="w-7 h-7 text-primary" />
-                    </div>
-                    <div className="absolute -top-3 -right-3 w-7 h-7 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold shadow-lg">03</div>
-                  </div>
-                  <h3 className="text-lg font-bold mb-2">Torna-te Trader Financiado</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">Após aprovação, a tua conta financiada é ativada. Opera com capital total e fica com até 90% dos lucros.</p>
-                  <div className="mt-4 flex flex-col gap-1.5 w-full">
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground bg-background rounded-lg px-3 py-1.5 border border-border">
-                      <BadgeCheck className="w-3.5 h-3.5 text-primary shrink-0" /> Aprovação em 24h
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground bg-background rounded-lg px-3 py-1.5 border border-border">
-                      <BadgeCheck className="w-3.5 h-3.5 text-primary shrink-0" /> Até 90% de profit split
-                    </div>
-                  </div>
-                </div>
-
-                {/* Step 4 */}
-                <div className="relative flex flex-col items-center text-center group">
-                  <div className="relative mb-6">
-                    <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                      <Wallet className="w-7 h-7 text-primary" />
-                    </div>
-                    <div className="absolute -top-3 -right-3 w-7 h-7 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold shadow-lg">04</div>
-                  </div>
-                  <h3 className="text-lg font-bold mb-2">Recebe os teus Lucros</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">Solicita pagamentos quinzenais via cripto ou transferência bancária. Processamento em até 24 horas.</p>
-                  <div className="mt-4 flex flex-col gap-1.5 w-full">
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground bg-background rounded-lg px-3 py-1.5 border border-border">
-                      <BadgeCheck className="w-3.5 h-3.5 text-primary shrink-0" /> Cripto ou wire transfer
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground bg-background rounded-lg px-3 py-1.5 border border-border">
-                      <BadgeCheck className="w-3.5 h-3.5 text-primary shrink-0" /> Pagamento em 24h
-                    </div>
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
 
-            <div className="text-center mt-14">
+            <div className="text-center mt-12">
               <Link href="/sign-up">
-                <Button size="lg" className="text-base px-10 h-13">
+                <Button size="lg" className="text-base px-10 h-12">
                   Começar o Desafio <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
