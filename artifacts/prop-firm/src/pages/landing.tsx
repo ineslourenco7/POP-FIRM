@@ -144,7 +144,7 @@ export default function Landing() {
           </Link>
           <nav className="hidden md:flex gap-6">
             <a href="#how-it-works" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Como Funciona</a>
-            <a href="#plans" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Desafios</a>
+            <Link href="/challenges" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Desafios</Link>
             <a href="#testimonials" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Testemunhos</a>
           </nav>
           <div className="flex items-center gap-4">
