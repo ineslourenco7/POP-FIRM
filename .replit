@@ -49,7 +49,7 @@ args = "PORT=20120 BASE_PATH=/ pnpm --filter @workspace/prop-firm run dev"
 waitForPort = 20120
 
 [agent]
-stack = "PNPM_WORKSPACE"
+stack = "BEST_EFFORT_FALLBACK"
 expertMode = true
 
 [postMerge]
