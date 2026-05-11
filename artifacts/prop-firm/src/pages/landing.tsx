@@ -288,33 +288,22 @@ export default function Landing() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-background border-t border-border py-12">
+      <footer className="bg-background border-t border-border py-8">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8 mb-8">
-            <div className="flex items-center gap-2">
-              <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="QuantFund" className="w-6 h-6 opacity-50 grayscale" />
-              <span className="text-lg font-bold opacity-50">QuantFund</span>
-            </div>
-            <div className="flex gap-6 text-sm text-muted-foreground">
-              <Link href="/terms" className="hover:text-foreground transition-colors flex items-center gap-1.5">
-                <FileText className="w-3.5 h-3.5" /> Termos &amp; Condições
-              </Link>
-              <Link href="/support" className="hover:text-foreground transition-colors flex items-center gap-1.5">
-                <HeadphonesIcon className="w-3.5 h-3.5" /> Suporte
-              </Link>
-            </div>
+          <div className="flex flex-wrap items-center justify-center gap-4 mb-5 text-xs text-muted-foreground/60">
+            <Link href="/terms" className="hover:text-muted-foreground transition-colors flex items-center gap-1">
+              <FileText className="w-3 h-3" /> Termos &amp; Condições
+            </Link>
+            <span>·</span>
+            <Link href="/support" className="hover:text-muted-foreground transition-colors flex items-center gap-1">
+              <HeadphonesIcon className="w-3 h-3" /> Suporte
+            </Link>
+            <span>·</span>
+            <span>&copy; {new Date().getFullYear()} QuantFund</span>
           </div>
-
-          {/* Disclaimer */}
-          <div className="border-t border-border pt-8">
-            <p className="text-xs text-muted-foreground/70 leading-relaxed max-w-4xl mx-auto text-center">
-              PipFarm (operated by ECI Ventures Pte. Ltd. – UEN 202329954C, the "Company") provides simulated trading challenges for entertainment, education and training purposes. Past performance is not necessarily indicative of future results. Hypothetical or simulated performance results have limitations. Simulated trading results do not represent actual trading, as trades have not been executed with counterparties. Simulated trading results may under-or-over compensate for the impact of certain market factors, such as lack of liquidity. Simulated trading programs are subject to the fact that they are designed with the benefit of hindsight. No representation is made that any user will or is likely to achieve profit or losses similar to those shown in the simulated environment.
-            </p>
-            <p className="text-xs text-muted-foreground/70 leading-relaxed max-w-4xl mx-auto text-center mt-3">
-              None of the information provided by the Company is intended as investment advice, an offer or solicitation of an offer to buy or sell, or a recommendation, endorsement, or sponsorship of any security or investment product. Nothing contained herein is a solicitation or an offer to buy or sell futures, options, or forex. Use of the information is at your own risk, and the Company assumes no responsibility or liability for any use or misuse of such information. None of the services provided are investment services or investment advice, per the Singapore Securities and Futures Act 2001 or other countries where the Company provides services.
-            </p>
-            <p className="text-xs mt-6 text-muted-foreground/40 text-center">&copy; {new Date().getFullYear()} QuantFund · ECI Ventures Pte. Ltd. Todos os direitos reservados.</p>
-          </div>
+          <p className="text-[11px] text-muted-foreground/50 leading-relaxed max-w-3xl mx-auto text-center">
+            A QuantFund fornece desafios de trading simulado apenas para fins de entretenimento, educação e treino. Nenhuma informação disponibilizada constitui aconselhamento de investimento, oferta ou solicitação de compra/venda de qualquer instrumento financeiro. Todos os desafios e contas são 100% simulados — nenhuma ordem é executada em mercados reais nem envolve capital real. Os resultados simulados não são indicativos de resultados futuros.
+          </p>
         </div>
       </footer>
     </div>

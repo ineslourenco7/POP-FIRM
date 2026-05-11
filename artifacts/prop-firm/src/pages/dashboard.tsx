@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { Activity, AlertTriangle, Plus, TrendingUp, TrendingDown, BarChart3, CheckCircle, Target, Shield, Calendar } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
 import PriceTicker from "@/components/PriceTicker";
 
 function fmt(n: number) {
@@ -22,15 +21,15 @@ export default function Dashboard() {
   const totalPnl = stats?.totalPnl ?? 0;
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-4 md:p-6 max-w-7xl mx-auto">
+      <div className="flex items-center justify-between mb-5">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground mt-1">Visão geral das suas contas de trading</p>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground text-sm mt-0.5">Visão geral das suas contas de trading</p>
         </div>
         <Link href="/challenges">
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
+          <Button size="sm">
+            <Plus className="w-4 h-4 mr-1.5" />
             Novo Desafio
           </Button>
         </Link>
@@ -40,71 +39,71 @@ export default function Dashboard() {
       <PriceTicker />
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <Card className="border-border">
-          <CardContent className="pt-5 pb-5">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-muted-foreground">Total Contas</span>
-              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                <BarChart3 className="w-4 h-4 text-primary" />
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-muted-foreground">Total Contas</span>
+              <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <BarChart3 className="w-3.5 h-3.5 text-primary" />
               </div>
             </div>
-            <div className="text-3xl font-bold tabular-nums">
+            <div className="text-2xl font-bold tabular-nums">
               {statsLoading ? "—" : stats?.totalAccounts ?? 0}
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-border">
-          <CardContent className="pt-5 pb-5">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-muted-foreground">Contas Ativas</span>
-              <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                <Activity className="w-4 h-4 text-blue-500" />
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-muted-foreground">Contas Ativas</span>
+              <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+                <Activity className="w-3.5 h-3.5 text-blue-500" />
               </div>
             </div>
-            <div className="text-3xl font-bold tabular-nums text-primary">
+            <div className="text-2xl font-bold tabular-nums text-primary">
               {statsLoading ? "—" : stats?.activeAccounts ?? 0}
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-border">
-          <CardContent className="pt-5 pb-5">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-muted-foreground">PnL Total</span>
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${totalPnl >= 0 ? "bg-green-500/10" : "bg-red-500/10"}`}>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-muted-foreground">PnL Total</span>
+              <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${totalPnl >= 0 ? "bg-green-500/10" : "bg-red-500/10"}`}>
                 {totalPnl >= 0
-                  ? <TrendingUp className="w-4 h-4 text-green-500" />
-                  : <TrendingDown className="w-4 h-4 text-red-500" />
+                  ? <TrendingUp className="w-3.5 h-3.5 text-green-500" />
+                  : <TrendingDown className="w-3.5 h-3.5 text-red-500" />
                 }
               </div>
             </div>
-            <div className={`text-3xl font-bold tabular-nums font-mono ${totalPnl > 0 ? "text-green-500" : totalPnl < 0 ? "text-red-500" : ""}`}>
+            <div className={`text-2xl font-bold tabular-nums font-mono truncate ${totalPnl > 0 ? "text-green-500" : totalPnl < 0 ? "text-red-500" : ""}`}>
               {statsLoading ? "—" : `${totalPnl >= 0 ? "+" : ""}$${Math.abs(totalPnl).toFixed(2)}`}
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-border">
-          <CardContent className="pt-5 pb-5">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-muted-foreground">Aprovadas</span>
-              <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                <CheckCircle className="w-4 h-4 text-purple-500" />
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-muted-foreground">Aprovadas</span>
+              <div className="w-7 h-7 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0">
+                <CheckCircle className="w-3.5 h-3.5 text-purple-500" />
               </div>
             </div>
-            <div className="text-3xl font-bold tabular-nums text-purple-500">
+            <div className="text-2xl font-bold tabular-nums text-purple-500">
               {statsLoading ? "—" : stats?.passedAccounts ?? 0}
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <h2 className="text-xl font-bold mb-4">As Suas Contas</h2>
+      <h2 className="text-lg font-bold mb-4">As Suas Contas</h2>
 
       {accountsLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {[1, 2, 3].map(i => (
             <Card key={i} className="animate-pulse">
               <CardContent className="h-52" />
@@ -112,7 +111,7 @@ export default function Dashboard() {
           ))}
         </div>
       ) : accounts && Array.isArray(accounts) && accounts.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {accounts.map(account => {
             const pnl = account.totalPnl ?? 0;
             const floatingPnl = account.floatingPnl ?? 0;
@@ -144,28 +143,28 @@ export default function Dashboard() {
                 <div className={`h-0.5 w-full ${statusConfig.bar}`} />
 
                 {/* Header */}
-                <CardHeader className="pb-2 pt-4">
-                  <div className="flex justify-between items-start gap-2">
-                    <div>
-                      <CardTitle className="text-base font-bold leading-tight">{account.challengeName}</CardTitle>
+                <CardHeader className="px-4 pb-2 pt-4">
+                  <div className="flex items-start gap-2 min-w-0">
+                    <div className="min-w-0 flex-1">
+                      <CardTitle className="text-sm font-bold leading-tight truncate">{account.challengeName}</CardTitle>
                       <div className="text-xs text-muted-foreground mt-0.5 font-mono">#{String(account.id).padStart(4, "0")}</div>
                     </div>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold tracking-widest shrink-0 ${statusConfig.badge}`}>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold tracking-widest shrink-0 whitespace-nowrap ${statusConfig.badge}`}>
                       {statusConfig.label}
                     </span>
                   </div>
                 </CardHeader>
 
-                <CardContent className="flex flex-col gap-4 pt-0 flex-1">
-                  {/* Financial values — single column list */}
-                  <div className="rounded-xl border border-white/5 bg-muted/20 overflow-hidden divide-y divide-white/5">
+                <CardContent className="flex flex-col gap-3 px-4 pt-0 pb-4 flex-1">
+                  {/* Financial values */}
+                  <div className="rounded-lg border border-white/5 bg-muted/20 overflow-hidden divide-y divide-white/5">
                     {[
                       { label: "Equity", value: `$${fmt(account.equity)}`, color: "" },
                       { label: "Saldo", value: `$${fmt(account.currentBalance)}`, color: "" },
                       {
                         label: "PnL Realizado",
                         value: `${pnl >= 0 ? "+" : ""}$${fmt(pnl)}`,
-                        sub: `${pnl >= 0 ? "+" : ""}${pnlPct.toFixed(2)}%`,
+                        sub: `${pnlPct >= 0 ? "+" : ""}${pnlPct.toFixed(2)}%`,
                         color: pnl > 0 ? "text-green-400" : pnl < 0 ? "text-red-400" : "",
                       },
                       {
@@ -174,26 +173,27 @@ export default function Dashboard() {
                         color: floatingPnl > 0 ? "text-green-400" : floatingPnl < 0 ? "text-red-400" : "",
                       },
                     ].map(({ label, value, sub, color }) => (
-                      <div key={label} className="flex items-center justify-between px-3 py-2.5">
-                        <span className="text-xs text-muted-foreground">{label}</span>
-                        <span className={`text-sm font-bold font-mono tabular-nums ${color}`}>
+                      <div key={label} className="flex items-center justify-between px-3 py-2 gap-2">
+                        <span className="text-xs text-muted-foreground shrink-0">{label}</span>
+                        <span className={`text-xs font-bold font-mono tabular-nums truncate text-right ${color}`}>
                           {value}
-                          {sub && <span className="text-[11px] font-normal opacity-60 ml-1.5">{sub}</span>}
+                          {sub && <span className="text-[10px] font-normal opacity-60 ml-1">{sub}</span>}
                         </span>
                       </div>
                     ))}
                   </div>
 
                   {/* Progress bars */}
-                  <div className="space-y-3">
+                  <div className="space-y-2.5">
                     {/* Profit target */}
                     <div>
-                      <div className="flex items-center justify-between text-xs mb-1.5">
-                        <span className="flex items-center gap-1.5 text-muted-foreground">
-                          <Target className="w-3 h-3" /> Objetivo de Lucro
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span className="flex items-center gap-1 text-muted-foreground">
+                          <Target className="w-3 h-3 shrink-0" />
+                          <span>Objetivo de Lucro</span>
                         </span>
-                        <span className="font-semibold font-mono">
-                          <span className={pnlPct >= profitTarget ? "text-green-400" : "text-foreground"}>{pnlPct.toFixed(2)}%</span>
+                        <span className="font-semibold font-mono ml-2 whitespace-nowrap">
+                          <span className={pnlPct >= profitTarget ? "text-green-400" : "text-foreground"}>{pnlPct.toFixed(1)}%</span>
                           <span className="text-muted-foreground"> / {profitTarget}%</span>
                         </span>
                       </div>
@@ -204,12 +204,13 @@ export default function Dashboard() {
 
                     {/* Drawdown */}
                     <div>
-                      <div className="flex items-center justify-between text-xs mb-1.5">
-                        <span className="flex items-center gap-1.5 text-muted-foreground">
-                          <Shield className="w-3 h-3" /> Drawdown Total
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span className="flex items-center gap-1 text-muted-foreground">
+                          <Shield className="w-3 h-3 shrink-0" />
+                          <span>Drawdown Total</span>
                         </span>
-                        <span className="font-semibold font-mono">
-                          <span className={ddColor}>{account.maxDrawdownReached.toFixed(2)}%</span>
+                        <span className="font-semibold font-mono ml-2 whitespace-nowrap">
+                          <span className={ddColor}>{account.maxDrawdownReached.toFixed(1)}%</span>
                           <span className="text-muted-foreground"> / {maxTotalDrawdown}%</span>
                         </span>
                       </div>
@@ -223,11 +224,12 @@ export default function Dashboard() {
 
                     {/* Trading days */}
                     <div>
-                      <div className="flex items-center justify-between text-xs mb-1.5">
-                        <span className="flex items-center gap-1.5 text-muted-foreground">
-                          <Calendar className="w-3 h-3" /> Dias de Trading
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span className="flex items-center gap-1 text-muted-foreground">
+                          <Calendar className="w-3 h-3 shrink-0" />
+                          <span>Dias de Trading</span>
                         </span>
-                        <span className="font-semibold font-mono">
+                        <span className="font-semibold font-mono ml-2 whitespace-nowrap">
                           <span className={tradingDays >= minTradingDays ? "text-green-400" : "text-foreground"}>{tradingDays}</span>
                           <span className="text-muted-foreground"> / {minTradingDays} mín.</span>
                         </span>
@@ -239,12 +241,12 @@ export default function Dashboard() {
                   </div>
 
                   {/* CTA */}
-                  <Link href={`/trade/${account.id}`} className="mt-auto">
+                  <Link href={`/trade/${account.id}`} className="mt-auto block">
                     <Button
-                      className="w-full font-semibold h-10"
+                      className="w-full font-semibold h-9 text-sm"
                       variant={account.status === "active" || account.status === "funded" ? "default" : "secondary"}
                     >
-                      <Activity className="w-4 h-4 mr-2" />
+                      <Activity className="w-3.5 h-3.5 mr-1.5" />
                       Abrir Terminal
                     </Button>
                   </Link>
@@ -255,11 +257,11 @@ export default function Dashboard() {
         </div>
       ) : (
         <div className="text-center py-16 bg-card border border-border rounded-xl">
-          <AlertTriangle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Sem contas ativas</h3>
-          <p className="text-muted-foreground mb-6">Compra um desafio para começar a negociar.</p>
+          <AlertTriangle className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+          <h3 className="text-base font-semibold mb-2">Sem contas ativas</h3>
+          <p className="text-muted-foreground text-sm mb-5">Compra um desafio para começar a negociar.</p>
           <Link href="/challenges">
-            <Button>Ver Desafios</Button>
+            <Button size="sm">Ver Desafios</Button>
           </Link>
         </div>
       )}
