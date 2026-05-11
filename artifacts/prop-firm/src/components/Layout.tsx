@@ -22,10 +22,10 @@ export default function Layout({ children }: LayoutProps) {
 
   const navItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/challenges", label: "Challenges", icon: Trophy },
+    { href: "/challenges", label: "Desafios", icon: Trophy },
     { href: "/leaderboard", label: "Leaderboard", icon: Activity },
-    { href: "/payments", label: "Payments", icon: CreditCard },
-    { href: "/payouts", label: "Payouts", icon: Wallet },
+    { href: "/payments", label: "Pagamentos", icon: CreditCard },
+    { href: "/payouts", label: "Saques", icon: Wallet },
   ];
 
   if (isAdmin) {
@@ -43,17 +43,25 @@ export default function Layout({ children }: LayoutProps) {
       {/* Sidebar */}
       <aside className="hidden md:flex w-64 flex-col border-r border-border bg-card">
         <div className="p-6">
-          <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
             <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="QuantFund" className="w-8 h-8" />
             <span className="text-xl font-bold tracking-tight text-white">QuantFund</span>
-          </div>
+          </Link>
         </div>
         <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = location === item.href;
             return (
-              <Link key={item.href} href={item.href} className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors ${isActive ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:bg-white/5 hover:text-foreground'}`}>
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors ${
+                  isActive
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
+                }`}
+              >
                 <Icon className="w-5 h-5" />
                 {item.label}
               </Link>
@@ -70,19 +78,23 @@ export default function Layout({ children }: LayoutProps) {
               <span className="text-xs text-muted-foreground truncate">{user?.emailAddresses[0]?.emailAddress}</span>
             </div>
           </div>
-          <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground" onClick={handleSignOut}>
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-muted-foreground hover:text-foreground"
+            onClick={handleSignOut}
+          >
             <LogOut className="w-4 h-4 mr-2" />
-            Sign out
+            Sair
           </Button>
         </div>
       </aside>
 
       {/* Mobile Nav */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-16 border-b border-border bg-card z-50 flex items-center justify-between px-4">
-        <div className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="QuantFund" className="w-6 h-6" />
           <span className="text-lg font-bold">QuantFund</span>
-        </div>
+        </Link>
         <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2">
           {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
@@ -95,15 +107,26 @@ export default function Layout({ children }: LayoutProps) {
               const Icon = item.icon;
               const isActive = location === item.href;
               return (
-                <Link key={item.href} href={item.href} onClick={() => setMobileMenuOpen(false)} className={`flex items-center gap-3 px-3 py-3 rounded-md text-base ${isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}>
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex items-center gap-3 px-3 py-3 rounded-md text-base ${
+                    isActive ? "bg-primary/10 text-primary" : "text-muted-foreground"
+                  }`}
+                >
                   <Icon className="w-5 h-5" />
                   {item.label}
                 </Link>
               );
             })}
-            <Button variant="ghost" className="w-full justify-start text-muted-foreground mt-4" onClick={handleSignOut}>
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-muted-foreground mt-4"
+              onClick={handleSignOut}
+            >
               <LogOut className="w-5 h-5 mr-3" />
-              Sign out
+              Sair
             </Button>
           </nav>
         </div>
