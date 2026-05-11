@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { Activity, AlertTriangle, Plus, TrendingUp, TrendingDown, BarChart3, CheckCircle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import PriceTicker from "@/components/PriceTicker";
 
 export default function Dashboard() {
   const { data: stats, isLoading: statsLoading } = useGetMyStats();
@@ -13,7 +14,7 @@ export default function Dashboard() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground mt-1">Visão geral das suas contas de trading</p>
@@ -25,6 +26,9 @@ export default function Dashboard() {
           </Button>
         </Link>
       </div>
+
+      {/* Live Price Ticker */}
+      <PriceTicker />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -98,7 +102,7 @@ export default function Dashboard() {
             </Card>
           ))}
         </div>
-      ) : accounts && accounts.length > 0 ? (
+      ) : accounts && Array.isArray(accounts) && accounts.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {accounts.map(account => {
             const pnl = account.totalPnl ?? 0;
@@ -116,7 +120,7 @@ export default function Dashboard() {
                   <div className="flex justify-between items-start">
                     <div>
                       <CardTitle className="text-base font-bold">{account.challengeName}</CardTitle>
-                      <div className="text-xs text-muted-foreground mt-0.5">ID #{ account.id}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">ID #{account.id}</div>
                     </div>
                     <span className={`text-[11px] px-2.5 py-1 rounded-full font-semibold tracking-wide ${statusConfig.badge}`}>
                       {statusConfig.label}
@@ -124,7 +128,6 @@ export default function Dashboard() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4 pt-0">
-                  {/* Balance & Equity Row */}
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-muted/40 rounded-lg p-3">
                       <div className="text-xs text-muted-foreground mb-1">Equity</div>
@@ -138,7 +141,6 @@ export default function Dashboard() {
                     </div>
                   </div>
 
-                  {/* Drawdown Progress */}
                   <div className="space-y-1.5">
                     <div className="flex justify-between items-center text-xs">
                       <span className="text-muted-foreground">Drawdown Máx.</span>
