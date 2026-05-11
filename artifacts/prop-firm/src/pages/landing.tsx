@@ -1,7 +1,36 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, BarChart3, ShieldCheck, Trophy, Zap, BadgeCheck, Star, HeadphonesIcon, FileText } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { ArrowRight, BarChart3, ShieldCheck, Trophy, Zap, BadgeCheck, Star, HeadphonesIcon, FileText, ChevronDown } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+
+const LICENSE_NUMBER = "QF-" + Math.random().toString(36).substring(2, 6).toUpperCase() + "-" + Math.random().toString(36).substring(2, 6).toUpperCase() + "-" + Math.random().toString(36).substring(2, 5).toUpperCase();
+
+const FAQS = [
+  {
+    q: "Como funciona o desafio QuantFund?",
+    a: "Escolhe um plano de capital, cumpre as metas de lucro respeitando os limites de drawdown e, após aprovação, recebes uma conta financiada para operar e ficar com até 90% dos lucros.",
+  },
+  {
+    q: "Quanto tempo tenho para passar a avaliação?",
+    a: "Tens tempo ilimitado para completar o desafio. Não existem prazos forçados — o importante é cumprir os critérios de forma consistente e controlada.",
+  },
+  {
+    q: "Quais são as regras de drawdown?",
+    a: "O drawdown diário máximo é de 5% e o drawdown total máximo é de 10% do capital da conta. A conta é encerrada automaticamente se qualquer um destes limites for atingido.",
+  },
+  {
+    q: "Como e quando posso solicitar um pagamento?",
+    a: "Após seres financiado, podes solicitar pagamentos quinzenais. Os pagamentos são processados via criptomoeda ou transferência bancária em até 24 horas.",
+  },
+  {
+    q: "O trading é real ou simulado?",
+    a: "A QuantFund utiliza trading 100% simulado com preços realistas. Isto elimina o risco de capital real durante a avaliação, mantendo as condições institucionais.",
+  },
+  {
+    q: "Posso usar Expert Advisors (EAs) ou bots?",
+    a: "Sim, são permitidos. No entanto, estratégias de arbitragem, exploração de latência ou qualquer forma de manipulação do sistema são estritamente proibidas.",
+  },
+];
 
 const TESTIMONIALS = [
   {
@@ -100,6 +129,26 @@ function PaymentBanner() {
   );
 }
 
+function FaqItem({ faq }: { faq: { q: string; a: string } }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border border-border rounded-xl overflow-hidden bg-background">
+      <button
+        className="w-full flex items-center justify-between px-6 py-4 text-left gap-4 hover:bg-muted/30 transition-colors"
+        onClick={() => setOpen((o) => !o)}
+      >
+        <span className="font-medium text-sm">{faq.q}</span>
+        <ChevronDown className={`w-4 h-4 shrink-0 text-muted-foreground transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="px-6 pb-4 text-sm text-muted-foreground leading-relaxed border-t border-border pt-4">
+          {faq.a}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function TestimonialCard({ t }: { t: typeof TESTIMONIALS[0] }) {
   return (
     <div className="p-6 bg-card border border-border rounded-2xl flex flex-col gap-4 hover:border-primary/40 transition-colors">
@@ -146,6 +195,7 @@ export default function Landing() {
             <a href="#how-it-works" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Como Funciona</a>
             <Link href="/challenges" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Desafios</Link>
             <a href="#testimonials" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Testemunhos</a>
+            <a href="#faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">FAQ</a>
           </nav>
           <div className="flex items-center gap-4">
             <Link href="/demo">
@@ -273,6 +323,21 @@ export default function Landing() {
           </div>
         </section>
 
+        {/* FAQ */}
+        <section id="faq" className="py-20 bg-card border-y border-border">
+          <div className="container mx-auto px-4 max-w-3xl">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold mb-4">Perguntas Frequentes</h2>
+              <p className="text-muted-foreground">Tudo o que precisas de saber antes de começares.</p>
+            </div>
+            <div className="flex flex-col gap-3">
+              {FAQS.map((faq, i) => (
+                <FaqItem key={i} faq={faq} />
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* CTA */}
         <section className="py-20 bg-card border-t border-border">
           <div className="container mx-auto px-4 text-center max-w-2xl">
@@ -303,6 +368,9 @@ export default function Landing() {
           </div>
           <p className="text-[11px] text-muted-foreground/50 leading-relaxed max-w-3xl mx-auto text-center">
             A QuantFund fornece desafios de trading simulado. Nenhuma informação disponibilizada constitui aconselhamento de investimento, oferta ou solicitação de compra/venda de qualquer instrumento financeiro. Os resultados simulados não são indicativos de resultados futuros.
+          </p>
+          <p className="text-[10px] text-muted-foreground/30 text-center mt-3 font-mono tracking-widest">
+            Licença Nº {LICENSE_NUMBER}
           </p>
         </div>
       </footer>
