@@ -16,7 +16,13 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import PriceTicker from "@/components/PriceTicker";
 
-const SYMBOLS = ["EURUSD", "GBPUSD", "USDJPY", "XAUUSD", "BTCUSD", "NAS100", "US30", "USDCHF", "AUDUSD"];
+const SYMBOLS = [
+  "EURUSD", "GBPUSD", "USDJPY", "USDCHF", "AUDUSD", "USDCAD", "NZDUSD", "EURGBP", "EURJPY", "GBPJPY",
+  "XAUUSD", "XAGUSD",
+  "BTCUSD", "ETHUSD",
+  "NAS100", "US30", "SP500",
+  "CRUDE",
+];
 
 function calcLivePnl(side: string, openPrice: number, currentPrice: number, size: number) {
   return side === "buy"
@@ -25,8 +31,10 @@ function calcLivePnl(side: string, openPrice: number, currentPrice: number, size
 }
 
 function priceDecimals(symbol: string) {
-  if (symbol === "USDJPY") return 3;
-  if (["XAUUSD", "BTCUSD", "ETHUSD", "NAS100", "US30", "SP500", "CRUDE"].includes(symbol)) return 2;
+  if (["USDJPY", "EURJPY", "GBPJPY"].includes(symbol)) return 3;
+  if (["BTCUSD", "NAS100", "US30", "SP500"].includes(symbol)) return 2;
+  if (["XAUUSD", "ETHUSD", "CRUDE"].includes(symbol)) return 2;
+  if (symbol === "XAGUSD") return 3;
   return 5;
 }
 

@@ -165,11 +165,29 @@ function ClerkProviderWithRoutes() {
             
             <Route path="/dashboard" component={() => <ProtectedRoute component={Dashboard} />} />
             <Route path="/trade/:accountId" component={() => <ProtectedRoute component={Trade} />} />
-            <Route path="/challenges" component={Challenges} />
+            <Route path="/challenges" component={() => (
+              <>
+                <Show when="signed-in">
+                  <Layout><Challenges /></Layout>
+                </Show>
+                <Show when="signed-out">
+                  <Challenges />
+                </Show>
+              </>
+            )} />
             <Route path="/checkout/:challengeId" component={() => <ProtectedRoute component={Checkout} />} />
             <Route path="/payments" component={() => <ProtectedRoute component={Payments} />} />
             <Route path="/payouts" component={() => <ProtectedRoute component={Payouts} />} />
-            <Route path="/leaderboard" component={Leaderboard} />
+            <Route path="/leaderboard" component={() => (
+              <>
+                <Show when="signed-in">
+                  <Layout><Leaderboard /></Layout>
+                </Show>
+                <Show when="signed-out">
+                  <Leaderboard />
+                </Show>
+              </>
+            )} />
             <Route path="/admin" component={() => <ProtectedRoute component={Admin} adminOnly />} />
             
             <Route>
