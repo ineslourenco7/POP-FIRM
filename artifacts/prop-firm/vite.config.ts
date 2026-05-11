@@ -26,8 +26,22 @@ if (!basePath) {
   );
 }
 
+const clerkPublishableKey = process.env.CLERK_PUBLISHABLE_KEY ?? "";
+
+// Only use proxy in production (dev Clerk instances load JS directly from Clerk CDN)
+const isProduction = process.env.NODE_ENV === "production";
+const replitDevDomain = process.env.REPLIT_DEV_DOMAIN;
+const clerkProxyUrl =
+  isProduction && replitDevDomain
+    ? `https://${replitDevDomain}/api/__clerk`
+    : "";
+
 export default defineConfig({
   base: basePath,
+  define: {
+    "import.meta.env.VITE_CLERK_PUBLISHABLE_KEY": JSON.stringify(clerkPublishableKey),
+    "import.meta.env.VITE_CLERK_PROXY_URL": JSON.stringify(clerkProxyUrl),
+  },
   plugins: [
     react(),
     tailwindcss({ optimize: false }),
