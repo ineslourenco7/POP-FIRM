@@ -157,33 +157,31 @@ export default function Dashboard() {
                 </CardHeader>
 
                 <CardContent className="flex flex-col gap-4 pt-0 flex-1">
-                  {/* Equity + Balance row */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="bg-muted/30 rounded-xl p-3 border border-white/5">
-                      <div className="text-[11px] text-muted-foreground mb-1 uppercase tracking-wider">Equity</div>
-                      <div className="text-xl font-black font-mono tabular-nums">${fmt(account.equity)}</div>
-                    </div>
-                    <div className="bg-muted/30 rounded-xl p-3 border border-white/5">
-                      <div className="text-[11px] text-muted-foreground mb-1 uppercase tracking-wider">Saldo</div>
-                      <div className="text-xl font-black font-mono tabular-nums">${fmt(account.currentBalance)}</div>
-                    </div>
-                  </div>
-
-                  {/* PnL row */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="bg-muted/30 rounded-xl p-3 border border-white/5">
-                      <div className="text-[11px] text-muted-foreground mb-1 uppercase tracking-wider">PnL Realizado</div>
-                      <div className={`text-base font-bold font-mono tabular-nums ${pnl > 0 ? "text-green-400" : pnl < 0 ? "text-red-400" : "text-foreground"}`}>
-                        {pnl >= 0 ? "+" : ""}${fmt(pnl)}
-                        <span className="text-xs font-normal ml-1 opacity-70">({pnl >= 0 ? "+" : ""}{pnlPct.toFixed(2)}%)</span>
+                  {/* Financial values — single column list */}
+                  <div className="rounded-xl border border-white/5 bg-muted/20 overflow-hidden divide-y divide-white/5">
+                    {[
+                      { label: "Equity", value: `$${fmt(account.equity)}`, color: "" },
+                      { label: "Saldo", value: `$${fmt(account.currentBalance)}`, color: "" },
+                      {
+                        label: "PnL Realizado",
+                        value: `${pnl >= 0 ? "+" : ""}$${fmt(pnl)}`,
+                        sub: `${pnl >= 0 ? "+" : ""}${pnlPct.toFixed(2)}%`,
+                        color: pnl > 0 ? "text-green-400" : pnl < 0 ? "text-red-400" : "",
+                      },
+                      {
+                        label: "PnL Flutuante",
+                        value: `${floatingPnl >= 0 ? "+" : ""}$${fmt(floatingPnl)}`,
+                        color: floatingPnl > 0 ? "text-green-400" : floatingPnl < 0 ? "text-red-400" : "",
+                      },
+                    ].map(({ label, value, sub, color }) => (
+                      <div key={label} className="flex items-center justify-between px-3 py-2.5">
+                        <span className="text-xs text-muted-foreground">{label}</span>
+                        <span className={`text-sm font-bold font-mono tabular-nums ${color}`}>
+                          {value}
+                          {sub && <span className="text-[11px] font-normal opacity-60 ml-1.5">{sub}</span>}
+                        </span>
                       </div>
-                    </div>
-                    <div className="bg-muted/30 rounded-xl p-3 border border-white/5">
-                      <div className="text-[11px] text-muted-foreground mb-1 uppercase tracking-wider">PnL Flutuante</div>
-                      <div className={`text-base font-bold font-mono tabular-nums ${floatingPnl > 0 ? "text-green-400" : floatingPnl < 0 ? "text-red-400" : "text-foreground"}`}>
-                        {floatingPnl >= 0 ? "+" : ""}${fmt(floatingPnl)}
-                      </div>
-                    </div>
+                    ))}
                   </div>
 
                   {/* Progress bars */}
