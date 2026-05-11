@@ -249,20 +249,69 @@ export default function Challenges() {
         )}
       </div>
 
-      {/* Bottom trust bar */}
-      <div className="border-t border-border bg-card/30 px-6 py-5">
-        <div className="max-w-4xl mx-auto flex flex-wrap justify-center gap-6 text-xs text-muted-foreground">
-          {[
-            { icon: CheckCircle, text: "Pagamento único, sem mensalidades" },
-            { icon: Zap, text: "Avaliação em 1 única fase" },
-            { icon: Shield, text: "100% simulado, sem risco real" },
-            { icon: Star, text: "Até 90% de divisão de lucros" },
-          ].map(({ icon: Icon, text }) => (
-            <div key={text} className="flex items-center gap-1.5">
-              <Icon className="w-3.5 h-3.5 text-primary shrink-0" />
-              <span>{text}</span>
-            </div>
-          ))}
+      {/* Bottom CTA section */}
+      <div className="border-t border-border bg-gradient-to-b from-card/60 to-card/20 px-6 py-10">
+        <div className="max-w-4xl mx-auto">
+          {/* Headline */}
+          <div className="text-center mb-8">
+            <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-2">
+              Pronto para provar que és trader?
+            </h2>
+            <p className="text-muted-foreground text-sm max-w-md mx-auto">
+              Junta-te a centenas de traders que já recebem saques mensais da QuantFund.
+            </p>
+          </div>
+
+          {/* Trust pillars */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            {[
+              {
+                icon: Zap,
+                title: "1 Única Fase",
+                sub: "Sem fases intermináveis",
+                color: "text-yellow-400",
+                bg: "bg-yellow-500/10 border-yellow-500/20",
+              },
+              {
+                icon: TrendingUp,
+                title: "Até 90% Lucros",
+                sub: "A tua performance, o teu dinheiro",
+                color: "text-green-400",
+                bg: "bg-green-500/10 border-green-500/20",
+              },
+              {
+                icon: Shield,
+                title: "Sem Mensalidades",
+                sub: "Pagamento único, sem surpresas",
+                color: "text-blue-400",
+                bg: "bg-blue-500/10 border-blue-500/20",
+              },
+              {
+                icon: CheckCircle,
+                title: "Saques em 48h",
+                sub: "Processamento rápido garantido",
+                color: "text-purple-400",
+                bg: "bg-purple-500/10 border-purple-500/20",
+              },
+            ].map(({ icon: Icon, title, sub, color, bg }) => (
+              <div key={title} className={`rounded-xl border p-4 text-center ${bg}`}>
+                <div className={`flex justify-center mb-2 ${color}`}>
+                  <Icon className="w-5 h-5" />
+                </div>
+                <div className={`text-sm font-bold mb-0.5 ${color}`}>{title}</div>
+                <div className="text-[11px] text-muted-foreground leading-tight">{sub}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Guarantee strip */}
+          <div className="flex flex-col md:flex-row items-center justify-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-5 py-4 text-center md:text-left">
+            <Star className="w-5 h-5 text-primary shrink-0" />
+            <p className="text-sm text-muted-foreground">
+              <span className="font-bold text-foreground">Satisfação garantida.</span>{" "}
+              Se passares a avaliação e não recebermos o teu saque nos prazos, reembolsamos a taxa de inscrição na íntegra.
+            </p>
+          </div>
         </div>
       </div>
     </div>
