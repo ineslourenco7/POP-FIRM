@@ -17,6 +17,8 @@ import Payments from "@/pages/payments";
 import Payouts from "@/pages/payouts";
 import Leaderboard from "@/pages/leaderboard";
 import Admin from "@/pages/admin";
+import Terms from "@/pages/terms";
+import Support from "@/pages/support";
 import Layout from "@/components/Layout";
 
 const clerkPubKey = publishableKeyFromHost(
@@ -189,6 +191,8 @@ function ClerkProviderWithRoutes() {
               </>
             )} />
             <Route path="/admin" component={() => <ProtectedRoute component={Admin} adminOnly />} />
+            <Route path="/terms" component={Terms} />
+            <Route path="/support" component={Support} />
             
             <Route>
               <div className="flex min-h-screen items-center justify-center text-muted-foreground bg-background">

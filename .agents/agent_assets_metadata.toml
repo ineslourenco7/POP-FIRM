@@ -1,0 +1,38 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "oBB6TKe9jfcBDmap1LLmV"
+uri = "file://artifacts/prop-firm/public/testimonials/pedro.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "MNF0EJDvyUbBtGLaK-lvW"
+uri = "file://artifacts/prop-firm/public/testimonials/maria.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "Ik85qX3CRNFjVENPB-1rv"
+uri = "file://artifacts/prop-firm/public/testimonials/james.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "i8VSGYJiDHJ6rI3Xuz26N"
+uri = "file://artifacts/prop-firm/public/testimonials/sophia.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "exW2VTNuiIwSAoX9S1q55"
+uri = "file://artifacts/prop-firm/public/testimonials/marco.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "OtGuVzq4XCWICWpprVyQb"
+uri = "file://artifacts/prop-firm/public/testimonials/ahmed.png"
+type = "image"
+title = "generated_image"
