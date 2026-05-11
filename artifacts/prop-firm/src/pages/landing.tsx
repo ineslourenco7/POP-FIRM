@@ -384,7 +384,7 @@ export default function Landing() {
                 <Star className="w-4 h-4 fill-yellow-400" /> Traders Verificados
               </div>
               <h2 className="text-3xl font-bold mb-4">O que dizem os nossos traders</h2>
-              <p className="text-muted-foreground max-w-xl mx-auto">Mais de 2.400 traders já passaram o nosso desafio e receberam capital real para operar.</p>
+              <p className="text-muted-foreground max-w-xl mx-auto">Mais de 200 traders já passaram o nosso desafio e receberam capital real para operar.</p>
             </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {TESTIMONIALS.map((t, i) => (
@@ -394,7 +394,7 @@ export default function Landing() {
             <div className="text-center mt-10">
               <div className="inline-flex items-center gap-6 flex-wrap justify-center">
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-primary">2.400+</div>
+                  <div className="text-3xl font-bold text-primary">200+</div>
                   <div className="text-sm text-muted-foreground">Traders Financiados</div>
                 </div>
                 <div className="w-px h-10 bg-border hidden sm:block" />
