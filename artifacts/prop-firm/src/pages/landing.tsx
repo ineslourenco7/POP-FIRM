@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, BarChart3, ShieldCheck, Trophy, Zap, BadgeCheck, Star, HeadphonesIcon, FileText, ChevronDown } from "lucide-react";
+import { ArrowRight, BarChart3, ShieldCheck, Trophy, Zap, BadgeCheck, Star, HeadphonesIcon, FileText, ChevronDown, ClipboardList, UserCheck, Wallet } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 const LICENSE_NUMBER = "QF-" + Math.random().toString(36).substring(2, 6).toUpperCase() + "-" + Math.random().toString(36).substring(2, 6).toUpperCase() + "-" + Math.random().toString(36).substring(2, 5).toUpperCase();
@@ -12,19 +12,15 @@ const FAQS = [
   },
   {
     q: "Quanto tempo tenho para passar a avaliação?",
-    a: "Tens tempo ilimitado para completar o desafio. Não existem prazos forçados — o importante é cumprir os critérios de forma consistente e controlada.",
+    a: "Tens no mínimo 2 dias e no máximo 30 dias para completar o desafio. O importante é cumprir os critérios de forma consistente dentro desse período.",
   },
   {
     q: "Quais são as regras de drawdown?",
-    a: "O drawdown diário máximo é de 5% e o drawdown total máximo é de 10% do capital da conta. A conta é encerrada automaticamente se qualquer um destes limites for atingido.",
+    a: "Cada conta tem um limite de drawdown diário e um limite de drawdown total. Se qualquer um dos limites for atingido, a conta é encerrada automaticamente. Consulta a página de Desafios para ver os limites exatos de cada plano.",
   },
   {
     q: "Como e quando posso solicitar um pagamento?",
     a: "Após seres financiado, podes solicitar pagamentos quinzenais. Os pagamentos são processados via criptomoeda ou transferência bancária em até 24 horas.",
-  },
-  {
-    q: "O trading é real ou simulado?",
-    a: "A QuantFund utiliza trading 100% simulado com preços realistas. Isto elimina o risco de capital real durante a avaliação, mantendo as condições institucionais.",
   },
   {
     q: "Posso usar Expert Advisors (EAs) ou bots?",
@@ -258,26 +254,111 @@ export default function Landing() {
         {/* Payment Methods Banner */}
         <PaymentBanner />
 
-        {/* Features */}
-        <section id="how-it-works" className="py-20 bg-card border-y border-border">
+        {/* How It Works */}
+        <section id="how-it-works" className="py-24 bg-card border-y border-border">
           <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center mb-12">Construído para Profissionais</h2>
-            <div className="grid md:grid-cols-3 gap-8">
-              <div className="p-6 bg-background rounded-2xl border border-border">
-                <BarChart3 className="w-10 h-10 text-primary mb-4" />
-                <h3 className="text-xl font-semibold mb-2">Terminal Avançado</h3>
-                <p className="text-muted-foreground">Opera diretamente no nosso webtrader com gráficos TradingView. Execução rápida, sem slippage.</p>
+            <div className="text-center mb-16">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4 border border-primary/20">
+                <Zap className="w-3.5 h-3.5" /> Processo Simples
               </div>
-              <div className="p-6 bg-background rounded-2xl border border-border">
-                <ShieldCheck className="w-10 h-10 text-primary mb-4" />
-                <h3 className="text-xl font-semibold mb-2">Regras Transparentes</h3>
-                <p className="text-muted-foreground">Sem spreads escondidos ou regras confusas. Limites de drawdown simples e metas de lucro claras.</p>
+              <h2 className="text-4xl font-bold mb-4">Torna-te um Trader Financiado</h2>
+              <p className="text-muted-foreground max-w-xl mx-auto">Quatro passos simples para teres acesso a capital real e começares a receber os teus lucros.</p>
+            </div>
+
+            {/* Steps */}
+            <div className="relative">
+              {/* Connector line */}
+              <div className="hidden lg:block absolute top-16 left-[calc(12.5%+2rem)] right-[calc(12.5%+2rem)] h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                {/* Step 1 */}
+                <div className="relative flex flex-col items-center text-center group">
+                  <div className="relative mb-6">
+                    <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                      <ClipboardList className="w-7 h-7 text-primary" />
+                    </div>
+                    <div className="absolute -top-3 -right-3 w-7 h-7 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold shadow-lg">01</div>
+                  </div>
+                  <h3 className="text-lg font-bold mb-2">Escolhe o teu Desafio</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">Seleciona um plano de capital entre $10K e $1M. Paga a taxa de avaliação única e começa imediatamente.</p>
+                  <div className="mt-4 flex flex-col gap-1.5 w-full">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground bg-background rounded-lg px-3 py-1.5 border border-border">
+                      <BadgeCheck className="w-3.5 h-3.5 text-primary shrink-0" /> Ativação instantânea
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground bg-background rounded-lg px-3 py-1.5 border border-border">
+                      <BadgeCheck className="w-3.5 h-3.5 text-primary shrink-0" /> Taxa única, sem mensalidades
+                    </div>
+                  </div>
+                </div>
+
+                {/* Step 2 */}
+                <div className="relative flex flex-col items-center text-center group">
+                  <div className="relative mb-6">
+                    <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                      <BarChart3 className="w-7 h-7 text-primary" />
+                    </div>
+                    <div className="absolute -top-3 -right-3 w-7 h-7 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold shadow-lg">02</div>
+                  </div>
+                  <h3 className="text-lg font-bold mb-2">Completa a Avaliação</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">Opera no nosso webtrader, atinge a meta de lucro e respeita os limites de drawdown. Tens até 30 dias.</p>
+                  <div className="mt-4 flex flex-col gap-1.5 w-full">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground bg-background rounded-lg px-3 py-1.5 border border-border">
+                      <BadgeCheck className="w-3.5 h-3.5 text-primary shrink-0" /> Meta de lucro: 8%
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground bg-background rounded-lg px-3 py-1.5 border border-border">
+                      <BadgeCheck className="w-3.5 h-3.5 text-primary shrink-0" /> Gráficos TradingView
+                    </div>
+                  </div>
+                </div>
+
+                {/* Step 3 */}
+                <div className="relative flex flex-col items-center text-center group">
+                  <div className="relative mb-6">
+                    <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                      <UserCheck className="w-7 h-7 text-primary" />
+                    </div>
+                    <div className="absolute -top-3 -right-3 w-7 h-7 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold shadow-lg">03</div>
+                  </div>
+                  <h3 className="text-lg font-bold mb-2">Torna-te Trader Financiado</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">Após aprovação, a tua conta financiada é ativada. Opera com capital total e fica com até 90% dos lucros.</p>
+                  <div className="mt-4 flex flex-col gap-1.5 w-full">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground bg-background rounded-lg px-3 py-1.5 border border-border">
+                      <BadgeCheck className="w-3.5 h-3.5 text-primary shrink-0" /> Aprovação em 24h
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground bg-background rounded-lg px-3 py-1.5 border border-border">
+                      <BadgeCheck className="w-3.5 h-3.5 text-primary shrink-0" /> Até 90% de profit split
+                    </div>
+                  </div>
+                </div>
+
+                {/* Step 4 */}
+                <div className="relative flex flex-col items-center text-center group">
+                  <div className="relative mb-6">
+                    <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                      <Wallet className="w-7 h-7 text-primary" />
+                    </div>
+                    <div className="absolute -top-3 -right-3 w-7 h-7 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold shadow-lg">04</div>
+                  </div>
+                  <h3 className="text-lg font-bold mb-2">Recebe os teus Lucros</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">Solicita pagamentos quinzenais via cripto ou transferência bancária. Processamento em até 24 horas.</p>
+                  <div className="mt-4 flex flex-col gap-1.5 w-full">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground bg-background rounded-lg px-3 py-1.5 border border-border">
+                      <BadgeCheck className="w-3.5 h-3.5 text-primary shrink-0" /> Cripto ou wire transfer
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground bg-background rounded-lg px-3 py-1.5 border border-border">
+                      <BadgeCheck className="w-3.5 h-3.5 text-primary shrink-0" /> Pagamento em 24h
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="p-6 bg-background rounded-2xl border border-border">
-                <Trophy className="w-10 h-10 text-primary mb-4" />
-                <h3 className="text-xl font-semibold mb-2">Pagamentos Rápidos</h3>
-                <p className="text-muted-foreground">Solicita pagamentos quinzenais via Cripto ou Transferência Bancária assim que ficares financiado.</p>
-              </div>
+            </div>
+
+            <div className="text-center mt-14">
+              <Link href="/sign-up">
+                <Button size="lg" className="text-base px-10 h-13">
+                  Começar o Desafio <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </Link>
             </div>
           </div>
         </section>
