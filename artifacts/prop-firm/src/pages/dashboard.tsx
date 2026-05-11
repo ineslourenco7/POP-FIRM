@@ -119,7 +119,7 @@ export default function Dashboard() {
             const profitTarget = 8;
             const maxTotalDrawdown = 10;
             const tradingDays = account.tradingDays ?? 0;
-            const minTradingDays = 5;
+            const minTradingDays = account.minTradingDays ?? 2;
 
             const pnlPct = initialBalance > 0 ? (pnl / initialBalance) * 100 : 0;
             const profitProgress = Math.min((pnlPct / profitTarget) * 100, 100);
