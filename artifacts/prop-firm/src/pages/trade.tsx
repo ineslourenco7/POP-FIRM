@@ -8,12 +8,14 @@ import {
   useGetMarketPrice,
   getListOrdersQueryKey,
   getGetAccountQueryKey,
+  type Order,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Home, ChevronDown, ChevronLeft, ChevronRight, Search, X } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Search, Star, X } from "lucide-react";
 import PriceTicker from "@/components/PriceTicker";
 
 declare global {
@@ -75,6 +77,42 @@ const TIMEFRAMES = [
   { label: "1W", value: "W" },
 ];
 
+function SymbolRow({
+  s,
+  selected,
+  isFav,
+  onSelect,
+  onToggleFav,
+}: {
+  s: { value: string; label: string; category: string };
+  selected: boolean;
+  isFav: boolean;
+  onSelect: () => void;
+  onToggleFav: (e: React.MouseEvent) => void;
+}) {
+  return (
+    <div
+      className={`w-full text-left px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-[#1e2a3a] transition-colors cursor-pointer ${
+        selected ? "text-primary" : "text-[#94a3b8]"
+      }`}
+    >
+      <button
+        onClick={onToggleFav}
+        className="shrink-0 p-0.5 rounded hover:text-yellow-400 transition-colors"
+        title={isFav ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+      >
+        <Star
+          className={`w-3 h-3 ${isFav ? "fill-yellow-400 text-yellow-400" : "text-[#475569]"}`}
+        />
+      </button>
+      <button onClick={onSelect} className="flex-1 flex items-center justify-between min-w-0">
+        <span className="font-semibold font-mono">{s.value}</span>
+        <span className="text-[#64748b] text-[10px] truncate ml-2">{s.label.replace(s.value, "").trim()}</span>
+      </button>
+    </div>
+  );
+}
+
 function calcLivePnl(side: string, openPrice: number, currentPrice: number, size: number) {
   return side === "buy"
     ? (currentPrice - openPrice) * size * 1000
@@ -120,6 +158,17 @@ export default function Trade() {
   const [size, setSize] = useState("1.0");
   const [sl, setSl] = useState("");
   const [tp, setTp] = useState("");
+
+  // Favorites stored in localStorage
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem("qf_fav_symbols") || '["EURUSD","XAUUSD"]'); }
+    catch { return ["EURUSD", "XAUUSD"]; }
+  });
+
+  // Refs for real-time notifications
+  const prevStatusRef = useRef<string | undefined>(undefined);
+  const prevOpenIdsRef = useRef<Set<number>>(new Set());
+  const manuallyClosedRef = useRef<Set<number>>(new Set());
 
   const tvContainerRef = useRef<HTMLDivElement>(null);
   const tvScriptLoaded = useRef(false);
@@ -172,6 +221,53 @@ export default function Trade() {
     }
   }, [symbol, timeframe]);
 
+  // ── Account status change notifications ──────────────────────────────────
+  useEffect(() => {
+    if (!account) return;
+    const prev = prevStatusRef.current;
+    const curr = account.status;
+    if (prev !== undefined && prev !== curr) {
+      if (curr === "passed") {
+        toast.success("Conta Aprovada!", { description: "Passaste o desafio! Parabéns." });
+      } else if (curr === "funded") {
+        toast.success("Conta Financiada!", { description: "A tua conta está financiada. Começa a operar!" });
+      } else if (curr === "failed") {
+        toast.error("Conta Falhada", { description: "O limite de drawdown foi atingido. A conta foi encerrada." });
+      }
+    }
+    prevStatusRef.current = curr;
+  }, [account?.status]);
+
+  // ── Order close / SL-TP notifications ────────────────────────────────────
+  useEffect(() => {
+    if (!orders) return;
+    const currentOpenIds = new Set<number>(orders.filter((o: Order) => o.status === "open").map((o: Order) => o.id));
+    const prevIds = prevOpenIdsRef.current;
+
+    if (prevIds.size > 0) {
+      prevIds.forEach((oid) => {
+        if (!currentOpenIds.has(oid)) {
+          const closed = orders.find((o: Order) => o.id === oid);
+          if (!closed) return;
+          const pnl = closed.pnl ?? 0;
+          const desc = `${closed.symbol} ${closed.side === "buy" ? "COMPRA" : "VENDA"} · PnL: ${pnl >= 0 ? "+" : ""}$${pnl.toFixed(2)}`;
+          const isManual = manuallyClosedRef.current.has(oid);
+          if (isManual) {
+            manuallyClosedRef.current.delete(oid);
+            pnl >= 0
+              ? toast.success("Posição Fechada", { description: desc })
+              : toast.error("Posição Fechada", { description: desc });
+          } else {
+            pnl >= 0
+              ? toast.success("Take Profit Atingido", { description: desc })
+              : toast.error("Stop Loss Atingido", { description: desc });
+          }
+        }
+      });
+    }
+    prevOpenIdsRef.current = currentOpenIds;
+  }, [orders]);
+
   const handleOrder = (side: "buy" | "sell") => {
     const slVal = sl.trim() ? parseFloat(sl) : undefined;
     const tpVal = tp.trim() ? parseFloat(tp) : undefined;
@@ -187,6 +283,7 @@ export default function Trade() {
   };
 
   const handleClose = (orderId: number) => {
+    manuallyClosedRef.current.add(orderId);
     closeOrderMut.mutate(
       { accountId: id, orderId },
       {
@@ -199,8 +296,9 @@ export default function Trade() {
   };
 
   const handleCloseAll = () => {
-    const open = orders?.filter((o) => o.status === "open") ?? [];
-    open.forEach((o) => {
+    const open = orders?.filter((o: Order) => o.status === "open") ?? [];
+    open.forEach((o: Order) => {
+      manuallyClosedRef.current.add(o.id);
       closeOrderMut.mutate(
         { accountId: id, orderId: o.id },
         {
@@ -213,13 +311,13 @@ export default function Trade() {
     });
   };
 
-  const openOrders = orders?.filter((o) => o.status === "open") || [];
-  const closedOrders = orders?.filter((o) => o.status === "closed") || [];
+  const openOrders = (orders?.filter((o: Order) => o.status === "open") || []) as Order[];
+  const closedOrders = (orders?.filter((o: Order) => o.status === "closed") || []) as Order[];
   const currentPrice = marketPrice?.price ?? 0;
 
   const totalFloatingPnl = openOrders
-    .filter((o) => o.symbol === symbol)
-    .reduce((sum, o) => sum + calcLivePnl(o.side, o.openPrice, currentPrice, o.size), 0);
+    .filter((o: Order) => o.symbol === symbol)
+    .reduce((sum: number, o: Order) => sum + calcLivePnl(o.side, o.openPrice, currentPrice, o.size), 0);
 
   // Drawdown calculations (using real challenge limits from account)
   const maxDailyDD  = account?.maxDailyDrawdown  ?? 5;
@@ -250,12 +348,24 @@ export default function Trade() {
   const dailyDDLevel = ddLevel(dailyDDUsed);
   const hasWarning = totalDDLevel !== "safe" || dailyDDLevel !== "safe";
 
+  const toggleFavorite = (sym: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setFavorites((prev) => {
+      const next = prev.includes(sym) ? prev.filter((s) => s !== sym) : [...prev, sym];
+      localStorage.setItem("qf_fav_symbols", JSON.stringify(next));
+      return next;
+    });
+  };
+
   const filteredSymbols = SYMBOLS.filter(
     (s) =>
       s.value.toLowerCase().includes(symbolSearch.toLowerCase()) ||
       s.label.toLowerCase().includes(symbolSearch.toLowerCase()) ||
       s.category.toLowerCase().includes(symbolSearch.toLowerCase())
   );
+
+  const favoriteSymbols = SYMBOLS.filter((s) => favorites.includes(s.value));
+  const hasFavorites = favoriteSymbols.length > 0 && !symbolSearch;
 
   const categories = [...new Set(filteredSymbols.map((s) => s.category))];
 
@@ -486,7 +596,7 @@ export default function Trade() {
                     </tr>
                   </thead>
                   <tbody>
-                    {openOrders.map((order) => {
+                    {openOrders.map((order: Order) => {
                       const liveCurrent = order.symbol === symbol ? currentPrice : (order.currentPrice ?? order.openPrice);
                       const livePnl = calcLivePnl(order.side, order.openPrice, liveCurrent, order.size);
                       const dec = priceDecimals(order.symbol);
@@ -634,7 +744,28 @@ export default function Trade() {
                           </button>
                         )}
                       </div>
-                      <div className="max-h-60 overflow-y-auto py-1">
+                      <div className="max-h-64 overflow-y-auto py-1">
+                        {/* Favorites section */}
+                        {hasFavorites && (
+                          <div>
+                            <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-yellow-500/80 font-semibold flex items-center gap-1">
+                              <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
+                              Favoritos
+                            </div>
+                            {favoriteSymbols.map((s) => (
+                              <SymbolRow
+                                key={`fav-${s.value}`}
+                                s={s}
+                                selected={symbol === s.value}
+                                isFav={true}
+                                onSelect={() => { setSymbol(s.value); setShowSymbolDropdown(false); setSymbolSearch(""); }}
+                                onToggleFav={(e) => toggleFavorite(s.value, e)}
+                              />
+                            ))}
+                            <div className="mx-3 my-1 border-t border-[#1e2a3a]" />
+                          </div>
+                        )}
+                        {/* All categories */}
                         {categories.map((cat) => (
                           <div key={cat}>
                             <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[#64748b] font-semibold">
@@ -643,20 +774,14 @@ export default function Trade() {
                             {filteredSymbols
                               .filter((s) => s.category === cat)
                               .map((s) => (
-                                <button
+                                <SymbolRow
                                   key={s.value}
-                                  onClick={() => {
-                                    setSymbol(s.value);
-                                    setShowSymbolDropdown(false);
-                                    setSymbolSearch("");
-                                  }}
-                                  className={`w-full text-left px-3 py-1.5 text-xs flex items-center justify-between hover:bg-[#1e2a3a] transition-colors ${
-                                    symbol === s.value ? "text-primary" : "text-[#94a3b8]"
-                                  }`}
-                                >
-                                  <span className="font-semibold font-mono">{s.value}</span>
-                                  <span className="text-[#64748b] text-[10px]">{s.label.replace(s.value, "").trim()}</span>
-                                </button>
+                                  s={s}
+                                  selected={symbol === s.value}
+                                  isFav={favorites.includes(s.value)}
+                                  onSelect={() => { setSymbol(s.value); setShowSymbolDropdown(false); setSymbolSearch(""); }}
+                                  onToggleFav={(e) => toggleFavorite(s.value, e)}
+                                />
                               ))}
                           </div>
                         ))}

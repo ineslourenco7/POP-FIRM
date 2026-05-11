@@ -6,6 +6,7 @@ import { Switch, Route, useLocation, Router as WouterRouter, Redirect } from 'wo
 import { QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
+import { Toaster as SonnerToaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 import Landing from "@/pages/landing";
@@ -212,6 +213,7 @@ function ClerkProviderWithRoutes() {
             </Route>
           </Switch>
           <Toaster />
+          <SonnerToaster position="bottom-right" theme="dark" richColors />
         </TooltipProvider>
       </QueryClientProvider>
     </ClerkProvider>
