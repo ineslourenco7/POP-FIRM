@@ -1,4 +1,5 @@
 import { FileText } from "lucide-react";
+import { Link } from "wouter";
 import TopBar from "@/components/TopBar";
 
 export default function Terms() {
