@@ -165,11 +165,11 @@ function ClerkProviderWithRoutes() {
             
             <Route path="/dashboard" component={() => <ProtectedRoute component={Dashboard} />} />
             <Route path="/trade/:accountId" component={() => <ProtectedRoute component={Trade} />} />
-            <Route path="/challenges" component={() => <ProtectedRoute component={Challenges} />} />
+            <Route path="/challenges" component={Challenges} />
             <Route path="/checkout/:challengeId" component={() => <ProtectedRoute component={Checkout} />} />
             <Route path="/payments" component={() => <ProtectedRoute component={Payments} />} />
             <Route path="/payouts" component={() => <ProtectedRoute component={Payouts} />} />
-            <Route path="/leaderboard" component={() => <ProtectedRoute component={Leaderboard} />} />
+            <Route path="/leaderboard" component={Leaderboard} />
             <Route path="/admin" component={() => <ProtectedRoute component={Admin} adminOnly />} />
             
             <Route>

@@ -27,8 +27,10 @@ export default function Challenges() {
               </div>
               <CardHeader>
                 <CardTitle className="text-2xl">{plan.name}</CardTitle>
-                <div className="mt-4">
-                  <span className="text-4xl font-bold">${plan.accountSize.toLocaleString()}</span>
+                <div className="mt-3">
+                  <span className={`font-bold leading-tight block ${plan.accountSize >= 1000000 ? 'text-2xl' : plan.accountSize >= 100000 ? 'text-3xl' : 'text-4xl'}`}>
+                    ${plan.accountSize.toLocaleString()}
+                  </span>
                 </div>
               </CardHeader>
               <CardContent className="flex-1">
