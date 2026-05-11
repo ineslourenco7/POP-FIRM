@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useUser, useClerk } from "@clerk/react";
-import { Activity, LayoutDashboard, Trophy, Wallet, CreditCard, Shield, Menu, X, LogOut } from "lucide-react";
+import { Calculator, LayoutDashboard, Trophy, Wallet, CreditCard, Shield, Menu, X, LogOut } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useGetMe } from "@workspace/api-client-react";
@@ -25,7 +25,7 @@ export default function Layout({ children }: LayoutProps) {
   const navItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/challenges", label: "Desafios", icon: Trophy },
-    { href: "/leaderboard", label: "Leaderboard", icon: Activity },
+    { href: "/calculator", label: "Calculadora", icon: Calculator },
     { href: "/payments", label: "Pagamentos", icon: CreditCard },
     { href: "/payouts", label: "Saques", icon: Wallet },
   ];

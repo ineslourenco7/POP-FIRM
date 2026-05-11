@@ -17,7 +17,7 @@ import Challenges from "@/pages/challenges";
 import Checkout from "@/pages/checkout";
 import Payments from "@/pages/payments";
 import Payouts from "@/pages/payouts";
-import Leaderboard from "@/pages/leaderboard";
+import LotCalculator from "@/pages/calculator";
 import Admin from "@/pages/admin";
 import Terms from "@/pages/terms";
 import Support from "@/pages/support";
@@ -192,16 +192,7 @@ function ClerkProviderWithRoutes() {
             <Route path="/checkout/:challengeId" component={() => <ProtectedRoute component={Checkout} />} />
             <Route path="/payments" component={() => <ProtectedRoute component={Payments} />} />
             <Route path="/payouts" component={() => <ProtectedRoute component={Payouts} />} />
-            <Route path="/leaderboard" component={() => (
-              <>
-                <Show when="signed-in">
-                  <Layout><Leaderboard /></Layout>
-                </Show>
-                <Show when="signed-out">
-                  <Leaderboard />
-                </Show>
-              </>
-            )} />
+            <Route path="/calculator" component={() => <ProtectedRoute component={LotCalculator} />} />
             <Route path="/admin" component={() => <ProtectedRoute component={Admin} adminOnly />} />
             <Route path="/terms" component={Terms} />
             <Route path="/support" component={Support} />
