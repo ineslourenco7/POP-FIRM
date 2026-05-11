@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useUser, useClerk } from "@clerk/react";
 import { Activity, LayoutDashboard, Trophy, Wallet, CreditCard, Shield, Menu, X, LogOut } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 
 interface LayoutProps {
@@ -14,7 +14,10 @@ export default function Layout({ children }: LayoutProps) {
   const { signOut } = useClerk();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // We could fetch user from our API to check if admin, but assuming user metadata or a role hook
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location]);
+
   const isAdmin = user?.publicMetadata?.role === "admin";
 
   const navItems = [

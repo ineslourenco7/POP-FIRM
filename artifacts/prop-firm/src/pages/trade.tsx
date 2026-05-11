@@ -60,10 +60,14 @@ export default function Trade() {
   const closeOrderMut = useCloseOrder();
 
   const [size, setSize] = useState("1.0");
+  const [sl, setSl] = useState("");
+  const [tp, setTp] = useState("");
 
   const handleOrder = (side: "buy" | "sell") => {
+    const slVal = sl.trim() ? parseFloat(sl) : undefined;
+    const tpVal = tp.trim() ? parseFloat(tp) : undefined;
     createOrderMut.mutate(
-      { accountId: id, data: { symbol, side, size: parseFloat(size) } },
+      { accountId: id, data: { symbol, side, size: parseFloat(size), stopLoss: slVal, takeProfit: tpVal } },
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListOrdersQueryKey(id) });
@@ -338,6 +342,33 @@ export default function Trade() {
                   >
                     +
                   </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[11px] text-red-400/80 mb-1 block uppercase tracking-wider">Stop Loss</label>
+                  <Input
+                    data-testid="sl-input"
+                    type="number"
+                    step="any"
+                    placeholder="0.00000"
+                    value={sl}
+                    onChange={(e) => setSl(e.target.value)}
+                    className="h-8 text-center font-mono border-[#1e2a3a] bg-[#050a14] text-xs placeholder:text-[#334155]"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] text-green-400/80 mb-1 block uppercase tracking-wider">Take Profit</label>
+                  <Input
+                    data-testid="tp-input"
+                    type="number"
+                    step="any"
+                    placeholder="0.00000"
+                    value={tp}
+                    onChange={(e) => setTp(e.target.value)}
+                    className="h-8 text-center font-mono border-[#1e2a3a] bg-[#050a14] text-xs placeholder:text-[#334155]"
+                  />
                 </div>
               </div>
 
