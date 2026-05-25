@@ -3,6 +3,8 @@ import cors from "cors";
 import pinoHttp from "pino-http";
 import { clerkMiddleware } from "@clerk/express";
 import { publishableKeyFromHost } from "@clerk/shared/keys";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   CLERK_PROXY_PATH,
   clerkProxyMiddleware,
@@ -12,6 +14,9 @@ import router from "./routes";
 import { logger } from "./lib/logger";
 
 const app: Express = express();
+const currentDir = path.dirname(fileURLToPath(import.meta.url));
+const frontendDist = path.resolve(currentDir, "..", "..", "prop-firm", "dist", "public");
+const indexHtml = path.join(frontendDist, "index.html");
 
 app.use(
   pinoHttp({
@@ -49,5 +54,13 @@ app.use(
 );
 
 app.use("/api", router);
+
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(frontendDist));
+
+  app.get(/^(?!\/api).*/, (_req, res) => {
+    res.sendFile(indexHtml);
+  });
+}
 
 export default app;
