@@ -20,15 +20,12 @@ const normalizeBasePath = (value: string | undefined): string => {
 
 const basePath = normalizeBasePath(process.env.BASE_PATH);
 
-const clerkPublishableKey = process.env.CLERK_PUBLISHABLE_KEY ?? "";
+const clerkPublishableKey =
+  process.env.VITE_CLERK_PUBLISHABLE_KEY ??
+  process.env.CLERK_PUBLISHABLE_KEY ??
+  "";
 
-// Only use proxy in production (dev Clerk instances load JS directly from Clerk CDN)
-const isProduction = process.env.NODE_ENV === "production";
-const replitDevDomain = process.env.REPLIT_DEV_DOMAIN;
-const clerkProxyUrl =
-  isProduction && replitDevDomain
-    ? `https://${replitDevDomain}/api/__clerk`
-    : "";
+const clerkProxyUrl = "";
 
 export default defineConfig({
   base: basePath,
