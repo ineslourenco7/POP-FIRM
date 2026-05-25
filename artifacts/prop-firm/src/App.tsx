@@ -39,10 +39,6 @@ function stripBase(path: string): string {
     : path;
 }
 
-if (!clerkPubKey) {
-  throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY in .env file');
-}
-
 const clerkAppearance = {
   theme: dark,
   cssLayerName: "clerk",
@@ -156,6 +152,35 @@ function ProtectedRoute({ component: Component, adminOnly = false }: { component
 
 function ClerkProviderWithRoutes() {
   const [, setLocation] = useLocation();
+
+  if (!clerkPubKey) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Switch>
+            <Route path="/" component={Landing} />
+            <Route path="/demo" component={Demo} />
+            <Route path="/challenges" component={() => (
+              <div className="min-h-screen bg-background text-foreground">
+                <TopBar backHref="/" backLabel="Início" />
+                <Challenges />
+              </div>
+            )} />
+            <Route path="/terms" component={Terms} />
+            <Route path="/support" component={Support} />
+            <Route>
+              <div className="flex min-h-screen items-center justify-center text-muted-foreground bg-background">
+                Autenticação temporariamente indisponível. As páginas públicas continuam disponíveis.
+              </div>
+            </Route>
+          </Switch>
+          <SupportChat />
+          <Toaster />
+          <SonnerToaster position="bottom-right" theme="dark" richColors />
+        </TooltipProvider>
+      </QueryClientProvider>
+    );
+  }
 
   return (
     <ClerkProvider
