@@ -1,6 +1,6 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Switch, Route, Router as WouterRouter } from "wouter";
-import { SignIn, SignUp } from "@clerk/clerk-react";
+import { SignIn, SignUp } from "@clerk/react";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "sonner";
