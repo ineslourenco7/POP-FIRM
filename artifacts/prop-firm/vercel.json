@@ -6,7 +6,7 @@
   "trailingSlash": false,
   "headers": [
     {
-      "source": "/(.*)",
+      "source": "/:path*",
       "headers": [
         {
           "key": "Cache-Control",
@@ -17,7 +17,7 @@
   ],
   "rewrites": [
     {
-      "source": "/((?!assets/|favicon.svg|robots.txt).*)",
+      "source": "/:path*",
       "destination": "/index.html"
     }
   ]
