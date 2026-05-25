@@ -16,12 +16,13 @@ type Challenge = {
 };
 
 const fallbackChallenges: Challenge[] = [
-  { id: 1, name: "POP $10K", accountSize: 10000, price: 99, profitTarget: 8, maxDailyDrawdown: 0, maxTotalDrawdown: 10, minTradingDays: 5, leverage: 100 },
-  { id: 2, name: "POP $25K", accountSize: 25000, price: 149, profitTarget: 8, maxDailyDrawdown: 0, maxTotalDrawdown: 10, minTradingDays: 5, leverage: 100 },
-  { id: 3, name: "POP $50K", accountSize: 50000, price: 249, profitTarget: 8, maxDailyDrawdown: 0, maxTotalDrawdown: 10, minTradingDays: 5, leverage: 100 },
-  { id: 4, name: "POP $100K", accountSize: 100000, price: 399, profitTarget: 8, maxDailyDrawdown: 0, maxTotalDrawdown: 10, minTradingDays: 5, leverage: 100 },
-  { id: 5, name: "POP $200K", accountSize: 200000, price: 749, profitTarget: 8, maxDailyDrawdown: 0, maxTotalDrawdown: 10, minTradingDays: 5, leverage: 100 },
-  { id: 6, name: "POP $400K", accountSize: 400000, price: 1299, profitTarget: 8, maxDailyDrawdown: 0, maxTotalDrawdown: 10, minTradingDays: 5, leverage: 100 },
+  { id: 1, name: "POP Launch", accountSize: 10000, price: 99, profitTarget: 8, maxDailyDrawdown: 0, maxTotalDrawdown: 10, minTradingDays: 5, leverage: 100 },
+  { id: 2, name: "POP Starter", accountSize: 25000, price: 149, profitTarget: 8, maxDailyDrawdown: 0, maxTotalDrawdown: 10, minTradingDays: 5, leverage: 100 },
+  { id: 3, name: "POP Growth", accountSize: 50000, price: 249, profitTarget: 8, maxDailyDrawdown: 0, maxTotalDrawdown: 10, minTradingDays: 5, leverage: 100 },
+  { id: 4, name: "POP Pro", accountSize: 100000, price: 399, profitTarget: 8, maxDailyDrawdown: 0, maxTotalDrawdown: 10, minTradingDays: 5, leverage: 100 },
+  { id: 5, name: "POP Elite", accountSize: 200000, price: 749, profitTarget: 8, maxDailyDrawdown: 0, maxTotalDrawdown: 10, minTradingDays: 5, leverage: 100 },
+  { id: 6, name: "POP Titan", accountSize: 400000, price: 1299, profitTarget: 8, maxDailyDrawdown: 0, maxTotalDrawdown: 10, minTradingDays: 5, leverage: 100 },
+  { id: 7, name: "POP Institutional", accountSize: 3000000, price: 4999, profitTarget: 8, maxDailyDrawdown: 0, maxTotalDrawdown: 10, minTradingDays: 5, leverage: 100 },
 ];
 
 function getChallengeList(raw: unknown): Challenge[] {
@@ -40,6 +41,7 @@ function getChallengeList(raw: unknown): Challenge[] {
 }
 
 function formatAccountSize(size: number): string {
+  if (size >= 1000000) return `$${size / 1000000}M`;
   if (size >= 1000) return `$${size / 1000}K`;
   return `$${size}`;
 }
@@ -66,6 +68,7 @@ function ChallengeCard({ plan }: { plan: Challenge }) {
         <div className="text-4xl font-black tabular-nums leading-none mb-1">
           {formatAccountSize(plan.accountSize)}
         </div>
+        <p className="text-xs font-semibold text-foreground/90 mb-1">{plan.name}</p>
         <p className="text-xs text-muted-foreground leading-snug">{popular ? "O plano mais escolhido." : premium ? "Para traders experientes." : "Ideal para começar."}</p>
       </div>
 
