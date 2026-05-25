@@ -17,7 +17,7 @@ import TopBar from "@/components/TopBar";
 import SupportChat from "@/components/SupportChat";
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
-const appVersion = "terminal-order-panel-2026-05-25";
+const appVersion = "terminal-watchlist-2026-05-25";
 const adminEmail = "ineslourencop7" + "@" + "gmail.com";
 
 const checkoutPlans: Record<string, { name: string; account: string; price: number; label: string }> = {
@@ -31,12 +31,18 @@ const checkoutPlans: Record<string, { name: string; account: string; price: numb
 };
 
 const assets = [
-  { label: "EUR/USD", value: "OANDA:EURUSD", price: "1.0842" },
-  { label: "GBP/USD", value: "OANDA:GBPUSD", price: "1.2710" },
-  { label: "XAU/USD", value: "OANDA:XAUUSD", price: "2,356.40" },
-  { label: "NAS100", value: "OANDA:NAS100USD", price: "18,724.2" },
-  { label: "US30", value: "OANDA:US30USD", price: "39,128.6" },
-  { label: "BTC/USD", value: "BITSTAMP:BTCUSD", price: "67,420" },
+  { label: "XAU/USD", name: "Gold", value: "OANDA:XAUUSD", price: "2,356.40", change: "+0.82%", category: "Metals" },
+  { label: "BTC/USD", name: "Bitcoin", value: "BITSTAMP:BTCUSD", price: "67,420.00", change: "+1.94%", category: "Crypto" },
+  { label: "ETH/USD", name: "Ethereum", value: "BITSTAMP:ETHUSD", price: "3,520.80", change: "+1.21%", category: "Crypto" },
+  { label: "EUR/USD", name: "Euro Dollar", value: "OANDA:EURUSD", price: "1.0842", change: "+0.14%", category: "Forex" },
+  { label: "GBP/USD", name: "Pound Dollar", value: "OANDA:GBPUSD", price: "1.2710", change: "-0.08%", category: "Forex" },
+  { label: "USD/JPY", name: "Dollar Yen", value: "OANDA:USDJPY", price: "156.82", change: "+0.22%", category: "Forex" },
+  { label: "USD/CHF", name: "Dollar Franc", value: "OANDA:USDCHF", price: "0.9124", change: "-0.11%", category: "Forex" },
+  { label: "AUD/USD", name: "Aussie Dollar", value: "OANDA:AUDUSD", price: "0.6631", change: "+0.05%", category: "Forex" },
+  { label: "NAS100", name: "Nasdaq 100", value: "OANDA:NAS100USD", price: "18,724.2", change: "+0.64%", category: "Indices" },
+  { label: "US30", name: "Dow Jones", value: "OANDA:US30USD", price: "39,128.6", change: "-0.18%", category: "Indices" },
+  { label: "SPX500", name: "S&P 500", value: "OANDA:SPX500USD", price: "5,304.1", change: "+0.31%", category: "Indices" },
+  { label: "USOIL", name: "WTI Crude", value: "TVC:USOIL", price: "78.42", change: "+0.47%", category: "Commodities" },
 ];
 
 function TradingViewChart({ symbol }: { symbol: string }) {
@@ -194,7 +200,7 @@ function TradingTerminalPage() {
 
   const openPositions = [
     { symbol: "EURUSD", side: "BUY", lots: "0.20", entry: "1.0812", pnl: "+$420" },
-    { symbol: "NAS100", side: "SELL", lots: "0.05", entry: "18,810", pnl: "+$180" },
+    { symbol: "BTCUSD", side: "BUY", lots: "0.03", entry: "66,110", pnl: "+$312" },
     { symbol: "XAUUSD", side: "BUY", lots: "0.10", entry: "2,341", pnl: "-$95" },
   ];
 
@@ -233,7 +239,41 @@ function TradingTerminalPage() {
           ))}
         </section>
 
-        <section className="grid gap-5 lg:grid-cols-[1.35fr_0.65fr]">
+        <section className="grid gap-5 xl:grid-cols-[0.42fr_1.1fr_0.48fr]">
+          <aside className="rounded-3xl border border-border bg-card p-4 shadow-xl">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-primary">Mercados</p>
+                <h2 className="text-xl font-black">Ativos</h2>
+              </div>
+              <span className="rounded-full bg-primary/10 px-2 py-1 text-[10px] font-bold text-primary">Live</span>
+            </div>
+            <div className="max-h-[620px] space-y-2 overflow-y-auto pr-1">
+              {assets.map((asset) => {
+                const active = asset.value === selectedAsset.value;
+                const positive = asset.change.startsWith("+");
+                return (
+                  <button
+                    key={asset.value}
+                    onClick={() => setSelectedAsset(asset)}
+                    className={`w-full rounded-2xl border p-3 text-left transition ${active ? "border-primary bg-primary/10" : "border-border bg-background/40 hover:bg-background/70"}`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="font-black">{asset.label}</p>
+                        <p className="text-[11px] text-muted-foreground">{asset.name} · {asset.category}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-bold">{asset.price}</p>
+                        <p className={`text-xs font-bold ${positive ? "text-emerald-400" : "text-red-400"}`}>{asset.change}</p>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </aside>
+
           <div className="rounded-3xl border border-border bg-card p-4 shadow-2xl md:p-6">
             <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
@@ -253,7 +293,7 @@ function TradingTerminalPage() {
                 <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-400">TradingView Online</span>
               </div>
             </div>
-            <div className="h-[560px] overflow-hidden rounded-2xl border border-border bg-background">
+            <div className="h-[620px] overflow-hidden rounded-2xl border border-border bg-background">
               <TradingViewChart symbol={selectedAsset.value} />
             </div>
           </div>
