@@ -1,15 +1,13 @@
 {
-  "version": 2,
   "installCommand": "corepack enable && pnpm install --frozen-lockfile=false",
   "buildCommand": "BASE_PATH=/ pnpm --filter @workspace/prop-firm run build",
   "outputDirectory": "artifacts/prop-firm/dist/public",
-  "routes": [
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "rewrites": [
     {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/.*",
-      "dest": "/index.html"
+      "source": "/((?!assets/|favicon.ico|robots.txt).*)",
+      "destination": "/index.html"
     }
   ]
 }
