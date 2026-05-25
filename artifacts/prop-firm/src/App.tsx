@@ -14,10 +14,11 @@ import TopBar from "@/components/TopBar";
 import SupportChat from "@/components/SupportChat";
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
+const appVersion = "restored-frontend-2026-05-25";
 
 function PublicChallengesPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground" data-app-version={appVersion}>
       <TopBar backHref="/" backLabel="Início" />
       <Challenges />
     </div>
@@ -29,21 +30,23 @@ function App() {
     <WouterRouter base={basePath}>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
-          <Switch>
-            <Route path="/" component={Landing} />
-            <Route path="/demo" component={Demo} />
-            <Route path="/challenges" component={PublicChallengesPage} />
-            <Route path="/terms" component={Terms} />
-            <Route path="/support" component={Support} />
-            <Route>
-              <div className="flex min-h-screen items-center justify-center text-muted-foreground bg-background">
-                Página não encontrada
-              </div>
-            </Route>
-          </Switch>
-          <SupportChat />
-          <Toaster />
-          <SonnerToaster position="bottom-right" theme="dark" richColors />
+          <div data-app-version={appVersion}>
+            <Switch>
+              <Route path="/" component={Landing} />
+              <Route path="/demo" component={Demo} />
+              <Route path="/challenges" component={PublicChallengesPage} />
+              <Route path="/terms" component={Terms} />
+              <Route path="/support" component={Support} />
+              <Route>
+                <div className="flex min-h-screen items-center justify-center text-muted-foreground bg-background">
+                  Página não encontrada
+                </div>
+              </Route>
+            </Switch>
+            <SupportChat />
+            <Toaster />
+            <SonnerToaster position="bottom-right" theme="dark" richColors />
+          </div>
         </TooltipProvider>
       </QueryClientProvider>
     </WouterRouter>
