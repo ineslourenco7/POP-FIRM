@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Switch, Route, Router as WouterRouter, Link, useRoute } from "wouter";
 import { SignIn, SignUp, useUser, UserButton } from "@clerk/react";
@@ -16,7 +17,7 @@ import TopBar from "@/components/TopBar";
 import SupportChat from "@/components/SupportChat";
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
-const appVersion = "admin-terminal-2026-05-25";
+const appVersion = "tradingview-terminal-2026-05-25";
 const adminEmail = "ineslourencop7" + "@" + "gmail.com";
 
 const checkoutPlans: Record<string, { name: string; account: string; price: number; label: string }> = {
@@ -28,6 +29,48 @@ const checkoutPlans: Record<string, { name: string; account: string; price: numb
   "6": { name: "POP Titan", account: "$400K", price: 1299, label: "Titan" },
   "7": { name: "POP Instant", account: "$3M", price: 4999, label: "Instant" },
 };
+
+function TradingViewChart() {
+  const container = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!container.current) return;
+
+    container.current.innerHTML = "";
+
+    const widget = document.createElement("div");
+    widget.className = "tradingview-widget-container__widget";
+    widget.style.height = "100%";
+    widget.style.width = "100%";
+
+    const script = document.createElement("script");
+    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
+    script.type = "text/javascript";
+    script.async = true;
+    script.innerHTML = JSON.stringify({
+      autosize: true,
+      symbol: "OANDA:EURUSD",
+      interval: "60",
+      timezone: "Etc/UTC",
+      theme: "dark",
+      style: "1",
+      locale: "en",
+      allow_symbol_change: true,
+      calendar: false,
+      hide_side_toolbar: false,
+      support_host: "https://www.tradingview.com",
+    });
+
+    container.current.appendChild(widget);
+    container.current.appendChild(script);
+
+    return () => {
+      if (container.current) container.current.innerHTML = "";
+    };
+  }, []);
+
+  return <div ref={container} className="h-full w-full" />;
+}
 
 function PublicChallengesPage() {
   return (
@@ -104,7 +147,7 @@ function AdminPage() {
     { icon: Users, label: "Utilizadores", value: "128", sub: "clientes registados" },
     { icon: CreditCard, label: "Compras", value: "$18.4K", sub: "volume demo" },
     { icon: BarChart3, label: "Challenges", value: "7", sub: "tiers ativos" },
-    { icon: Activity, label: "Terminal", value: "Online", sub: "demo funcional" },
+    { icon: Activity, label: "Terminal", value: "TradingView", sub: "gráfico ligado" },
   ];
 
   return (
@@ -135,8 +178,8 @@ function AdminPage() {
         </div>
         <div className="mt-8 grid gap-5 lg:grid-cols-2">
           <Link href="/terminal" className="rounded-3xl border border-emerald-500/20 bg-emerald-500/10 p-6 transition hover:bg-emerald-500/15">
-            <h2 className="text-xl font-black">Abrir terminal demo</h2>
-            <p className="mt-2 text-sm text-muted-foreground">Testa a experiência que o cliente vê depois do login.</p>
+            <h2 className="text-xl font-black">Abrir terminal</h2>
+            <p className="mt-2 text-sm text-muted-foreground">Testa a experiência pós-login com TradingView.</p>
           </Link>
           <Link href="/challenges" className="rounded-3xl border border-blue-500/20 bg-blue-500/10 p-6 transition hover:bg-blue-500/15">
             <h2 className="text-xl font-black">Ver challenges</h2>
@@ -162,7 +205,7 @@ function TradingTerminalPage() {
         <div className="mx-auto flex max-w-7xl items-center justify-between">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.25em] text-primary">POP FIRM Terminal</p>
-            <h1 className="text-2xl font-black">Trading Terminal Demo</h1>
+            <h1 className="text-2xl font-black">Trading Terminal</h1>
           </div>
           <div className="flex items-center gap-4">
             <Link href="/admin" className="text-sm text-muted-foreground hover:text-foreground">Admin</Link>
@@ -170,21 +213,17 @@ function TradingTerminalPage() {
           </div>
         </div>
       </header>
-      <main className="mx-auto grid max-w-7xl gap-5 px-6 py-8 lg:grid-cols-[1.2fr_0.8fr]">
-        <section className="rounded-3xl border border-border bg-card p-6 shadow-2xl">
+      <main className="mx-auto grid max-w-7xl gap-5 px-6 py-8 lg:grid-cols-[1.35fr_0.65fr]">
+        <section className="rounded-3xl border border-border bg-card p-4 shadow-2xl md:p-6">
           <div className="mb-5 flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Sessão</p>
               <p className="font-bold">{user?.primaryEmailAddress?.emailAddress}</p>
             </div>
-            <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-400">Terminal Online</span>
+            <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-400">TradingView Online</span>
           </div>
-          <div className="h-80 rounded-2xl border border-border bg-background/70 p-5">
-            <div className="flex h-full items-end gap-2">
-              {[35, 52, 45, 70, 64, 82, 75, 90, 84, 96, 88, 104].map((height, i) => (
-                <div key={i} className="flex-1 rounded-t-lg bg-primary/70" style={{ height: `${height}%` }} />
-              ))}
-            </div>
+          <div className="h-[580px] overflow-hidden rounded-2xl border border-border bg-background">
+            <TradingViewChart />
           </div>
         </section>
         <aside className="space-y-5">
