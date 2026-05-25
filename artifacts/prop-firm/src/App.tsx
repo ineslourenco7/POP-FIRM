@@ -16,11 +16,15 @@ import TopBar from "@/components/TopBar";
 import SupportChat from "@/components/SupportChat";
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
-const appVersion = "checkout-design-2026-05-25";
+const appVersion = "six-plans-checkout-2026-05-25";
 
 const checkoutPlans: Record<string, { name: string; account: string; price: number; label: string }> = {
-  "1": { name: "POP Starter", account: "$25K", price: 149, label: "Ideal para começar" },
-  "2": { name: "POP Pro", account: "$100K", price: 399, label: "Mais escolhido" },
+  "1": { name: "POP $10K", account: "$10K", price: 99, label: "Starter" },
+  "2": { name: "POP $25K", account: "$25K", price: 149, label: "Popular" },
+  "3": { name: "POP $50K", account: "$50K", price: 249, label: "Growth" },
+  "4": { name: "POP $100K", account: "$100K", price: 399, label: "Pro" },
+  "5": { name: "POP $200K", account: "$200K", price: 749, label: "Elite" },
+  "6": { name: "POP $400K", account: "$400K", price: 1299, label: "Institutional" },
 };
 
 function PublicChallengesPage() {
