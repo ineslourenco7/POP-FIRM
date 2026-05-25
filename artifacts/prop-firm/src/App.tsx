@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Switch, Route, Router as WouterRouter, Link, useRoute } from "wouter";
 import { SignIn, SignUp, useUser, UserButton } from "@clerk/react";
@@ -16,7 +17,7 @@ import TopBar from "@/components/TopBar";
 import SupportChat from "@/components/SupportChat";
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
-const appVersion = "tradingview-iframe-terminal-2026-05-25";
+const appVersion = "terminal-order-panel-2026-05-25";
 const adminEmail = "ineslourencop7" + "@" + "gmail.com";
 
 const checkoutPlans: Record<string, { name: string; account: string; price: number; label: string }> = {
@@ -29,9 +30,18 @@ const checkoutPlans: Record<string, { name: string; account: string; price: numb
   "7": { name: "POP Instant", account: "$3M", price: 4999, label: "Instant" },
 };
 
-function TradingViewChart() {
+const assets = [
+  { label: "EUR/USD", value: "OANDA:EURUSD", price: "1.0842" },
+  { label: "GBP/USD", value: "OANDA:GBPUSD", price: "1.2710" },
+  { label: "XAU/USD", value: "OANDA:XAUUSD", price: "2,356.40" },
+  { label: "NAS100", value: "OANDA:NAS100USD", price: "18,724.2" },
+  { label: "US30", value: "OANDA:US30USD", price: "39,128.6" },
+  { label: "BTC/USD", value: "BITSTAMP:BTCUSD", price: "67,420" },
+];
+
+function TradingViewChart({ symbol }: { symbol: string }) {
   const params = new URLSearchParams({
-    symbol: "OANDA:EURUSD",
+    symbol,
     interval: "60",
     theme: "dark",
     style: "1",
@@ -178,11 +188,19 @@ function AdminPage() {
 
 function TradingTerminalPage() {
   const { user } = useUser();
-  const trades = [
-    ["EURUSD", "BUY", "+$420", "+1.4%"],
-    ["NAS100", "SELL", "+$180", "+0.6%"],
-    ["XAUUSD", "BUY", "-$95", "-0.3%"],
+  const [selectedAsset, setSelectedAsset] = useState(assets[0]);
+  const [lotSize, setLotSize] = useState("0.10");
+  const [lastAction, setLastAction] = useState("Nenhuma ordem enviada nesta sessão.");
+
+  const openPositions = [
+    { symbol: "EURUSD", side: "BUY", lots: "0.20", entry: "1.0812", pnl: "+$420" },
+    { symbol: "NAS100", side: "SELL", lots: "0.05", entry: "18,810", pnl: "+$180" },
+    { symbol: "XAUUSD", side: "BUY", lots: "0.10", entry: "2,341", pnl: "-$95" },
   ];
+
+  const sendOrder = (side: "BUY" | "SELL") => {
+    setLastAction(`${side} ${lotSize} lot em ${selectedAsset.label} enviado em modo demo.`);
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -198,39 +216,116 @@ function TradingTerminalPage() {
           </div>
         </div>
       </header>
-      <main className="mx-auto grid max-w-7xl gap-5 px-6 py-8 lg:grid-cols-[1.35fr_0.65fr]">
-        <section className="rounded-3xl border border-border bg-card p-4 shadow-2xl md:p-6">
-          <div className="mb-5 flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">Sessão</p>
-              <p className="font-bold">{user?.primaryEmailAddress?.emailAddress}</p>
+
+      <main className="mx-auto max-w-7xl space-y-5 px-6 py-8">
+        <section className="grid gap-4 md:grid-cols-5">
+          {[
+            ["Saldo", "$100,000.00"],
+            ["Equity", "$102,840.00"],
+            ["Margem usada", "$1,240.00"],
+            ["Margem livre", "$101,600.00"],
+            ["Drawdown", "0.9%"],
+          ].map(([label, value]) => (
+            <div key={label} className="rounded-2xl border border-border bg-card p-4 shadow-xl">
+              <p className="text-xs text-muted-foreground">{label}</p>
+              <p className="mt-1 text-xl font-black">{value}</p>
             </div>
-            <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-400">TradingView Online</span>
+          ))}
+        </section>
+
+        <section className="grid gap-5 lg:grid-cols-[1.35fr_0.65fr]">
+          <div className="rounded-3xl border border-border bg-card p-4 shadow-2xl md:p-6">
+            <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Sessão</p>
+                <p className="font-bold">{user?.primaryEmailAddress?.emailAddress}</p>
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <select
+                  value={selectedAsset.value}
+                  onChange={(event) => setSelectedAsset(assets.find((asset) => asset.value === event.target.value) ?? assets[0])}
+                  className="rounded-xl border border-border bg-background px-3 py-2 text-sm font-bold outline-none"
+                >
+                  {assets.map((asset) => (
+                    <option key={asset.value} value={asset.value}>{asset.label}</option>
+                  ))}
+                </select>
+                <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-400">TradingView Online</span>
+              </div>
+            </div>
+            <div className="h-[560px] overflow-hidden rounded-2xl border border-border bg-background">
+              <TradingViewChart symbol={selectedAsset.value} />
+            </div>
           </div>
-          <div className="h-[580px] overflow-hidden rounded-2xl border border-border bg-background">
-            <TradingViewChart />
+
+          <aside className="space-y-5">
+            <div className="rounded-3xl border border-border bg-card p-6 shadow-xl">
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-primary">Nova ordem</p>
+              <h2 className="mt-1 text-2xl font-black">{selectedAsset.label}</h2>
+              <p className="mt-1 text-sm text-muted-foreground">Preço indicativo: <strong className="text-foreground">{selectedAsset.price}</strong></p>
+
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-muted-foreground">Lot size</label>
+                  <input
+                    value={lotSize}
+                    onChange={(event) => setLotSize(event.target.value)}
+                    className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-3 text-sm font-bold outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Tipo</label>
+                  <div className="mt-1 rounded-xl border border-border bg-background px-3 py-3 text-sm font-bold">Market</div>
+                </div>
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <button onClick={() => sendOrder("BUY")} className="rounded-2xl bg-emerald-500 px-4 py-4 font-black text-white shadow-lg hover:bg-emerald-400">BUY</button>
+                <button onClick={() => sendOrder("SELL")} className="rounded-2xl bg-red-500 px-4 py-4 font-black text-white shadow-lg hover:bg-red-400">SELL</button>
+              </div>
+
+              <p className="mt-4 rounded-2xl border border-border bg-background/60 p-3 text-xs text-muted-foreground">{lastAction}</p>
+            </div>
+
+            <div className="rounded-3xl border border-border bg-card p-6 shadow-xl">
+              <Wallet className="mb-3 h-6 w-6 text-primary" />
+              <p className="text-sm text-muted-foreground">Conta POP Demo</p>
+              <p className="text-4xl font-black">$102,840</p>
+              <p className="mt-1 text-sm text-emerald-400">+$2,840 lucro aberto</p>
+            </div>
+          </aside>
+        </section>
+
+        <section className="rounded-3xl border border-border bg-card p-6 shadow-xl">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-xl font-black">Posições abertas</h2>
+            <span className="text-xs text-muted-foreground">Modo demo</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[650px] text-left text-sm">
+              <thead className="text-xs uppercase tracking-widest text-muted-foreground">
+                <tr>
+                  <th className="py-3">Ativo</th>
+                  <th>Lado</th>
+                  <th>Lotes</th>
+                  <th>Entrada</th>
+                  <th className="text-right">P/L</th>
+                </tr>
+              </thead>
+              <tbody>
+                {openPositions.map((position) => (
+                  <tr key={position.symbol} className="border-t border-border">
+                    <td className="py-4 font-bold">{position.symbol}</td>
+                    <td className={position.side === "BUY" ? "font-bold text-emerald-400" : "font-bold text-red-400"}>{position.side}</td>
+                    <td>{position.lots}</td>
+                    <td>{position.entry}</td>
+                    <td className={`text-right font-black ${position.pnl.startsWith("-") ? "text-red-400" : "text-emerald-400"}`}>{position.pnl}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </section>
-        <aside className="space-y-5">
-          <div className="rounded-3xl border border-border bg-card p-6 shadow-xl">
-            <Wallet className="mb-3 h-6 w-6 text-primary" />
-            <p className="text-sm text-muted-foreground">Equity demo</p>
-            <p className="text-4xl font-black">$102,840</p>
-            <p className="mt-1 text-sm text-emerald-400">+$2,840 lucro</p>
-          </div>
-          <div className="rounded-3xl border border-border bg-card p-6 shadow-xl">
-            <TrendingUp className="mb-3 h-6 w-6 text-primary" />
-            <p className="mb-4 text-lg font-black">Trades recentes</p>
-            <div className="space-y-3">
-              {trades.map(([symbol, side, pnl, pct]) => (
-                <div key={symbol} className="flex items-center justify-between rounded-2xl border border-border bg-background/60 p-3 text-sm">
-                  <div><strong>{symbol}</strong><p className="text-xs text-muted-foreground">{side}</p></div>
-                  <div className="text-right"><strong className={pnl.startsWith("-") ? "text-red-400" : "text-emerald-400"}>{pnl}</strong><p className="text-xs text-muted-foreground">{pct}</p></div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </aside>
       </main>
     </div>
   );
