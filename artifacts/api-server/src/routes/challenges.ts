@@ -82,6 +82,18 @@ const defaultChallenges = [
     leverage: 100,
     instruments: ["EURUSD", "GBPUSD", "USDJPY", "XAUUSD"],
   },
+  {
+    name: "POP 3M Instant Funded",
+    accountSize: 3000000,
+    price: 4999,
+    profitTarget: 0,
+    maxDailyDrawdown: 0,
+    maxTotalDrawdown: 10,
+    minTradingDays: 0,
+    maxTradingDays: 0,
+    leverage: 100,
+    instruments: ["EURUSD", "GBPUSD", "USDJPY", "XAUUSD"],
+  },
 ];
 
 function formatChallenge(c: typeof challengesTable.$inferSelect) {
@@ -107,14 +119,31 @@ async function getOrCreateChallenges() {
     .from(challengesTable)
     .orderBy(challengesTable.accountSize);
 
-  if (existingChallenges.length > 0) {
-    return existingChallenges;
+  if (existingChallenges.length === 0) {
+    return db
+      .insert(challengesTable)
+      .values(defaultChallenges)
+      .returning();
   }
 
-  return db
-    .insert(challengesTable)
-    .values(defaultChallenges)
-    .returning();
+  const hasInstantChallenge = existingChallenges.some(
+    (challenge) => challenge.accountSize >= 3000000,
+  );
+
+  if (!hasInstantChallenge) {
+    const [instantChallenge] = await db
+      .insert(challengesTable)
+      .values(defaultChallenges[defaultChallenges.length - 1])
+      .returning();
+
+    if (instantChallenge) {
+      return [...existingChallenges, instantChallenge].sort(
+        (a, b) => a.accountSize - b.accountSize,
+      );
+    }
+  }
+
+  return existingChallenges;
 }
 
 router.get("/challenges", async (_req, res): Promise<void> => {
