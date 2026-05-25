@@ -16,40 +16,24 @@ type Challenge = {
 };
 
 const fallbackChallenges: Challenge[] = [
-  {
-    id: 1,
-    name: "POP Starter $25K",
-    accountSize: 25000,
-    price: 149,
-    profitTarget: 8,
-    maxDailyDrawdown: 0,
-    maxTotalDrawdown: 10,
-    minTradingDays: 5,
-    leverage: 100,
-  },
-  {
-    id: 2,
-    name: "POP Pro $100K",
-    accountSize: 100000,
-    price: 399,
-    profitTarget: 8,
-    maxDailyDrawdown: 0,
-    maxTotalDrawdown: 10,
-    minTradingDays: 5,
-    leverage: 100,
-  },
+  { id: 1, name: "POP $10K", accountSize: 10000, price: 99, profitTarget: 8, maxDailyDrawdown: 0, maxTotalDrawdown: 10, minTradingDays: 5, leverage: 100 },
+  { id: 2, name: "POP $25K", accountSize: 25000, price: 149, profitTarget: 8, maxDailyDrawdown: 0, maxTotalDrawdown: 10, minTradingDays: 5, leverage: 100 },
+  { id: 3, name: "POP $50K", accountSize: 50000, price: 249, profitTarget: 8, maxDailyDrawdown: 0, maxTotalDrawdown: 10, minTradingDays: 5, leverage: 100 },
+  { id: 4, name: "POP $100K", accountSize: 100000, price: 399, profitTarget: 8, maxDailyDrawdown: 0, maxTotalDrawdown: 10, minTradingDays: 5, leverage: 100 },
+  { id: 5, name: "POP $200K", accountSize: 200000, price: 749, profitTarget: 8, maxDailyDrawdown: 0, maxTotalDrawdown: 10, minTradingDays: 5, leverage: 100 },
+  { id: 6, name: "POP $400K", accountSize: 400000, price: 1299, profitTarget: 8, maxDailyDrawdown: 0, maxTotalDrawdown: 10, minTradingDays: 5, leverage: 100 },
 ];
 
 function getChallengeList(raw: unknown): Challenge[] {
-  if (Array.isArray(raw)) return raw as Challenge[];
+  if (Array.isArray(raw) && raw.length > 0) return raw as Challenge[];
 
   if (raw && typeof raw === "object") {
     const value = raw as { data?: unknown; challenges?: unknown; items?: unknown; result?: unknown };
 
-    if (Array.isArray(value.data)) return value.data as Challenge[];
-    if (Array.isArray(value.challenges)) return value.challenges as Challenge[];
-    if (Array.isArray(value.items)) return value.items as Challenge[];
-    if (Array.isArray(value.result)) return value.result as Challenge[];
+    if (Array.isArray(value.data) && value.data.length > 0) return value.data as Challenge[];
+    if (Array.isArray(value.challenges) && value.challenges.length > 0) return value.challenges as Challenge[];
+    if (Array.isArray(value.items) && value.items.length > 0) return value.items as Challenge[];
+    if (Array.isArray(value.result) && value.result.length > 0) return value.result as Challenge[];
   }
 
   return fallbackChallenges;
@@ -61,11 +45,12 @@ function formatAccountSize(size: number): string {
 }
 
 function ChallengeCard({ plan }: { plan: Challenge }) {
-  const popular = plan.accountSize >= 100000;
+  const popular = plan.accountSize === 100000;
+  const premium = plan.accountSize >= 200000;
 
   return (
-    <div className={`relative flex flex-col rounded-2xl border bg-card overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl ${popular ? "border-blue-500/40 ring-1 ring-blue-500/10" : "border-emerald-500/30 ring-1 ring-emerald-500/10"}`}>
-      <div className={`absolute top-0 inset-x-0 h-28 bg-gradient-to-b ${popular ? "from-blue-950/60 via-blue-900/20" : "from-emerald-950/60 via-emerald-900/20"} to-transparent pointer-events-none`} />
+    <div className={`relative flex flex-col rounded-2xl border bg-card overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl ${popular ? "border-blue-500/40 ring-1 ring-blue-500/10" : premium ? "border-purple-500/35 ring-1 ring-purple-500/10" : "border-emerald-500/30 ring-1 ring-emerald-500/10"}`}>
+      <div className={`absolute top-0 inset-x-0 h-28 bg-gradient-to-b ${popular ? "from-blue-950/60 via-blue-900/20" : premium ? "from-purple-950/60 via-purple-900/20" : "from-emerald-950/60 via-emerald-900/20"} to-transparent pointer-events-none`} />
 
       {popular && (
         <div className="absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-500 text-white shadow-sm z-10">
@@ -75,13 +60,13 @@ function ChallengeCard({ plan }: { plan: Challenge }) {
       )}
 
       <div className="relative px-5 pt-5 pb-3">
-        <div className={`text-[10px] font-black uppercase tracking-[0.2em] mb-1 ${popular ? "text-blue-400" : "text-emerald-400"}`}>
-          {popular ? "Pro" : "Explorer"}
+        <div className={`text-[10px] font-black uppercase tracking-[0.2em] mb-1 ${popular ? "text-blue-400" : premium ? "text-purple-400" : "text-emerald-400"}`}>
+          {popular ? "Pro" : premium ? "Elite" : "Explorer"}
         </div>
         <div className="text-4xl font-black tabular-nums leading-none mb-1">
           {formatAccountSize(plan.accountSize)}
         </div>
-        <p className="text-xs text-muted-foreground leading-snug">{popular ? "O plano mais escolhido." : "Ideal para começar."}</p>
+        <p className="text-xs text-muted-foreground leading-snug">{popular ? "O plano mais escolhido." : premium ? "Para traders experientes." : "Ideal para começar."}</p>
       </div>
 
       <div className="h-px bg-white/5 mx-5" />
