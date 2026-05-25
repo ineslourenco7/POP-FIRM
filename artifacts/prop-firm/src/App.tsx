@@ -1,5 +1,6 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Switch, Route, Router as WouterRouter } from "wouter";
+import { SignIn, SignUp } from "@clerk/clerk-react";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "sonner";
@@ -14,13 +15,29 @@ import TopBar from "@/components/TopBar";
 import SupportChat from "@/components/SupportChat";
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
-const appVersion = "restored-frontend-2026-05-25";
+const appVersion = "auth-routes-2026-05-25";
 
 function PublicChallengesPage() {
   return (
     <div className="min-h-screen bg-background text-foreground" data-app-version={appVersion}>
       <TopBar backHref="/" backLabel="Início" />
       <Challenges />
+    </div>
+  );
+}
+
+function SignInPage() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-6 py-10">
+      <SignIn routing="path" path="/sign-in" signUpUrl="/sign-up" fallbackRedirectUrl="/challenges" />
+    </div>
+  );
+}
+
+function SignUpPage() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-6 py-10">
+      <SignUp routing="path" path="/sign-up" signInUrl="/sign-in" fallbackRedirectUrl="/challenges" />
     </div>
   );
 }
@@ -37,6 +54,8 @@ function App() {
               <Route path="/challenges" component={PublicChallengesPage} />
               <Route path="/terms" component={Terms} />
               <Route path="/support" component={Support} />
+              <Route path="/sign-in" component={SignInPage} />
+              <Route path="/sign-up" component={SignUpPage} />
               <Route>
                 <div className="flex min-h-screen items-center justify-center text-muted-foreground bg-background">
                   Página não encontrada
