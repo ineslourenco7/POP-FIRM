@@ -1,4 +1,3 @@
-import { useEffect, useRef } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Switch, Route, Router as WouterRouter, Link, useRoute } from "wouter";
 import { SignIn, SignUp, useUser, UserButton } from "@clerk/react";
@@ -17,7 +16,7 @@ import TopBar from "@/components/TopBar";
 import SupportChat from "@/components/SupportChat";
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
-const appVersion = "tradingview-terminal-2026-05-25";
+const appVersion = "tradingview-iframe-terminal-2026-05-25";
 const adminEmail = "ineslourencop7" + "@" + "gmail.com";
 
 const checkoutPlans: Record<string, { name: string; account: string; price: number; label: string }> = {
@@ -31,45 +30,31 @@ const checkoutPlans: Record<string, { name: string; account: string; price: numb
 };
 
 function TradingViewChart() {
-  const container = useRef<HTMLDivElement | null>(null);
+  const params = new URLSearchParams({
+    symbol: "OANDA:EURUSD",
+    interval: "60",
+    theme: "dark",
+    style: "1",
+    timezone: "Etc/UTC",
+    withdateranges: "1",
+    hide_side_toolbar: "0",
+    allow_symbol_change: "1",
+    save_image: "0",
+    details: "1",
+    hotlist: "0",
+    calendar: "0",
+    studies: "[]",
+    locale: "en",
+  });
 
-  useEffect(() => {
-    if (!container.current) return;
-
-    container.current.innerHTML = "";
-
-    const widget = document.createElement("div");
-    widget.className = "tradingview-widget-container__widget";
-    widget.style.height = "100%";
-    widget.style.width = "100%";
-
-    const script = document.createElement("script");
-    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
-    script.type = "text/javascript";
-    script.async = true;
-    script.innerHTML = JSON.stringify({
-      autosize: true,
-      symbol: "OANDA:EURUSD",
-      interval: "60",
-      timezone: "Etc/UTC",
-      theme: "dark",
-      style: "1",
-      locale: "en",
-      allow_symbol_change: true,
-      calendar: false,
-      hide_side_toolbar: false,
-      support_host: "https://www.tradingview.com",
-    });
-
-    container.current.appendChild(widget);
-    container.current.appendChild(script);
-
-    return () => {
-      if (container.current) container.current.innerHTML = "";
-    };
-  }, []);
-
-  return <div ref={container} className="h-full w-full" />;
+  return (
+    <iframe
+      title="TradingView Chart"
+      src={`https://s.tradingview.com/widgetembed/?${params.toString()}`}
+      className="h-full w-full border-0"
+      allowFullScreen
+    />
+  );
 }
 
 function PublicChallengesPage() {
