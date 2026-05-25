@@ -1,7 +1,7 @@
 import { useListChallenges } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { Star, Zap, TrendingUp, Shield, Clock, BarChart2, Layers, CheckCircle } from "lucide-react";
+import { Star, Zap, TrendingUp, Shield, CheckCircle } from "lucide-react";
 
 type Challenge = {
   id: number;
@@ -39,6 +39,21 @@ const fallbackChallenges: Challenge[] = [
     leverage: 100,
   },
 ];
+
+function getChallengeList(raw: unknown): Challenge[] {
+  if (Array.isArray(raw)) return raw as Challenge[];
+
+  if (raw && typeof raw === "object") {
+    const value = raw as { data?: unknown; challenges?: unknown; items?: unknown; result?: unknown };
+
+    if (Array.isArray(value.data)) return value.data as Challenge[];
+    if (Array.isArray(value.challenges)) return value.challenges as Challenge[];
+    if (Array.isArray(value.items)) return value.items as Challenge[];
+    if (Array.isArray(value.result)) return value.result as Challenge[];
+  }
+
+  return fallbackChallenges;
+}
 
 function formatAccountSize(size: number): string {
   if (size >= 1000) return `$${size / 1000}K`;
@@ -97,7 +112,7 @@ function ChallengeCard({ plan }: { plan: Challenge }) {
 
 export default function Challenges() {
   const { data: challenges } = useListChallenges();
-  const visibleChallenges = challenges && challenges.length > 0 ? (challenges as Challenge[]) : fallbackChallenges;
+  const visibleChallenges = getChallengeList(challenges);
 
   return (
     <div className="min-h-screen">
@@ -116,7 +131,7 @@ export default function Challenges() {
 
       <div className="px-6 pb-16 max-w-7xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {visibleChallenges.map(plan => (
+          {visibleChallenges.map((plan) => (
             <ChallengeCard key={plan.id} plan={plan} />
           ))}
         </div>
