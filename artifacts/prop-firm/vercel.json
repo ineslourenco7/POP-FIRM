@@ -2,23 +2,10 @@
   "installCommand": "corepack enable && pnpm install --no-frozen-lockfile",
   "buildCommand": "pnpm build",
   "outputDirectory": "dist/public",
-  "cleanUrls": true,
+  "cleanUrls": false,
   "trailingSlash": false,
-  "headers": [
-    {
-      "source": "/:path*",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
-        }
-      ]
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/:path*",
-      "destination": "/index.html"
-    }
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/.*", "dest": "/index.html" }
   ]
 }
