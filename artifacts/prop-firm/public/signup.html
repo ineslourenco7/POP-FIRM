@@ -30,12 +30,7 @@
     }
     h1 { margin: 0 0 8px; font-size: 30px; }
     p { color: rgba(255, 255, 255, 0.72); line-height: 1.5; }
-    label {
-      display: block;
-      margin: 18px 0 8px;
-      font-size: 14px;
-      color: rgba(255, 255, 255, 0.82);
-    }
+    label { display: block; margin: 18px 0 8px; font-size: 14px; color: rgba(255, 255, 255, 0.82); }
     input {
       width: 100%;
       padding: 14px 16px;
@@ -68,7 +63,7 @@
 <body>
   <main class="card">
     <h1>Criar Conta</h1>
-    <p>Cria a tua conta QuantFund. Depois confirma o email para entrar na plataforma.</p>
+    <p>Cria a tua conta QuantFund. Depois confirma o email para veres os desafios disponíveis.</p>
 
     <label for="email">Email</label>
     <input id="email" type="email" placeholder="o-teu-email@exemplo.com" autocomplete="email" />
@@ -83,7 +78,7 @@
   <script>
     const SUPABASE_URL = 'https://aobxefjlelvalwfotyje.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_Oge9RIKPJA9eUyA987Of6Q_h3maEupu';
-    const REDIRECT_URL = 'https://quantfund.pt/login';
+    const REDIRECT_URL = 'https://quantfund.pt/#challenges';
 
     const { createClient } = supabase;
     const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -111,9 +106,7 @@
       const { error } = await client.auth.signUp({
         email,
         password,
-        options: {
-          emailRedirectTo: REDIRECT_URL
-        }
+        options: { emailRedirectTo: REDIRECT_URL }
       });
 
       if (error) {
@@ -124,9 +117,7 @@
       }
 
       setMessage('Conta criada! Verifica o email.', 'success');
-      setTimeout(() => {
-        window.location.href = REDIRECT_URL;
-      }, 2000);
+      setTimeout(() => { window.location.href = REDIRECT_URL; }, 2000);
     }
   </script>
 </body>
