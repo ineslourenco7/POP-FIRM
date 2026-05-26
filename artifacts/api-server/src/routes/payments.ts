@@ -23,6 +23,8 @@ const cryptoCheckoutPlans: Record<string, { name: string; account: string; price
   "8": { name: "Infinity", account: "$3M", price: 4999 },
 };
 
+const allowedCryptoCurrencies = new Set(["btc", "eth"]);
+
 async function formatPayment(p: typeof paymentsTable.$inferSelect) {
   const [challenge] = await db.select().from(challengesTable).where(eq(challengesTable.id, p.challengeId));
   return {
@@ -85,8 +87,15 @@ router.post("/payments/crypto-invoice", async (req, res): Promise<void> => {
 
     const planId = String(req.body?.planId ?? "1");
     const plan = cryptoCheckoutPlans[planId] ?? cryptoCheckoutPlans["1"];
+    const payCurrency = String(req.body?.payCurrency ?? "btc").toLowerCase();
+
+    if (!allowedCryptoCurrencies.has(payCurrency)) {
+      res.status(400).json({ error: "Unsupported crypto payment method" });
+      return;
+    }
+
     const origin = req.get("origin") ?? `${req.protocol}://${req.get("host")}`;
-    const orderId = `pop-firm-${planId}-${Date.now()}`;
+    const orderId = `pop-firm-${planId}-${payCurrency}-${Date.now()}`;
 
     const response = await fetch("https://api.nowpayments.io/v1/invoice", {
       method: "POST",
@@ -97,8 +106,9 @@ router.post("/payments/crypto-invoice", async (req, res): Promise<void> => {
       body: JSON.stringify({
         price_amount: plan.price,
         price_currency: "usd",
+        pay_currency: payCurrency,
         order_id: orderId,
-        order_description: `POP FIRM ${plan.name} ${plan.account}`,
+        order_description: `POP FIRM ${plan.name} ${plan.account} · ${payCurrency.toUpperCase()}`,
         ipn_callback_url: `${origin}/api/payments/nowpayments-webhook`,
         success_url: `${origin}/terminal`,
         cancel_url: `${origin}/challenges`,
@@ -116,6 +126,7 @@ router.post("/payments/crypto-invoice", async (req, res): Promise<void> => {
       invoiceUrl: data.invoice_url ?? data.invoiceUrl ?? data.url,
       orderId,
       plan,
+      payCurrency,
       raw: data,
     });
   } catch (error) {
