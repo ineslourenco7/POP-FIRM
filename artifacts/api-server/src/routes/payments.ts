@@ -12,6 +12,17 @@ import {
 
 const router: IRouter = Router();
 
+const cryptoCheckoutPlans: Record<string, { name: string; account: string; price: number }> = {
+  "1": { name: "Rookie", account: "$10K", price: 99 },
+  "2": { name: "Ascend", account: "$25K", price: 149 },
+  "3": { name: "Velocity", account: "$50K", price: 249 },
+  "4": { name: "Apex", account: "$100K", price: 399 },
+  "5": { name: "Dominance", account: "$200K", price: 749 },
+  "6": { name: "Legacy", account: "$400K", price: 1299 },
+  "7": { name: "Sovereign", account: "$1M", price: 2499 },
+  "8": { name: "Infinity", account: "$3M", price: 4999 },
+};
+
 async function formatPayment(p: typeof paymentsTable.$inferSelect) {
   const [challenge] = await db.select().from(challengesTable).where(eq(challengesTable.id, p.challengeId));
   return {
@@ -62,6 +73,59 @@ router.post("/payments", requireAuth, async (req, res): Promise<void> => {
 
   const formatted = await formatPayment(payment);
   res.status(201).json(formatted);
+});
+
+router.post("/payments/crypto-invoice", async (req, res): Promise<void> => {
+  try {
+    const apiKey = process.env.NOWPAYMENTS_API_KEY;
+    if (!apiKey) {
+      res.status(500).json({ error: "NOWPAYMENTS_API_KEY is missing" });
+      return;
+    }
+
+    const planId = String(req.body?.planId ?? "1");
+    const plan = cryptoCheckoutPlans[planId] ?? cryptoCheckoutPlans["1"];
+    const origin = req.get("origin") ?? `${req.protocol}://${req.get("host")}`;
+    const orderId = `pop-firm-${planId}-${Date.now()}`;
+
+    const response = await fetch("https://api.nowpayments.io/v1/invoice", {
+      method: "POST",
+      headers: {
+        "x-api-key": apiKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        price_amount: plan.price,
+        price_currency: "usd",
+        order_id: orderId,
+        order_description: `POP FIRM ${plan.name} ${plan.account}`,
+        ipn_callback_url: `${origin}/api/payments/nowpayments-webhook`,
+        success_url: `${origin}/terminal`,
+        cancel_url: `${origin}/challenges`,
+      }),
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      res.status(response.status).json({ error: "NOWPayments invoice failed", details: data });
+      return;
+    }
+
+    res.json({
+      invoiceUrl: data.invoice_url ?? data.invoiceUrl ?? data.url,
+      orderId,
+      plan,
+      raw: data,
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Crypto checkout error" });
+  }
+});
+
+router.post("/payments/nowpayments-webhook", async (req, res): Promise<void> => {
+  console.log("NOWPayments IPN", req.body);
+  res.json({ ok: true });
 });
 
 router.post("/payments/:id/proof", requireAuth, async (req, res): Promise<void> => {
