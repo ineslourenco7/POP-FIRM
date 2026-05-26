@@ -49,6 +49,9 @@ const promotions = [
 ];
 
 const equityPoints = "0,70 55,62 110,68 165,50 220,42 275,46 330,30 385,24 440,28 495,18";
+const secondaryButtonClass = "min-h-11 flex-1 whitespace-nowrap rounded-xl border border-border px-3 py-2 text-center text-xs font-black transition hover:bg-card sm:flex-none";
+const tableButtonClass = "min-h-11 whitespace-nowrap rounded-xl border border-border px-3 py-2 text-xs font-black transition hover:bg-background";
+const adminActionButtonClass = "flex min-h-[88px] w-full items-center rounded-2xl border border-border bg-background/60 p-4 text-left text-sm font-black transition hover:bg-background";
 
 function statusClass(status: string) {
   const value = status.toLowerCase();
@@ -65,20 +68,20 @@ function Badge({ value }: { value: string }) {
 export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border bg-card/70 px-6 py-5 backdrop-blur">
-        <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-4">
+      <header className="border-b border-border bg-card/70 px-4 py-5 backdrop-blur sm:px-6">
+        <div className="mx-auto flex max-w-[1600px] flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.25em] text-primary">POP FIRM Admin</p>
-            <h1 className="text-3xl font-black">Painel de Administração</h1>
+            <h1 className="text-2xl font-black sm:text-3xl">Painel de Administração</h1>
           </div>
-          <div className="flex items-center gap-3 rounded-2xl border border-border bg-background px-4 py-3 text-sm text-muted-foreground">
-            <Search className="h-4 w-4" />
-            Procurar cliente, pagamento, challenge, ticket...
+          <div className="flex w-full min-w-0 items-center gap-3 rounded-2xl border border-border bg-background px-4 py-3 text-sm text-muted-foreground lg:w-auto lg:min-w-[420px]">
+            <Search className="h-4 w-4 shrink-0" />
+            <span className="min-w-0 truncate">Procurar cliente, pagamento, challenge, ticket...</span>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-[1600px] space-y-6 px-6 py-8">
+      <main className="mx-auto max-w-[1600px] space-y-6 px-4 py-6 sm:px-6 sm:py-8">
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {adminStats.map(({ label, value, sub, icon: Icon }) => (
             <div key={label} className="rounded-3xl border border-border bg-card p-6 shadow-xl">
@@ -92,19 +95,23 @@ export default function AdminDashboard() {
 
         <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
           <div className="rounded-3xl border border-border bg-card p-5 shadow-xl">
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-xl font-black">Inbox de suporte</h2>
               <Badge value="4 urgentes" />
             </div>
             <div className="space-y-3">
               {supportMessages.map((message) => (
                 <div key={message.email} className="rounded-2xl border border-border bg-background/60 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div><p className="font-black">{message.name}</p><p className="text-xs text-muted-foreground">{message.email}</p></div>
-                    <div className="flex gap-2"><Badge value={message.priority} /><Badge value={message.status} /></div>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0"><p className="font-black">{message.name}</p><p className="truncate text-xs text-muted-foreground">{message.email}</p></div>
+                    <div className="flex flex-wrap gap-2"><Badge value={message.priority} /><Badge value={message.status} /></div>
                   </div>
                   <p className="mt-3 text-sm">{message.subject}</p>
-                  <div className="mt-3 flex gap-2"><button className="rounded-xl border border-border px-3 py-2 text-xs font-black hover:bg-card">Responder</button><button className="rounded-xl border border-border px-3 py-2 text-xs font-black hover:bg-card">Pending</button><button className="rounded-xl border border-border px-3 py-2 text-xs font-black hover:bg-card">Solved</button></div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button className={secondaryButtonClass}>Responder</button>
+                    <button className={secondaryButtonClass}>Pending</button>
+                    <button className={secondaryButtonClass}>Solved</button>
+                  </div>
                   <p className="mt-2 text-xs text-muted-foreground">Recebida às {message.time}</p>
                 </div>
               ))}
@@ -126,7 +133,7 @@ export default function AdminDashboard() {
 
         <section className="rounded-3xl border border-border bg-card p-5 shadow-xl">
           <div className="mb-4 flex items-center gap-2"><Users className="h-5 w-5 text-primary" /><h2 className="text-xl font-black">Clientes, contacto e pagamentos</h2></div>
-          <div className="overflow-x-auto"><table className="w-full min-w-[1300px] text-sm"><thead className="text-left text-[10px] uppercase tracking-[0.18em] text-muted-foreground"><tr><th className="py-3">Cliente</th><th>Contacto</th><th>País</th><th>Registo</th><th>IP / Login</th><th>KYC</th><th>Plano</th><th>Pagamento</th><th>Invoices</th><th>Payouts</th><th>Chargebacks</th><th>Status</th><th>Ações</th></tr></thead><tbody>{clients.map((client) => <tr key={client.email} className="border-t border-border"><td className="py-4 font-black">{client.name}</td><td><p>{client.email}</p><p className="text-xs text-muted-foreground">{client.phone}</p></td><td>{client.country}</td><td>{client.registered}</td><td><p>{client.lastIp}</p><p className="text-xs text-muted-foreground">{client.loginHistory}</p></td><td><Badge value={client.kyc} /></td><td>{client.plan}</td><td>{client.payment}</td><td>{client.invoices}</td><td>{client.payouts}</td><td><Badge value={client.chargebacks === "0" ? "0" : `${client.chargebacks} chargeback`} /></td><td><Badge value={client.status} /></td><td><button className="rounded-xl border border-border px-3 py-2 text-xs font-black hover:bg-background">Ver perfil</button></td></tr>)}</tbody></table></div>
+          <div className="overflow-x-auto"><table className="w-full min-w-[1300px] text-sm"><thead className="text-left text-[10px] uppercase tracking-[0.18em] text-muted-foreground"><tr><th className="py-3">Cliente</th><th>Contacto</th><th>País</th><th>Registo</th><th>IP / Login</th><th>KYC</th><th>Plano</th><th>Pagamento</th><th>Invoices</th><th>Payouts</th><th>Chargebacks</th><th>Status</th><th>Ações</th></tr></thead><tbody>{clients.map((client) => <tr key={client.email} className="border-t border-border"><td className="py-4 font-black">{client.name}</td><td><p>{client.email}</p><p className="text-xs text-muted-foreground">{client.phone}</p></td><td>{client.country}</td><td>{client.registered}</td><td><p>{client.lastIp}</p><p className="text-xs text-muted-foreground">{client.loginHistory}</p></td><td><Badge value={client.kyc} /></td><td>{client.plan}</td><td>{client.payment}</td><td>{client.invoices}</td><td>{client.payouts}</td><td><Badge value={client.chargebacks === "0" ? "0" : `${client.chargebacks} chargeback`} /></td><td><Badge value={client.status} /></td><td><button className={tableButtonClass}>Ver perfil</button></td></tr>)}</tbody></table></div>
         </section>
 
         <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
@@ -137,7 +144,14 @@ export default function AdminDashboard() {
 
           <div className="rounded-3xl border border-border bg-card p-5 shadow-xl">
             <div className="mb-4 flex items-center gap-2"><Lock className="h-5 w-5 text-primary" /><h2 className="text-xl font-black">Ações admin</h2></div>
-            <div className="grid gap-3 sm:grid-cols-2"><button className="rounded-2xl border border-border bg-background/60 p-4 text-left text-sm font-black hover:bg-background"><Activity className="mb-2 h-5 w-5 text-primary" />Reset challenge</button><button className="rounded-2xl border border-border bg-background/60 p-4 text-left text-sm font-black hover:bg-background"><Ban className="mb-2 h-5 w-5 text-red-400" />Ban trader</button><button className="rounded-2xl border border-border bg-background/60 p-4 text-left text-sm font-black hover:bg-background"><Lock className="mb-2 h-5 w-5 text-amber-300" />Freeze account</button><button className="rounded-2xl border border-border bg-background/60 p-4 text-left text-sm font-black hover:bg-background"><Wallet className="mb-2 h-5 w-5 text-emerald-400" />Approve payout</button><button className="rounded-2xl border border-border bg-background/60 p-4 text-left text-sm font-black hover:bg-background"><Shield className="mb-2 h-5 w-5 text-red-400" />Fail manual</button><button className="rounded-2xl border border-border bg-background/60 p-4 text-left text-sm font-black hover:bg-background"><MessageSquare className="mb-2 h-5 w-5 text-blue-300" />Mensagem direta</button></div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <button className={adminActionButtonClass}><span><Activity className="mb-2 h-5 w-5 text-primary" />Reset challenge</span></button>
+              <button className={adminActionButtonClass}><span><Ban className="mb-2 h-5 w-5 text-red-400" />Ban trader</span></button>
+              <button className={adminActionButtonClass}><span><Lock className="mb-2 h-5 w-5 text-amber-300" />Freeze account</span></button>
+              <button className={adminActionButtonClass}><span><Wallet className="mb-2 h-5 w-5 text-emerald-400" />Approve payout</span></button>
+              <button className={adminActionButtonClass}><span><Shield className="mb-2 h-5 w-5 text-red-400" />Fail manual</span></button>
+              <button className={adminActionButtonClass}><span><MessageSquare className="mb-2 h-5 w-5 text-blue-300" />Mensagem direta</span></button>
+            </div>
           </div>
         </section>
 
@@ -147,8 +161,8 @@ export default function AdminDashboard() {
         </section>
 
         <section className="rounded-3xl border border-border bg-card p-5 shadow-xl">
-          <div className="mb-4 flex items-center justify-between"><div className="flex items-center gap-2"><Gift className="h-5 w-5 text-primary" /><h2 className="text-xl font-black">Promoções e cupões</h2></div><button className="rounded-xl bg-primary px-4 py-3 text-xs font-black text-primary-foreground">Criar promoção</button></div>
-          <div className="grid gap-4 md:grid-cols-3">{promotions.map((promo) => <div key={promo.code} className="rounded-3xl border border-border bg-background/60 p-5"><div className="flex items-start justify-between"><div><p className="text-2xl font-black">{promo.code}</p><p className="text-sm text-muted-foreground">{promo.discount}</p></div><Badge value={promo.status} /></div><div className="mt-4 grid grid-cols-2 gap-3 text-sm"><div><p className="text-xs text-muted-foreground">Uso</p><p className="font-black">{promo.usage}</p></div><div><p className="text-xs text-muted-foreground">Expira</p><p className="font-black">{promo.expires}</p></div></div><div className="mt-4 flex gap-2"><button className="rounded-xl border border-border px-3 py-2 text-xs font-black hover:bg-card">Editar</button><button className="rounded-xl border border-border px-3 py-2 text-xs font-black hover:bg-card">Desativar</button></div></div>)}</div>
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div className="flex items-center gap-2"><Gift className="h-5 w-5 text-primary" /><h2 className="text-xl font-black">Promoções e cupões</h2></div><button className="min-h-11 w-full rounded-xl bg-primary px-4 py-3 text-xs font-black text-primary-foreground sm:w-auto">Criar promoção</button></div>
+          <div className="grid gap-4 md:grid-cols-3">{promotions.map((promo) => <div key={promo.code} className="rounded-3xl border border-border bg-background/60 p-5"><div className="flex items-start justify-between"><div><p className="text-2xl font-black">{promo.code}</p><p className="text-sm text-muted-foreground">{promo.discount}</p></div><Badge value={promo.status} /></div><div className="mt-4 grid grid-cols-2 gap-3 text-sm"><div><p className="text-xs text-muted-foreground">Uso</p><p className="font-black">{promo.usage}</p></div><div><p className="text-xs text-muted-foreground">Expira</p><p className="font-black">{promo.expires}</p></div></div><div className="mt-4 flex flex-wrap gap-2"><button className={secondaryButtonClass}>Editar</button><button className={secondaryButtonClass}>Desativar</button></div></div>)}</div>
         </section>
       </main>
     </div>
