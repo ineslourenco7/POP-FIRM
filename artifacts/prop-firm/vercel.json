@@ -4,6 +4,9 @@
   "outputDirectory": "dist/public",
   "cleanUrls": false,
   "trailingSlash": false,
+  "github": {
+    "silent": false
+  },
   "rewrites": [
     {
       "source": "/(.*)",
