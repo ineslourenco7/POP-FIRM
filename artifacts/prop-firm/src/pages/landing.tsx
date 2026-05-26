@@ -137,7 +137,7 @@ export default function Landing() {
           <div className="flex items-center gap-2 sm:gap-4">
             <Link href="/demo"><Button variant="ghost" className="hidden text-sm text-primary hover:text-primary/80 sm:inline-flex">Demo</Button></Link>
             <Link href="/sign-in"><Button variant="ghost" className="text-sm">Entrar</Button></Link>
-            <Link href="/sign-up"><Button className="text-sm">Começar</Button></Link>
+            <Link href="/sign-in"><Button className="text-sm">Começar</Button></Link>
           </div>
         </div>
       </header>
