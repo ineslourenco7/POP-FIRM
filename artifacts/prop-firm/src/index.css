@@ -15,11 +15,11 @@
 
   --color-card: hsl(var(--card));
   --color-card-foreground: hsl(var(--card-foreground));
-  --color-card-border: hsl(var(--card-border));
+  --color-card-border: var(--card-border);
 
   --color-popover: hsl(var(--popover));
   --color-popover-foreground: hsl(var(--popover-foreground));
-  --color-popover-border: hsl(var(--popover-border));
+  --color-popover-border: var(--popover-border);
 
   --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
@@ -214,9 +214,18 @@
     justify-content: flex-end;
   }
 
-  header a[href="/demo"] button,
-  header a[href="/sign-in"] button {
+  header a[href="/demo"] button {
     display: none;
+  }
+
+  header a[href="/sign-in"] button {
+    display: inline-flex !important;
+    min-width: 5.25rem;
+    height: 2.35rem;
+    padding-left: 0.85rem;
+    padding-right: 0.85rem;
+    font-size: 0.8rem;
+    white-space: nowrap;
   }
 
   header a[href="/sign-up"] button {
