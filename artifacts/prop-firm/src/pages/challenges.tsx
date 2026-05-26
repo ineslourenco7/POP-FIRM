@@ -16,21 +16,22 @@ type Challenge = {
 };
 
 const fallbackChallenges: Challenge[] = [
-  { id: 1, name: "Rookie", accountSize: 10000, price: 99, profitTarget: 8, maxDailyDrawdown: 10, maxTotalDrawdown: 10, minTradingDays: 2, leverage: 100 },
-  { id: 2, name: "Ascend", accountSize: 25000, price: 149, profitTarget: 8, maxDailyDrawdown: 10, maxTotalDrawdown: 10, minTradingDays: 2, leverage: 100 },
-  { id: 3, name: "Velocity", accountSize: 50000, price: 249, profitTarget: 8, maxDailyDrawdown: 10, maxTotalDrawdown: 10, minTradingDays: 2, leverage: 100 },
-  { id: 4, name: "Apex", accountSize: 100000, price: 399, profitTarget: 8, maxDailyDrawdown: 10, maxTotalDrawdown: 10, minTradingDays: 2, leverage: 100 },
-  { id: 5, name: "Dominance", accountSize: 200000, price: 749, profitTarget: 8, maxDailyDrawdown: 10, maxTotalDrawdown: 10, minTradingDays: 2, leverage: 100 },
-  { id: 6, name: "Legacy", accountSize: 400000, price: 1299, profitTarget: 8, maxDailyDrawdown: 10, maxTotalDrawdown: 10, minTradingDays: 2, leverage: 100 },
-  { id: 7, name: "Infinity", accountSize: 3000000, price: 4999, profitTarget: 8, maxDailyDrawdown: 10, maxTotalDrawdown: 10, minTradingDays: 2, leverage: 100 },
+  { id: 1, name: "Rookie", accountSize: 10000, price: 99, profitTarget: 10, maxDailyDrawdown: 10, maxTotalDrawdown: 10, minTradingDays: 2, leverage: 100 },
+  { id: 2, name: "Ascend", accountSize: 25000, price: 149, profitTarget: 10, maxDailyDrawdown: 10, maxTotalDrawdown: 10, minTradingDays: 2, leverage: 100 },
+  { id: 3, name: "Velocity", accountSize: 50000, price: 249, profitTarget: 10, maxDailyDrawdown: 10, maxTotalDrawdown: 10, minTradingDays: 2, leverage: 100 },
+  { id: 4, name: "Apex", accountSize: 100000, price: 399, profitTarget: 10, maxDailyDrawdown: 10, maxTotalDrawdown: 10, minTradingDays: 2, leverage: 100 },
+  { id: 5, name: "Dominance", accountSize: 200000, price: 749, profitTarget: 10, maxDailyDrawdown: 10, maxTotalDrawdown: 10, minTradingDays: 2, leverage: 100 },
+  { id: 6, name: "Legacy", accountSize: 400000, price: 1299, profitTarget: 10, maxDailyDrawdown: 10, maxTotalDrawdown: 10, minTradingDays: 2, leverage: 100 },
+  { id: 7, name: "Infinity", accountSize: 3000000, price: 4999, profitTarget: 10, maxDailyDrawdown: 10, maxTotalDrawdown: 10, minTradingDays: 2, leverage: 100 },
 ];
 
 function normalizeChallenge(plan: Challenge): Challenge {
   return {
     ...plan,
     name: plan.name.replace(/^POP\s+/i, ""),
-    maxDailyDrawdown: plan.maxTotalDrawdown || plan.maxDailyDrawdown || 10,
-    maxTotalDrawdown: plan.maxTotalDrawdown || plan.maxDailyDrawdown || 10,
+    profitTarget: 10,
+    maxDailyDrawdown: 10,
+    maxTotalDrawdown: 10,
     minTradingDays: 2,
   };
 }
@@ -131,7 +132,7 @@ export default function Challenges() {
           Escolhe o Teu Tier
         </h1>
         <p className="text-muted-foreground text-base max-w-xl mx-auto leading-relaxed">
-          Uma única fase de avaliação. Mínimo de <strong className="text-foreground">2 dias</strong>, perda diária igual à perda total e até <strong className="text-foreground">90% dos lucros</strong>.
+          Uma única fase de avaliação. Objetivo de lucro de <strong className="text-foreground">10%</strong>, perda máxima diária de <strong className="text-foreground">10%</strong>, mínimo de <strong className="text-foreground">2 dias</strong> e até <strong className="text-foreground">90% dos lucros</strong>.
         </p>
       </div>
 
@@ -157,9 +158,9 @@ export default function Challenges() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             {[
               { icon: Zap, title: "1 Única Fase", sub: "Processo simples", color: "text-yellow-400", bg: "bg-yellow-500/10 border-yellow-500/20" },
-              { icon: TrendingUp, title: "Até 90% Lucros", sub: "Plano claro", color: "text-green-400", bg: "bg-green-500/10 border-green-500/20" },
+              { icon: TrendingUp, title: "10% Lucro", sub: "Objetivo claro", color: "text-green-400", bg: "bg-green-500/10 border-green-500/20" },
               { icon: Shield, title: "2 Dias Mínimos", sub: "Avaliação rápida", color: "text-blue-400", bg: "bg-blue-500/10 border-blue-500/20" },
-              { icon: CheckCircle, title: "Suporte", sub: "Ajuda rápida", color: "text-purple-400", bg: "bg-purple-500/10 border-purple-500/20" },
+              { icon: CheckCircle, title: "10% Perda Diária", sub: "Regra sincronizada", color: "text-purple-400", bg: "bg-purple-500/10 border-purple-500/20" },
             ].map(({ icon: Icon, title, sub, color, bg }) => (
               <div key={title} className={`rounded-xl border p-4 text-center ${bg}`}>
                 <div className={`flex justify-center mb-2 ${color}`}>
