@@ -151,7 +151,211 @@
     @apply border-border;
   }
 
+  html {
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+  }
+
   body {
     @apply font-sans antialiased bg-background text-foreground;
+    overflow-x: hidden;
+  }
+
+  img,
+  svg,
+  video,
+  canvas,
+  iframe {
+    max-width: 100%;
+  }
+}
+
+@layer utilities {
+  .safe-x {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+}
+
+@media (max-width: 767px) {
+  .container {
+    width: 100%;
+    max-width: 100%;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  header .container,
+  header .mx-auto {
+    min-height: auto;
+    height: auto;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  header nav {
+    width: 100%;
+    order: 3;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+    scrollbar-width: none;
+  }
+
+  header nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  header .flex.items-center.gap-4 {
+    gap: 0.4rem;
+    margin-left: auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  header a[href="/demo"] button,
+  header a[href="/sign-in"] button {
+    display: none;
+  }
+
+  header a[href="/sign-up"] button {
+    height: 2.35rem;
+    padding-left: 0.8rem;
+    padding-right: 0.8rem;
+    font-size: 0.8rem;
+  }
+
+  h1,
+  .text-5xl,
+  .text-6xl,
+  .text-7xl {
+    font-size: clamp(2.15rem, 11vw, 3.25rem) !important;
+    line-height: 1.05 !important;
+    letter-spacing: -0.045em;
+  }
+
+  h2,
+  .text-4xl {
+    font-size: clamp(1.75rem, 8vw, 2.35rem) !important;
+    line-height: 1.12 !important;
+  }
+
+  .text-3xl {
+    font-size: clamp(1.45rem, 6.5vw, 1.9rem) !important;
+    line-height: 1.18 !important;
+  }
+
+  .text-xl {
+    font-size: 1.05rem !important;
+    line-height: 1.55 !important;
+  }
+
+  section {
+    scroll-margin-top: 5.75rem;
+  }
+
+  .py-24,
+  .py-32 {
+    padding-top: 4rem !important;
+    padding-bottom: 4rem !important;
+  }
+
+  .py-20 {
+    padding-top: 3.5rem !important;
+    padding-bottom: 3.5rem !important;
+  }
+
+  .py-16 {
+    padding-top: 3rem !important;
+    padding-bottom: 3rem !important;
+  }
+
+  .p-8,
+  .md\:p-12 {
+    padding: 1.25rem !important;
+  }
+
+  .rounded-3xl,
+  .rounded-\[2rem\] {
+    border-radius: 1.25rem !important;
+  }
+
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    min-height: 44px;
+  }
+
+  table {
+    font-size: 0.78rem;
+  }
+
+  th,
+  td {
+    white-space: nowrap;
+  }
+
+  .min-w-\[720px\],
+  .min-w-\[820px\],
+  .min-w-\[900px\],
+  .min-w-\[1300px\] {
+    min-width: 680px !important;
+  }
+
+  .w-\[360px\] {
+    width: min(92vw, 360px) !important;
+  }
+
+  .max-w-\[1500px\],
+  .max-w-\[1600px\],
+  .max-w-\[1900px\] {
+    max-width: 100% !important;
+  }
+
+  .grid {
+    min-width: 0;
+  }
+
+  [class*="grid-cols-\["],
+  [class*="xl:grid-cols-\["] {
+    min-width: 0;
+  }
+
+  iframe[title="TradingView Chart"] {
+    min-height: 420px;
+  }
+
+  .h-\[calc\(100vh-420px\)\] {
+    height: 420px !important;
+  }
+}
+
+@media (max-width: 420px) {
+  header a[href="/"] span {
+    font-size: 1rem;
+  }
+
+  header a[href="/"] img {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  .text-5xl,
+  .text-6xl,
+  .text-7xl {
+    font-size: clamp(2rem, 12vw, 2.65rem) !important;
+  }
+
+  .px-8,
+  .px-10 {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  .gap-6 {
+    gap: 1rem !important;
   }
 }
