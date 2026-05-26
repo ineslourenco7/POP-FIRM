@@ -26,11 +26,11 @@
       .summary-row { display: flex; justify-content: space-between; gap: 18px; padding: 16px 0; border-bottom: 1px solid rgba(148,163,184,.15); }
       .total { display: flex; justify-content: space-between; align-items: end; padding-top: 18px; }
       .price { font-size: 44px; font-weight: 950; letter-spacing: -.05em; }
-      .address-box { margin-top: 18px; border: 1px solid rgba(56,189,248,.25); background: rgba(56,189,248,.08); border-radius: 22px; padding: 16px; }
-      code { display: block; word-break: break-all; color: #dbeafe; background: rgba(2,6,23,.72); border: 1px solid rgba(148,163,184,.18); border-radius: 14px; padding: 12px; font-size: 12px; }
+      .invoice-box { margin-top: 18px; border: 1px solid rgba(56,189,248,.25); background: rgba(56,189,248,.08); border-radius: 22px; padding: 16px; }
       button.primary { width: 100%; border: 0; cursor: pointer; margin-top: 18px; border-radius: 18px; padding: 16px; background: #3b82f6; color: #0f172a; font-weight: 950; font-size: 16px; }
+      button.primary:disabled { cursor: wait; opacity: .7; }
       .note { margin-top: 16px; border: 1px solid rgba(16,185,129,.25); background: rgba(16,185,129,.1); color: #bbf7d0; border-radius: 18px; padding: 14px; font-size: 13px; line-height: 1.5; }
-      .qr { width: 132px; height: 132px; margin: 0 auto 14px; border-radius: 18px; border: 1px dashed rgba(148,163,184,.3); display: grid; place-items: center; color: #94a3b8; font-size: 12px; text-align: center; }
+      .error { display: none; margin-top: 16px; border: 1px solid rgba(239,68,68,.35); background: rgba(239,68,68,.12); color: #fecaca; border-radius: 18px; padding: 14px; font-size: 13px; line-height: 1.5; }
       @media (max-width: 860px) { .wrap { padding: 18px; } .grid { grid-template-columns: 1fr; } .card { padding: 22px; border-radius: 24px; } .price { font-size: 36px; } }
     </style>
   </head>
@@ -41,7 +41,7 @@
         <section class="card">
           <div class="pill">⚡ Crypto checkout</div>
           <h1>Pagamento por criptomoeda</h1>
-          <p>Escolhe a moeda/rede para pagar o teu desafio POP FIRM. Nesta fase o checkout está crypto-only, sem cartão e sem transferência bancária.</p>
+          <p>Escolhe BTC ou ETH. O site vai criar uma invoice oficial da NOWPayments e redirecionar-te para o checkout seguro, sem mostrar wallets falsas no ecrã.</p>
           <div class="methods" id="methods"></div>
         </section>
         <aside class="card">
@@ -49,15 +49,15 @@
           <h2 id="planName" style="font-size:28px;margin:18px 0 8px">POP Challenge</h2>
           <div class="summary-row"><span class="muted">Desafio</span><strong id="planAccount">$100K</strong></div>
           <div class="summary-row"><span class="muted">Tipo</span><strong>1 fase</strong></div>
-          <div class="summary-row"><span class="muted">Método</span><strong id="selectedMethod">USDT · TRC20</strong></div>
+          <div class="summary-row"><span class="muted">Método</span><strong id="selectedMethod">Bitcoin · BTC</strong></div>
           <div class="total"><span class="muted">Total</span><strong class="price" id="planPrice">$399</strong></div>
-          <div class="address-box">
-            <div class="qr">QR / invoice<br/>gateway crypto</div>
-            <p style="margin:0 0 8px;color:#cbd5e1;font-weight:800">Endereço de pagamento</p>
-            <code id="walletAddress">TQKpX9c6VtPOPFiRMExampleTRC20Wallet</code>
-            <button class="primary" id="copyBtn">Copiar endereço</button>
+          <div class="invoice-box">
+            <p style="margin:0;color:#cbd5e1;font-weight:800">Checkout NOWPayments</p>
+            <p class="muted" style="margin:8px 0 0">Ao clicar, criamos uma invoice real para o plano e moeda escolhidos. O endereço de pagamento será gerado pela NOWPayments.</p>
+            <button class="primary" id="payBtn">Criar invoice e pagar</button>
           </div>
-          <div class="note">Envia apenas pela rede selecionada. USDT TRC20 é recomendado por ter taxas baixas e confirmação rápida.</div>
+          <div class="note">Nunca envies fundos para endereços copiados de prints ou textos antigos. Usa apenas a invoice gerada pela NOWPayments neste checkout.</div>
+          <div class="error" id="errorBox"></div>
         </aside>
       </div>
     </main>
@@ -73,26 +73,61 @@
         "8": { name: "POP Institutional", account: "$3M", price: 4999 }
       };
       const methods = [
-        { id: "usdt_trc20", label: "USDT", network: "TRC20", badge: "RECOMENDADO", icon: "₮", note: "Taxas baixas · confirmação rápida", address: "TQKpX9c6VtPOPFiRMExampleTRC20Wallet" },
-        { id: "usdt_sol", label: "USDT", network: "Solana", badge: "RÁPIDO", icon: "₮", note: "Muito rápido · ideal para ativação instantânea", address: "POPFiRMExampleSolanaUSDTWallet111111111" },
-        { id: "btc", label: "Bitcoin", network: "BTC", badge: "BTC", icon: "₿", note: "Mais lento · usar apenas se preferires BTC", address: "bc1qpopfirmexamplebtcwallet0000000000000" },
-        { id: "eth", label: "Ethereum", network: "ERC20", badge: "ETH", icon: "Ξ", note: "Rede Ethereum · taxas variáveis", address: "0x39a1d82121e428c0b57e79391abf12f0e0df6f15" },
-        { id: "sol", label: "Solana", network: "SOL", badge: "SOL", icon: "◎", note: "Confirmação rápida na rede Solana", address: "POPFiRMExampleSolanaWallet111111111111111" }
+        { id: "btc", label: "Bitcoin", network: "BTC", badge: "BTC", icon: "₿", note: "Pagamento direto em Bitcoin" },
+        { id: "eth", label: "Ethereum", network: "ETH", badge: "ETH", icon: "Ξ", note: "Pagamento direto em Ethereum" }
       ];
-      const id = location.pathname.split("/").filter(Boolean).pop() || "4";
-      const plan = plans[id] || plans["4"];
+      const params = new URLSearchParams(location.search);
+      const planId = params.get("plan") || "4";
+      const plan = plans[planId] || plans["4"];
       let selected = methods[0];
+
       planName.textContent = plan.name;
       planAccount.textContent = plan.account;
       planPrice.textContent = "$" + plan.price;
+
       function renderMethods() {
-        methodsEl = document.getElementById("methods");
+        const methodsEl = document.getElementById("methods");
         methodsEl.innerHTML = methods.map((m) => `<button class="method ${m.id === selected.id ? "active" : ""}" data-id="${m.id}"><span class="icon">${m.icon}</span><span><span class="method-title">${m.label} <span class="muted">${m.network}</span> <span class="badge">${m.badge}</span></span><span class="muted">${m.note}</span></span></button>`).join("");
-        methodsEl.querySelectorAll("button").forEach((btn) => btn.onclick = () => { selected = methods.find((m) => m.id === btn.dataset.id) || methods[0]; updateSelected(); renderMethods(); });
+        methodsEl.querySelectorAll("button").forEach((btn) => btn.onclick = () => {
+          selected = methods.find((m) => m.id === btn.dataset.id) || methods[0];
+          updateSelected();
+          renderMethods();
+        });
       }
-      function updateSelected() { selectedMethod.textContent = selected.label + " · " + selected.network; walletAddress.textContent = selected.address; }
-      copyBtn.onclick = async () => { await navigator.clipboard.writeText(selected.address); copyBtn.textContent = "Endereço copiado"; setTimeout(() => copyBtn.textContent = "Copiar endereço", 1600); };
-      updateSelected(); renderMethods();
+
+      function updateSelected() {
+        selectedMethod.textContent = selected.label + " · " + selected.network;
+      }
+
+      function showError(message) {
+        errorBox.style.display = "block";
+        errorBox.textContent = message;
+      }
+
+      payBtn.onclick = async () => {
+        errorBox.style.display = "none";
+        payBtn.disabled = true;
+        payBtn.textContent = "A criar invoice...";
+        try {
+          const response = await fetch("/api/payments/crypto-invoice", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ planId, payCurrency: selected.id })
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok || !data.invoiceUrl) {
+            throw new Error(data.error || "Não foi possível criar a invoice NOWPayments.");
+          }
+          window.location.href = data.invoiceUrl;
+        } catch (error) {
+          showError(error instanceof Error ? error.message : "Erro ao criar checkout crypto.");
+          payBtn.disabled = false;
+          payBtn.textContent = "Criar invoice e pagar";
+        }
+      };
+
+      updateSelected();
+      renderMethods();
     </script>
   </body>
 </html>
