@@ -4,6 +4,13 @@
   "outputDirectory": "dist/public",
   "cleanUrls": false,
   "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/checkout/:id",
+      "destination": "/crypto-checkout.html?plan=:id",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     {
       "source": "/(.*)",
