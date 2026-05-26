@@ -24,21 +24,18 @@ export default function TopBar({
 
   return (
     <header className={`h-14 border-b sticky top-0 z-50 flex items-center px-4 justify-between shrink-0 ${bg} ${className}`}>
-      {/* Left: logo + back */}
       <div className="flex items-center gap-3">
         <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <img
             src={`${import.meta.env.BASE_URL}logo.svg`}
-            alt="QuantFund"
+            alt="POP FIRM"
             className="w-7 h-7"
           />
-          <span className="font-bold text-base tracking-tight hidden sm:block">QuantFund</span>
+          <span className="font-bold text-base tracking-tight hidden sm:block">POP FIRM</span>
         </Link>
 
-        {/* Separator */}
         <span className="text-muted-foreground/30 select-none">|</span>
 
-        {/* Back to menu */}
         <Link
           href={backHref}
           className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -48,14 +45,12 @@ export default function TopBar({
         </Link>
       </div>
 
-      {/* Center: optional title */}
       {title && (
         <span className="absolute left-1/2 -translate-x-1/2 text-sm font-semibold text-foreground pointer-events-none">
           {title}
         </span>
       )}
 
-      {/* Right: optional slot */}
       {right && <div className="flex items-center gap-2">{right}</div>}
     </header>
   );
