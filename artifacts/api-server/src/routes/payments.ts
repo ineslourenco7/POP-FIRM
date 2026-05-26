@@ -77,8 +77,9 @@ router.post("/payments", requireAuth, async (req, res): Promise<void> => {
   res.status(201).json(formatted);
 });
 
-router.post("/payments/crypto-invoice", async (req, res): Promise<void> => {
+router.post("/payments/crypto-invoice", requireAuth, async (req, res): Promise<void> => {
   try {
+    const user = (req as any).currentUser;
     const apiKey = process.env.NOWPAYMENTS_API_KEY;
     if (!apiKey) {
       res.status(500).json({ error: "NOWPAYMENTS_API_KEY is missing" });
@@ -95,7 +96,7 @@ router.post("/payments/crypto-invoice", async (req, res): Promise<void> => {
     }
 
     const origin = req.get("origin") ?? `${req.protocol}://${req.get("host")}`;
-    const orderId = `pop-firm-${planId}-${payCurrency}-${Date.now()}`;
+    const orderId = `pop-firm-${user.id}-${planId}-${payCurrency}-${Date.now()}`;
 
     const response = await fetch("https://api.nowpayments.io/v1/invoice", {
       method: "POST",
