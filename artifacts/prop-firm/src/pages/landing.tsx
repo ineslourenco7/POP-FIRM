@@ -21,9 +21,9 @@ const FAQS = [
 ];
 
 const TESTIMONIALS = [
-  { name: "Pedro Silva", country: "Portugal", flag: "🇵🇹", role: "Trader Forex", text: "Passei o desafio em 12 dias com uma conta de $100k. O terminal é rápido, os spreads são justos e o suporte respondeu em minutos.", stars: 5, profit: "+$8.240" },
-  { name: "Maria Santos", country: "Brasil", flag: "🇧🇷", role: "Day Trader", text: "Já tentei outras prop firms mas as regras eram complicadas demais. Aqui é simples: segue as regras, passa e recebe.", stars: 5, profit: "+$5.180" },
-  { name: "James Chen", country: "Singapore", flag: "🇸🇬", role: "Algorithmic Trader", text: "The platform is stable, execution is fast and the risk management tools are exactly what I needed.", stars: 5, profit: "+$22.600" },
+  { name: "Pedro Silva", country: "Portugal", flag: "🇵🇹", role: "Trader Forex", photo: "testimonials/pedro.png", text: "Passei o desafio em 12 dias com uma conta de $100k. O terminal é rápido, os spreads são justos e o suporte respondeu em minutos.", stars: 5, profit: "+$8.240" },
+  { name: "Maria Santos", country: "Brasil", flag: "🇧🇷", role: "Day Trader", photo: "testimonials/maria.png", text: "Já tentei outras prop firms mas as regras eram complicadas demais. Aqui é simples: segue as regras, passa e recebe.", stars: 5, profit: "+$5.180" },
+  { name: "James Chen", country: "Singapore", flag: "🇸🇬", role: "Algorithmic Trader", photo: "testimonials/james.png", text: "The platform is stable, execution is fast and the risk management tools are exactly what I needed.", stars: 5, profit: "+$22.600" },
 ];
 
 function FaqItem({ faq }: { faq: { q: string; a: string } }) {
@@ -47,7 +47,7 @@ function ChallengePlanCard({ plan }: { plan: (typeof CHALLENGE_PLANS)[number] })
 }
 
 function TestimonialCard({ t }: { t: (typeof TESTIMONIALS)[number] }) {
-  return <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-6 shadow-xl transition-colors hover:border-primary/40"><div className="flex items-center gap-3"><div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-primary/30 bg-primary/10 text-lg font-black text-primary">{t.name.slice(0, 1)}</div><div><div className="text-sm font-semibold">{t.name} <span className="text-base">{t.flag}</span></div><div className="text-xs text-muted-foreground">{t.role} · {t.country}</div></div><div className="ml-auto font-mono text-sm font-bold text-green-400">{t.profit}</div></div><div className="flex gap-0.5">{Array.from({ length: t.stars }).map((_, i) => <Star key={i} className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />)}</div><p className="text-sm leading-relaxed text-muted-foreground">“{t.text}”</p></div>;
+  return <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-6 shadow-xl transition-colors hover:border-primary/40"><div className="flex items-center gap-3"><img src={`${import.meta.env.BASE_URL}${t.photo}`} alt={t.name} className="h-12 w-12 rounded-full border-2 border-primary/30 object-cover" /><div><div className="text-sm font-semibold">{t.name} <span className="text-base">{t.flag}</span></div><div className="text-xs text-muted-foreground">{t.role} · {t.country}</div></div><div className="ml-auto font-mono text-sm font-bold text-green-400">{t.profit}</div></div><div className="flex gap-0.5">{Array.from({ length: t.stars }).map((_, i) => <Star key={i} className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />)}</div><p className="text-sm leading-relaxed text-muted-foreground">“{t.text}”</p></div>;
 }
 
 export default function Landing() {
