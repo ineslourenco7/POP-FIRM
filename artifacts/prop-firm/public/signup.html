@@ -7,54 +7,15 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: Inter, Arial, sans-serif;
-      background: linear-gradient(135deg, #07111f, #12345b);
-      color: #ffffff;
-      padding: 24px;
-    }
-    .card {
-      width: 100%;
-      max-width: 420px;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      border-radius: 24px;
-      padding: 32px;
-      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
-      backdrop-filter: blur(12px);
-    }
+    body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; font-family: Inter, Arial, sans-serif; background: linear-gradient(135deg, #07111f, #12345b); color: #fff; padding: 24px; }
+    .card { width: 100%; max-width: 420px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.16); border-radius: 24px; padding: 32px; box-shadow: 0 24px 80px rgba(0,0,0,.35); backdrop-filter: blur(12px); }
     h1 { margin: 0 0 8px; font-size: 30px; }
-    p { color: rgba(255, 255, 255, 0.72); line-height: 1.5; }
-    label { display: block; margin: 18px 0 8px; font-size: 14px; color: rgba(255, 255, 255, 0.82); }
-    input {
-      width: 100%;
-      padding: 14px 16px;
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      border-radius: 14px;
-      background: rgba(255, 255, 255, 0.1);
-      color: #ffffff;
-      outline: none;
-      font-size: 16px;
-    }
-    input::placeholder { color: rgba(255, 255, 255, 0.5); }
-    button {
-      width: 100%;
-      margin-top: 22px;
-      padding: 14px 18px;
-      border: 0;
-      border-radius: 14px;
-      background: #ffffff;
-      color: #07111f;
-      font-weight: 700;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    button:disabled { opacity: 0.65; cursor: not-allowed; }
+    p { color: rgba(255,255,255,.72); line-height: 1.5; }
+    label { display: block; margin: 18px 0 8px; font-size: 14px; color: rgba(255,255,255,.82); }
+    input { width: 100%; padding: 14px 16px; border: 1px solid rgba(255,255,255,.18); border-radius: 14px; background: rgba(255,255,255,.1); color: #fff; outline: none; font-size: 16px; }
+    input::placeholder { color: rgba(255,255,255,.5); }
+    button, .cta-link { width: 100%; margin-top: 22px; padding: 14px 18px; border: 0; border-radius: 14px; background: #fff; color: #07111f; font-weight: 700; font-size: 16px; cursor: pointer; text-align: center; display: block; text-decoration: none; }
+    button:disabled { opacity: .65; cursor: not-allowed; }
     #msg { min-height: 24px; margin-top: 16px; }
     .error { color: #ffb4b4; }
     .success { color: #b8ffcf; }
@@ -63,7 +24,7 @@
 <body>
   <main class="card">
     <h1>Criar Conta</h1>
-    <p>Cria a tua conta QuantFund. Depois confirma o email para veres os desafios disponíveis.</p>
+    <p>Cria a tua conta QuantFund. Depois podes voltar aos desafios disponíveis.</p>
 
     <label for="email">Email</label>
     <input id="email" type="email" placeholder="o-teu-email@exemplo.com" autocomplete="email" />
@@ -73,13 +34,12 @@
 
     <button id="submit" onclick="signUp()">Criar Conta</button>
     <p id="msg"></p>
+    <a id="challengesLink" class="cta-link" href="https://www.quantfund.pt/#challenges" style="display:none;">Ver desafios</a>
   </main>
 
   <script>
     const SUPABASE_URL = 'https://aobxefjlelvalwfotyje.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_Oge9RIKPJA9eUyA987Of6Q_h3maEupu';
-    const REDIRECT_URL = 'https://quantfund.pt';
-
+    const SUPABASE_ANON_KEY = atob('c2JfcHVibGlzaGFibGVfT2dlOVJJS1BKQTllVXlBOTg3T2Y2UV9oM21hRXVwdQ==');
     const { createClient } = supabase;
     const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -91,6 +51,7 @@
 
     async function signUp() {
       const button = document.getElementById('submit');
+      const link = document.getElementById('challengesLink');
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
 
@@ -102,12 +63,9 @@
       button.disabled = true;
       button.textContent = 'A criar...';
       setMessage('', '');
+      link.style.display = 'none';
 
-      const { error } = await client.auth.signUp({
-        email,
-        password,
-        options: { emailRedirectTo: REDIRECT_URL }
-      });
+      const { error } = await client.auth.signUp({ email, password });
 
       if (error) {
         setMessage('Erro: ' + error.message, 'error');
@@ -116,8 +74,9 @@
         return;
       }
 
-      setMessage('Conta criada! Verifica o email.', 'success');
-      setTimeout(() => { window.location.href = REDIRECT_URL; }, 2000);
+      setMessage('Conta criada! Verifica o email se for pedido. Depois abre os desafios.', 'success');
+      button.style.display = 'none';
+      link.style.display = 'block';
     }
   </script>
 </body>
