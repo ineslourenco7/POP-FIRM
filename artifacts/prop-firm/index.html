@@ -16,6 +16,26 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+      (function () {
+        var signupUrl = '/signup.html';
+        function isSignupPath(pathname) { return pathname === '/sign-up' || pathname === '/sign-up/'; }
+        if (isSignupPath(window.location.pathname)) {
+          window.location.replace(signupUrl);
+          return;
+        }
+        document.addEventListener('click', function (event) {
+          var link = event.target && event.target.closest ? event.target.closest('a[href]') : null;
+          if (!link) return;
+          var href = link.getAttribute('href');
+          if (href === '/sign-up' || href === '/sign-up/') {
+            event.preventDefault();
+            event.stopPropagation();
+            window.location.href = signupUrl;
+          }
+        }, true);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
