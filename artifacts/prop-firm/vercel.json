@@ -9,8 +9,13 @@
   },
   "redirects": [
     {
-      "source": "/sign-up",
-      "destination": "https://ineslourenco7.github.io/POP-FIRM/artifacts/prop-firm/public/signup.html",
+      "source": "/signup.html",
+      "destination": "/sign-up/",
+      "permanent": false
+    },
+    {
+      "source": "/sign-up.html",
+      "destination": "/sign-up/",
       "permanent": false
     }
   ],
