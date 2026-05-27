@@ -3,131 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>POP FIRM · Crypto Checkout</title>
-    <style>
-      :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #07111f; color: #f8fafc; }
-      * { box-sizing: border-box; }
-      body { margin: 0; min-height: 100vh; background: radial-gradient(circle at top left, rgba(59,130,246,.25), transparent 35%), radial-gradient(circle at bottom right, rgba(34,211,238,.18), transparent 35%), #07111f; }
-      a { color: inherit; text-decoration: none; }
-      .wrap { width: min(1120px, 100%); margin: 0 auto; padding: 24px; }
-      .back { display: inline-flex; align-items: center; gap: 8px; color: #94a3b8; font-size: 14px; font-weight: 800; }
-      .grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 24px; margin-top: 32px; }
-      .card { border: 1px solid rgba(148,163,184,.18); background: rgba(15,23,42,.82); border-radius: 32px; padding: 28px; box-shadow: 0 24px 80px rgba(0,0,0,.35); backdrop-filter: blur(14px); }
-      .pill { display: inline-flex; align-items: center; gap: 8px; border: 1px solid rgba(34,211,238,.35); background: rgba(34,211,238,.1); color: #a5f3fc; border-radius: 999px; padding: 8px 12px; font-size: 11px; font-weight: 950; letter-spacing: .16em; text-transform: uppercase; }
-      h1 { font-size: clamp(34px, 6vw, 56px); line-height: .98; margin: 24px 0 14px; letter-spacing: -.055em; }
-      p { color: #94a3b8; line-height: 1.65; }
-      .methods { display: grid; gap: 12px; margin-top: 22px; }
-      .method { width: 100%; display: flex; align-items: center; gap: 14px; text-align: left; cursor: pointer; border: 1px solid rgba(148,163,184,.18); background: rgba(2,6,23,.55); color: #f8fafc; border-radius: 18px; padding: 16px; transition: .15s ease; }
-      .method.active { border-color: #38bdf8; background: rgba(56,189,248,.12); }
-      .icon { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 999px; background: rgba(56,189,248,.12); color: #7dd3fc; font-size: 22px; font-weight: 950; flex: none; }
-      .method-title { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-weight: 950; }
-      .badge { border: 1px solid rgba(56,189,248,.35); color: #7dd3fc; background: rgba(56,189,248,.1); border-radius: 999px; padding: 3px 8px; font-size: 10px; font-weight: 950; }
-      .muted { color: #94a3b8; font-size: 13px; }
-      .summary-row { display: flex; justify-content: space-between; gap: 18px; padding: 16px 0; border-bottom: 1px solid rgba(148,163,184,.15); }
-      .total { display: flex; justify-content: space-between; align-items: end; padding-top: 18px; }
-      .price { font-size: 44px; font-weight: 950; letter-spacing: -.05em; }
-      .invoice-box { margin-top: 18px; border: 1px solid rgba(56,189,248,.25); background: rgba(56,189,248,.08); border-radius: 22px; padding: 16px; }
-      button.primary { width: 100%; border: 0; cursor: pointer; margin-top: 18px; border-radius: 18px; padding: 16px; background: #3b82f6; color: #0f172a; font-weight: 950; font-size: 16px; }
-      button.primary:disabled { cursor: wait; opacity: .7; }
-      .note { margin-top: 16px; border: 1px solid rgba(16,185,129,.25); background: rgba(16,185,129,.1); color: #bbf7d0; border-radius: 18px; padding: 14px; font-size: 13px; line-height: 1.5; }
-      .error { display: none; margin-top: 16px; border: 1px solid rgba(239,68,68,.35); background: rgba(239,68,68,.12); color: #fecaca; border-radius: 18px; padding: 14px; font-size: 13px; line-height: 1.5; }
-      @media (max-width: 860px) { .wrap { padding: 18px; } .grid { grid-template-columns: 1fr; } .card { padding: 22px; border-radius: 24px; } .price { font-size: 36px; } }
-    </style>
-  </head>
-  <body>
-    <main class="wrap">
-      <a class="back" href="/challenges">← Voltar aos desafios</a>
-      <div class="grid">
-        <section class="card">
-          <div class="pill">⚡ Crypto checkout</div>
-          <h1>Pagamento por criptomoeda</h1>
-          <p>Escolhe BTC ou ETH. O site vai criar uma invoice oficial da NOWPayments e redirecionar-te para o checkout seguro, sem mostrar wallets falsas no ecrã.</p>
-          <div class="methods" id="methods"></div>
-        </section>
-        <aside class="card">
-          <div class="pill">Resumo</div>
-          <h2 id="planName" style="font-size:28px;margin:18px 0 8px">POP Challenge</h2>
-          <div class="summary-row"><span class="muted">Desafio</span><strong id="planAccount">$100K</strong></div>
-          <div class="summary-row"><span class="muted">Tipo</span><strong>1 fase</strong></div>
-          <div class="summary-row"><span class="muted">Método</span><strong id="selectedMethod">Bitcoin · BTC</strong></div>
-          <div class="total"><span class="muted">Total</span><strong class="price" id="planPrice">$399</strong></div>
-          <div class="invoice-box">
-            <p style="margin:0;color:#cbd5e1;font-weight:800">Checkout NOWPayments</p>
-            <p class="muted" style="margin:8px 0 0">Ao clicar, criamos uma invoice real para o plano e moeda escolhidos. O endereço de pagamento será gerado pela NOWPayments.</p>
-            <button class="primary" id="payBtn">Criar invoice e pagar</button>
-          </div>
-          <div class="note">Nunca envies fundos para endereços copiados de prints ou textos antigos. Usa apenas a invoice gerada pela NOWPayments neste checkout.</div>
-          <div class="error" id="errorBox"></div>
-        </aside>
-      </div>
-    </main>
+    <title>QuantFund · Checkout</title>
     <script>
-      const plans = {
-        "1": { name: "POP Launch", account: "$10K", price: 99 },
-        "2": { name: "POP Starter", account: "$25K", price: 149 },
-        "3": { name: "POP Growth", account: "$50K", price: 249 },
-        "4": { name: "POP Pro", account: "$100K", price: 399 },
-        "5": { name: "POP Elite", account: "$200K", price: 749 },
-        "6": { name: "POP Titan", account: "$400K", price: 1299 },
-        "7": { name: "POP Sovereign", account: "$1M", price: 2499 },
-        "8": { name: "POP Institutional", account: "$3M", price: 4999 }
-      };
-      const methods = [
-        { id: "btc", label: "Bitcoin", network: "BTC", badge: "BTC", icon: "₿", note: "Pagamento direto em Bitcoin" },
-        { id: "eth", label: "Ethereum", network: "ETH", badge: "ETH", icon: "Ξ", note: "Pagamento direto em Ethereum" }
-      ];
-      const params = new URLSearchParams(location.search);
-      const planId = params.get("plan") || "4";
-      const plan = plans[planId] || plans["4"];
-      let selected = methods[0];
-
-      planName.textContent = plan.name;
-      planAccount.textContent = plan.account;
-      planPrice.textContent = "$" + plan.price;
-
-      function renderMethods() {
-        const methodsEl = document.getElementById("methods");
-        methodsEl.innerHTML = methods.map((m) => `<button class="method ${m.id === selected.id ? "active" : ""}" data-id="${m.id}"><span class="icon">${m.icon}</span><span><span class="method-title">${m.label} <span class="muted">${m.network}</span> <span class="badge">${m.badge}</span></span><span class="muted">${m.note}</span></span></button>`).join("");
-        methodsEl.querySelectorAll("button").forEach((btn) => btn.onclick = () => {
-          selected = methods.find((m) => m.id === btn.dataset.id) || methods[0];
-          updateSelected();
-          renderMethods();
-        });
-      }
-
-      function updateSelected() {
-        selectedMethod.textContent = selected.label + " · " + selected.network;
-      }
-
-      function showError(message) {
-        errorBox.style.display = "block";
-        errorBox.textContent = message;
-      }
-
-      payBtn.onclick = async () => {
-        errorBox.style.display = "none";
-        payBtn.disabled = true;
-        payBtn.textContent = "A criar invoice...";
-        try {
-          const response = await fetch("/api/payments/crypto-invoice", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ planId, payCurrency: selected.id })
-          });
-          const data = await response.json().catch(() => ({}));
-          if (!response.ok || !data.invoiceUrl) {
-            throw new Error(data.error || "Não foi possível criar a invoice NOWPayments.");
-          }
-          window.location.href = data.invoiceUrl;
-        } catch (error) {
-          showError(error instanceof Error ? error.message : "Erro ao criar checkout crypto.");
-          payBtn.disabled = false;
-          payBtn.textContent = "Criar invoice e pagar";
-        }
-      };
-
-      updateSelected();
-      renderMethods();
+      const params = new URLSearchParams(window.location.search);
+      const plan = params.get('plan') || '1';
+      window.location.replace('/checkout/' + encodeURIComponent(plan));
     </script>
+  </head>
+  <body style="margin:0;min-height:100vh;display:grid;place-items:center;background:#07111f;color:#f8fafc;font-family:Inter,Arial,sans-serif">
+    <p>A abrir checkout seguro...</p>
   </body>
 </html>
