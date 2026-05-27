@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { LayoutDashboard } from "lucide-react";
+import { useUser } from "@clerk/react";
 
 interface TopBarProps {
   backHref?: string;
@@ -10,6 +11,8 @@ interface TopBarProps {
   dark?: boolean;
 }
 
+const adminEmail = "ineslourencop7" + "@" + "gmail.com";
+
 export default function TopBar({
   backHref = "/dashboard",
   backLabel = "Menu",
@@ -18,6 +21,9 @@ export default function TopBar({
   className = "",
   dark = false,
 }: TopBarProps) {
+  const { isSignedIn, user } = useUser();
+  const email = user?.primaryEmailAddress?.emailAddress?.toLowerCase() ?? "";
+  const isAdmin = isSignedIn && email === adminEmail;
   const bg = dark
     ? "bg-[#0a0e1a] border-[#1e2a3a]"
     : "bg-background/80 backdrop-blur-sm border-border";
@@ -51,7 +57,11 @@ export default function TopBar({
         </span>
       )}
 
-      {right && <div className="flex items-center gap-2">{right}</div>}
+      <div className="flex items-center gap-3">
+        {isSignedIn && <Link href="/terminal" className="text-sm font-semibold text-muted-foreground hover:text-foreground">Terminal</Link>}
+        {isAdmin && <Link href="/admin" className="rounded-xl bg-primary px-3 py-2 text-xs font-black text-primary-foreground">Admin</Link>}
+        {right && <div className="flex items-center gap-2">{right}</div>}
+      </div>
     </header>
   );
 }
