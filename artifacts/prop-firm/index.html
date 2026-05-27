@@ -16,6 +16,17 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+      (function () {
+        var path = window.location.pathname;
+        if (path.indexOf('/sign-up/') === 0 && path !== '/sign-up/') {
+          window.location.replace('/terminal');
+        }
+        if (path.indexOf('/sign-in/') === 0 && path !== '/sign-in/') {
+          window.location.replace('/terminal');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
