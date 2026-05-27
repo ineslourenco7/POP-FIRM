@@ -71,8 +71,8 @@ function TradingTerminalPage() {
       <main className="mx-auto max-w-6xl px-6 py-10">
         <div className="rounded-3xl border border-border bg-card p-8 shadow-2xl">
           <p className="text-xs font-black uppercase tracking-[0.2em] text-primary">Bem-vindo à QuantFund</p>
-          <h2 className="mt-2 text-4xl font-black">Obrigada pela tua compra</h2>
-          <p className="mt-4 max-w-2xl text-muted-foreground">A tua conta foi criada com sucesso. Já podes escolher o teu desafio e continuar para a próxima etapa.</p>
+          <h2 className="mt-2 text-4xl font-black">A tua jornada funded começa agora 🚀</h2>
+          <p className="mt-4 max-w-2xl text-muted-foreground">Explora os desafios, escolhe o teu capital e mostra ao mercado o que consegues fazer.</p>
           <Link href="/challenges" className="mt-6 inline-flex rounded-2xl bg-primary px-6 py-4 font-black text-primary-foreground">Ver desafios</Link>
         </div>
       </main>
