@@ -28,10 +28,10 @@ export default function TopBar({
         <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <img
             src={`${import.meta.env.BASE_URL}logo.svg`}
-            alt="POP FIRM"
+            alt="QuantFund"
             className="w-7 h-7"
           />
-          <span className="font-bold text-base tracking-tight hidden sm:block">POP FIRM</span>
+          <span className="font-bold text-base tracking-tight hidden sm:block">QuantFund</span>
         </Link>
 
         <span className="text-muted-foreground/30 select-none">|</span>
