@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import { UserButton, useUser } from "@clerk/react";
 import { ChevronDown, ChevronLeft, ChevronRight, Wallet } from "lucide-react";
+import { useAccount } from "@/hooks/useAccount";
 
 type Side = "BUY" | "SELL";
 type Tab = "open" | "history";
@@ -47,6 +48,7 @@ function TradingViewChart({ asset }: { asset: Asset }) {
 
 export default function TerminalPage() {
   const { user } = useUser();
+  const { data: account } = useAccount(1);
   const [selectedAsset, setSelectedAsset] = useState<Asset>(assets[0]);
   const [assetMenuOpen, setAssetMenuOpen] = useState(false);
   const [lotSize, setLotSize] = useState("0.10");
@@ -79,8 +81,8 @@ export default function TerminalPage() {
   const closedPositions = enrichedPositions.filter((position) => position.status === "closed");
   const floatingPnl = openPositions.reduce((sum, position) => sum + position.pnl, 0);
   const realizedPnl = closedPositions.reduce((sum, position) => sum + position.pnl, 0);
-  const balance = 100000 + realizedPnl;
-  const equity = balance + floatingPnl;
+  const balance = (account?.currentBalance ?? account?.initialBalance ?? 100000) + realizedPnl;
+  const equity = (account?.equity ?? balance) + floatingPnl;
   const usedMargin = openPositions.reduce((sum, position) => { const asset = assets.find((item) => item.label === position.symbol) ?? selectedAsset; return sum + Math.max((position.current * position.lots * asset.multiplier) / 100, 1); }, 0);
   const freeMargin = equity - usedMargin;
 
