@@ -10,6 +10,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Landing from "@/pages/landing";
 import Demo from "@/pages/demo";
 import Challenges from "@/pages/challenges";
+import Trade from "@/pages/trade";
 import Terms from "@/pages/terms";
 import Support from "@/pages/support";
 import AdminDashboard from "@/pages/admin-dashboard";
@@ -17,7 +18,7 @@ import TopBar from "@/components/TopBar";
 import SupportChat from "@/components/SupportChat";
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
-const appVersion = "quantfund-terminal-copy-2026-05-27";
+const appVersion = "quantfund-trade-route-2026-05-28";
 const adminEmail = "ineslourencop7" + "@" + "gmail.com";
 
 const checkoutPlans: Record<string, { name: string; account: string; price: number; label: string }> = {
@@ -60,12 +61,14 @@ function RequireAdmin({ children }: { children: ReactNode }) {
 
 function TradingTerminalPage() {
   const { user } = useUser();
+  const email = user?.primaryEmailAddress?.emailAddress?.toLowerCase() ?? "";
+  const isAdmin = email === adminEmail;
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="border-b border-border bg-card/70 px-4 py-3 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
           <div><p className="text-xs font-black uppercase tracking-[0.25em] text-primary">QuantFund Terminal</p><h1 className="text-xl font-black md:text-2xl">Área do Trader</h1></div>
-          <div className="flex items-center gap-4"><div className="hidden text-right md:block"><p className="text-xs text-muted-foreground">Conta</p><p className="text-sm font-bold">{user?.primaryEmailAddress?.emailAddress}</p></div><Link href="/challenges" className="text-sm text-muted-foreground hover:text-foreground">Desafios</Link><UserButton afterSignOutUrl="/" /></div>
+          <div className="flex items-center gap-4"><div className="hidden text-right md:block"><p className="text-xs text-muted-foreground">Conta</p><p className="text-sm font-bold">{email}</p></div>{isAdmin && <Link href="/trade/1" className="rounded-xl bg-primary px-4 py-2 text-sm font-black text-primary-foreground">Trading Admin</Link>}<Link href="/challenges" className="text-sm text-muted-foreground hover:text-foreground">Desafios</Link><UserButton afterSignOutUrl="/" /></div>
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-6 py-10">
@@ -73,7 +76,7 @@ function TradingTerminalPage() {
           <p className="text-xs font-black uppercase tracking-[0.2em] text-primary">Bem-vindo à QuantFund</p>
           <h2 className="mt-2 text-4xl font-black">A tua jornada funded começa agora 🚀</h2>
           <p className="mt-4 max-w-2xl text-muted-foreground">Explora os desafios, escolhe o teu capital e mostra ao mercado o que consegues fazer.</p>
-          <Link href="/challenges" className="mt-6 inline-flex rounded-2xl bg-primary px-6 py-4 font-black text-primary-foreground">Ver desafios</Link>
+          <div className="mt-6 flex flex-wrap gap-3"><Link href="/challenges" className="inline-flex rounded-2xl bg-primary px-6 py-4 font-black text-primary-foreground">Ver desafios</Link>{isAdmin && <Link href="/trade/1" className="inline-flex rounded-2xl border border-primary/30 px-6 py-4 font-black text-primary">Abrir trading terminal</Link>}</div>
         </div>
       </main>
     </div>
@@ -89,7 +92,7 @@ function CheckoutPage() {
 function NotFoundPage() { return <div className="flex min-h-screen items-center justify-center bg-background text-muted-foreground">Página não encontrada</div>; }
 
 function App() {
-  return <WouterRouter base={basePath}><QueryClientProvider client={queryClient}><TooltipProvider><div data-app-version={appVersion}><Switch><Route path="/" component={Landing} /><Route path="/demo" component={Demo} /><Route path="/challenges" component={PublicChallengesPage} /><Route path="/checkout/:id" component={CheckoutPage} /><Route path="/terminal"><RequireLogin><TradingTerminalPage /></RequireLogin></Route><Route path="/admin"><RequireAdmin><AdminDashboard /></RequireAdmin></Route><Route path="/terms" component={Terms} /><Route path="/support" component={Support} /><Route path="/sign-in/:rest*" component={SignInPage} /><Route path="/sign-in" component={SignInPage} /><Route path="/sign-up/:rest*" component={SignUpPage} /><Route path="/sign-up" component={SignUpPage} /><Route component={NotFoundPage} /></Switch><SupportChat /><Toaster /><SonnerToaster position="bottom-right" theme="dark" richColors /></div></TooltipProvider></QueryClientProvider></WouterRouter>;
+  return <WouterRouter base={basePath}><QueryClientProvider client={queryClient}><TooltipProvider><div data-app-version={appVersion}><Switch><Route path="/" component={Landing} /><Route path="/demo" component={Demo} /><Route path="/challenges" component={PublicChallengesPage} /><Route path="/checkout/:id" component={CheckoutPage} /><Route path="/terminal"><RequireLogin><TradingTerminalPage /></RequireLogin></Route><Route path="/trade/:accountId"><RequireLogin><Trade /></RequireLogin></Route><Route path="/admin"><RequireAdmin><AdminDashboard /></RequireAdmin></Route><Route path="/terms" component={Terms} /><Route path="/support" component={Support} /><Route path="/sign-in/:rest*" component={SignInPage} /><Route path="/sign-in" component={SignInPage} /><Route path="/sign-up/:rest*" component={SignUpPage} /><Route path="/sign-up" component={SignUpPage} /><Route component={NotFoundPage} /></Switch><SupportChat /><Toaster /><SonnerToaster position="bottom-right" theme="dark" richColors /></div></TooltipProvider></QueryClientProvider></WouterRouter>;
 }
 
 export default App;
