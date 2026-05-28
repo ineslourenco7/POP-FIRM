@@ -18,7 +18,7 @@ import TopBar from "@/components/TopBar";
 import SupportChat from "@/components/SupportChat";
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
-const appVersion = "quantfund-checkout-continue-2026-05-28";
+const appVersion = "quantfund-user-terminal-button-2026-05-28";
 const adminEmail = "ineslourencop7" + "@" + "gmail.com";
 
 const checkoutPlans: Record<string, { name: string; account: string; price: number; label: string }> = {
@@ -30,6 +30,28 @@ const checkoutPlans: Record<string, { name: string; account: string; price: numb
   "6": { name: "POP Titan", account: "$400K", price: 1299, label: "Titan" },
   "7": { name: "POP Instant", account: "$3M", price: 4999, label: "Instant" },
 };
+
+type LocalChallenge = {
+  id: string;
+  user_id: string;
+  user_email?: string;
+  plan_id: string;
+  plan_name: string;
+  account_size: number;
+  price: number;
+  status: string;
+  balance: number;
+  equity: number;
+  created_at: string;
+};
+
+function getLocalChallenges(): LocalChallenge[] {
+  try {
+    return JSON.parse(localStorage.getItem("quantfund_challenges") || "[]") as LocalChallenge[];
+  } catch {
+    return [];
+  }
+}
 
 function accountToNumber(account: string) {
   const text = account.toUpperCase();
@@ -71,12 +93,15 @@ function TradingTerminalPage() {
   const { user } = useUser();
   const email = user?.primaryEmailAddress?.emailAddress?.toLowerCase() ?? "";
   const isAdmin = email === adminEmail;
+  const activeChallenges = user?.id ? getLocalChallenges().filter((challenge) => challenge.user_id === user.id && challenge.status === "active") : [];
+  const firstChallenge = activeChallenges[0];
+  const hasActiveChallenge = Boolean(firstChallenge);
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="border-b border-border bg-card/70 px-4 py-3 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
           <div><p className="text-xs font-black uppercase tracking-[0.25em] text-primary">QuantFund Terminal</p><h1 className="text-xl font-black md:text-2xl">Área do Trader</h1></div>
-          <div className="flex items-center gap-4"><div className="hidden text-right md:block"><p className="text-xs text-muted-foreground">Conta</p><p className="text-sm font-bold">{email}</p></div>{isAdmin && <Link href="/trade/1" className="rounded-xl bg-primary px-4 py-2 text-sm font-black text-primary-foreground">Trading Admin</Link>}<Link href="/challenges" className="text-sm text-muted-foreground hover:text-foreground">Desafios</Link><UserButton afterSignOutUrl="/" /></div>
+          <div className="flex items-center gap-4"><div className="hidden text-right md:block"><p className="text-xs text-muted-foreground">Conta</p><p className="text-sm font-bold">{email}</p></div>{hasActiveChallenge && <Link href={`/trade/${firstChallenge.id}`} className="rounded-xl bg-primary px-4 py-2 text-sm font-black text-primary-foreground">Trading Terminal</Link>}{isAdmin && <Link href="/trade/1" className="rounded-xl border border-primary/30 px-4 py-2 text-sm font-black text-primary">Trading Admin</Link>}<Link href="/challenges" className="text-sm text-muted-foreground hover:text-foreground">Desafios</Link><UserButton afterSignOutUrl="/" /></div>
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-6 py-10">
@@ -84,7 +109,7 @@ function TradingTerminalPage() {
           <p className="text-xs font-black uppercase tracking-[0.2em] text-primary">Bem-vindo à QuantFund</p>
           <h2 className="mt-2 text-4xl font-black">A tua jornada funded começa agora 🚀</h2>
           <p className="mt-4 max-w-2xl text-muted-foreground">Explora os desafios, escolhe o teu capital e mostra ao mercado o que consegues fazer.</p>
-          <div className="mt-6 flex flex-wrap gap-3"><Link href="/challenges" className="inline-flex rounded-2xl bg-primary px-6 py-4 font-black text-primary-foreground">Ver desafios</Link>{isAdmin && <Link href="/trade/1" className="inline-flex rounded-2xl border border-primary/30 px-6 py-4 font-black text-primary">Abrir trading terminal</Link>}</div>
+          <div className="mt-6 flex flex-wrap gap-3"><Link href="/challenges" className="inline-flex rounded-2xl bg-primary px-6 py-4 font-black text-primary-foreground">Ver desafios</Link>{hasActiveChallenge && <Link href={`/trade/${firstChallenge.id}`} className="inline-flex rounded-2xl border border-primary/30 px-6 py-4 font-black text-primary">Abrir trading terminal</Link>}{isAdmin && <Link href="/trade/1" className="inline-flex rounded-2xl border border-primary/30 px-6 py-4 font-black text-primary">Trading Admin</Link>}</div>
         </div>
       </main>
     </div>
@@ -108,7 +133,7 @@ function CheckoutPage() {
     try {
       const accountSize = accountToNumber(plan.account);
       const challengeId = `${planId}-${Date.now()}`;
-      const challenge = {
+      const challenge: LocalChallenge = {
         id: challengeId,
         user_id: user.id,
         user_email: user.primaryEmailAddress?.emailAddress ?? "",
@@ -121,11 +146,11 @@ function CheckoutPage() {
         equity: accountSize,
         created_at: new Date().toISOString(),
       };
-      const existing = JSON.parse(localStorage.getItem("quantfund_challenges") || "[]");
+      const existing = getLocalChallenges();
       localStorage.setItem("quantfund_challenges", JSON.stringify([challenge, ...existing]));
       localStorage.setItem(`quantfund_challenge_${challengeId}`, JSON.stringify(challenge));
       toast.success("Challenge criado", { description: `${plan.name} está pronto no terminal.` });
-      navigate(`/trade/${planId}`);
+      navigate(`/trade/${challengeId}`);
     } catch (error) {
       toast.error("Erro ao criar challenge", { description: error instanceof Error ? error.message : "Tenta novamente." });
       setIsProcessing(false);
