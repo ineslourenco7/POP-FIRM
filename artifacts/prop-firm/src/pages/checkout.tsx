@@ -1,222 +1,154 @@
 import { useState } from "react";
-import { useParams, useLocation } from "wouter";
-import { useGetChallenge, useSubmitPayment, useValidateDiscountCode, getGetChallengeQueryKey, getListMyPaymentsQueryKey } from "@workspace/api-client-react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ShieldCheck, Bitcoin, CheckCircle2, Tag, X, Zap, Copy, QrCode } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+import { Link, useLocation, useRoute } from "wouter";
+import { useUser } from "@clerk/react";
+import { ArrowLeft } from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
 
-const CRYPTO_METHODS = [
-  { id: "usdt_trc20", label: "USDT", network: "TRC20", note: "Recomendado · taxas baixas · confirmação rápida", badge: "RECOMENDADO", icon: "₮", address: "TQKpX9c6VtPOPFiRMExampleTRC20Wallet" },
-  { id: "usdt_sol", label: "USDT", network: "Solana", note: "Muito rápido · ideal para pagamentos instantâneos", badge: "RÁPIDO", icon: "₮", address: "POPFiRMExampleSolanaUSDTWallet111111111" },
-  { id: "btc", label: "Bitcoin", network: "BTC", note: "Confirmação mais lenta · usar apenas se preferires BTC", badge: "BTC", icon: "₿", address: "bc1qpopfirmexamplebtcwallet0000000000000" },
-  { id: "eth", label: "Ethereum", network: "ERC20", note: "Rede Ethereum · taxas podem variar", badge: "ETH", icon: "Ξ", address: "0x39a1d82121e428c0b57e79391abf12f0e0df6f15" },
-  { id: "sol", label: "Solana", network: "SOL", note: "Confirmação rápida na rede Solana", badge: "SOL", icon: "◎", address: "POPFiRMExampleSolanaWallet111111111111111" },
-];
+const checkoutPlans: Record<string, { name: string; account: string; price: number; label: string }> = {
+  "1": { name: "POP Launch", account: "$10K", price: 99, label: "Starter" },
+  "2": { name: "POP Starter", account: "$25K", price: 149, label: "Popular" },
+  "3": { name: "POP Growth", account: "$50K", price: 249, label: "Growth" },
+  "4": { name: "POP Pro", account: "$100K", price: 399, label: "Pro" },
+  "5": { name: "POP Elite", account: "$200K", price: 749, label: "Elite" },
+  "6": { name: "POP Titan", account: "$400K", price: 1299, label: "Titan" },
+  "7": { name: "POP Instant", account: "$3M", price: 4999, label: "Instant" },
+};
 
-export default function Checkout() {
-  const { challengeId } = useParams();
-  const id = parseInt(challengeId || "0", 10);
-  const [, setLocation] = useLocation();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+type LocalChallenge = {
+  id: string;
+  user_id: string;
+  user_email?: string;
+  plan_id: string;
+  plan_name: string;
+  account_size: number;
+  price: number;
+  status: string;
+  balance: number;
+  equity: number;
+  created_at: string;
+};
 
-  const { data: challenge, isLoading } = useGetChallenge(id, {
-    query: { enabled: !!id, queryKey: getGetChallengeQueryKey(id) },
-  });
+function accountToNumber(account: string) {
+  const text = account.toUpperCase();
+  const value = Number(text.replace(/[^0-9.]/g, ""));
+  if (text.includes("M")) return value * 1000000;
+  if (text.includes("K")) return value * 1000;
+  return value;
+}
 
-  const submitPayment = useSubmitPayment();
-  const validateCode = useValidateDiscountCode();
+function getLocalChallenges(): LocalChallenge[] {
+  try {
+    return JSON.parse(localStorage.getItem("quantfund_challenges") || "[]") as LocalChallenge[];
+  } catch {
+    return [];
+  }
+}
 
-  const [method] = useState("crypto");
-  const [cryptoMethod, setCryptoMethod] = useState(CRYPTO_METHODS[0].id);
-  const [submitted, setSubmitted] = useState(false);
-  const [discountCode, setDiscountCode] = useState("");
-  const [appliedCode, setAppliedCode] = useState<string | null>(null);
-  const [discountPercent, setDiscountPercent] = useState(0);
-  const [codeError, setCodeError] = useState("");
+function saveLocalChallenge(challenge: LocalChallenge) {
+  const existing = getLocalChallenges().filter((item) => item.id !== challenge.id);
+  localStorage.setItem("quantfund_challenges", JSON.stringify([challenge, ...existing]));
+  localStorage.setItem(`quantfund_challenge_${challenge.id}`, JSON.stringify(challenge));
+}
 
-  const selectedCrypto = CRYPTO_METHODS.find((item) => item.id === cryptoMethod) ?? CRYPTO_METHODS[0];
-  const basePrice = challenge?.price ?? 0;
-  const discountAmount = (basePrice * discountPercent) / 100;
-  const finalPrice = +(basePrice - discountAmount).toFixed(2);
+export default function CheckoutPage() {
+  const [, params] = useRoute("/checkout/:id");
+  const [, navigate] = useLocation();
+  const { user, isSignedIn } = useUser();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const planId = params?.id ?? "1";
+  const plan = checkoutPlans[planId] ?? checkoutPlans["1"];
 
-  const handleApplyCode = () => {
-    const code = discountCode.trim().toUpperCase();
-    if (!code) return;
-    validateCode.mutate(
-      { data: { code } },
-      {
-        onSuccess: (result) => {
-          if (result.valid) {
-            setAppliedCode(result.code);
-            setDiscountPercent(result.discountPercent);
-            setCodeError("");
-            toast({ title: "Código aplicado!", description: `Desconto de ${result.discountPercent}% aplicado com sucesso.` });
-          } else {
-            setCodeError(result.message ?? "Código de desconto inválido.");
-            setAppliedCode(null);
-            setDiscountPercent(0);
-          }
-        },
-        onError: () => {
-          setCodeError("Erro ao validar o código. Tenta novamente.");
-          setAppliedCode(null);
-          setDiscountPercent(0);
-        },
+  async function createChallenge() {
+    if (!user?.id) throw new Error("Sessão inválida.");
+    const accountSize = accountToNumber(plan.account);
+    const fallbackId = `${planId}-${Date.now()}`;
+    const payload = {
+      user_id: user.id,
+      user_email: user.primaryEmailAddress?.emailAddress ?? "",
+      plan_id: planId,
+      plan_name: plan.name,
+      account_size: accountSize,
+      price: plan.price,
+      status: "pending_payment",
+      balance: accountSize,
+      equity: accountSize,
+      created_at: new Date().toISOString(),
+    };
+
+    if (supabase) {
+      const { data, error } = await supabase.from("challenges").insert(payload).select().single();
+      if (!error && data?.id) {
+        const challenge = { id: String(data.id), ...payload };
+        saveLocalChallenge(challenge);
+        return challenge;
       }
-    );
-  };
+      console.warn("Supabase insert failed; using local fallback", error);
+    }
 
-  const handleRemoveCode = () => {
-    setAppliedCode(null);
-    setDiscountCode("");
-    setDiscountPercent(0);
-    setCodeError("");
-  };
-
-  const copyAddress = async () => {
-    await navigator.clipboard.writeText(selectedCrypto.address);
-    toast({ title: "Endereço copiado", description: `${selectedCrypto.label} ${selectedCrypto.network} copiado para a área de transferência.` });
-  };
-
-  const handleSubmit = async () => {
-    if (!challenge) return;
-
-    submitPayment.mutate(
-      {
-        data: {
-          challengeId: challenge.id,
-          amount: finalPrice,
-          method: `${method}:${cryptoMethod}`,
-        },
-      },
-      {
-        onSuccess: () => {
-          setSubmitted(true);
-          queryClient.invalidateQueries({ queryKey: getListMyPaymentsQueryKey() });
-          toast({ title: "Pagamento cripto criado", description: "Envia o valor exato para o endereço indicado e aguarda confirmação." });
-        },
-        onError: () => {
-          toast({ title: "Erro", description: "Falha ao criar pagamento cripto.", variant: "destructive" });
-        },
-      }
-    );
-  };
-
-  if (isLoading) {
-    return <div className="flex justify-center py-20"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>;
+    const challenge = { id: fallbackId, ...payload };
+    saveLocalChallenge(challenge);
+    return challenge;
   }
 
-  if (!challenge) {
-    return <div className="p-6 text-center">Desafio não encontrado.</div>;
+  async function createInvoice(challengeId: string) {
+    const response = await fetch("/api/payments/crypto-invoice", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ planId, challengeId, price: plan.price, planName: plan.name }),
+    });
+
+    if (!response.ok) return null;
+    const data = await response.json().catch(() => null);
+    return data?.invoice_url || data?.invoiceUrl || data?.payment_url || data?.paymentUrl || null;
   }
 
-  if (submitted) {
-    return (
-      <div className="mx-auto max-w-lg p-6 py-20">
-        <Card className="border-border text-center">
-          <CardHeader>
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-500/20">
-              <CheckCircle2 className="h-10 w-10 text-green-500" />
-            </div>
-            <CardTitle className="text-2xl">Pagamento Cripto Pendente</CardTitle>
-            <CardDescription>Envia o valor exato para o endereço abaixo. Quando confirmado, a challenge será ativada.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-1 rounded-lg bg-muted p-4 text-left text-sm">
-              <p><strong>Desafio:</strong> {challenge.name}</p>
-              {discountPercent > 0 && <p><strong>Desconto ({appliedCode}):</strong> -{discountPercent}%</p>}
-              <p><strong>Valor:</strong> ${finalPrice}</p>
-              <p><strong>Método:</strong> {selectedCrypto.label} · {selectedCrypto.network}</p>
-            </div>
-            <div className="rounded-lg border border-border p-4 text-sm">
-              <div className="mb-3 flex items-center justify-center gap-2 text-muted-foreground"><QrCode className="h-4 w-4" /> QR/Invoice será ligado ao gateway cripto.</div>
-              <p className="mb-2 text-muted-foreground">Endereço de pagamento:</p>
-              <code className="block break-all rounded border border-border bg-background p-2 text-xs">{selectedCrypto.address}</code>
-              <Button variant="outline" className="mt-3 w-full" onClick={copyAddress}><Copy className="mr-2 h-4 w-4" /> Copiar endereço</Button>
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button className="w-full" onClick={() => setLocation("/payments")}>Ver os Meus Pagamentos</Button>
-          </CardFooter>
-        </Card>
-      </div>
-    );
+  async function handleContinue() {
+    if (!isSignedIn || !user?.id) {
+      navigate("/sign-in");
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const challenge = await createChallenge();
+      sessionStorage.setItem("quantfund_pending_challenge_id", challenge.id);
+      const invoiceUrl = await createInvoice(challenge.id);
+      toast.success("Challenge criado", { description: invoiceUrl ? "A abrir pagamento cripto." : "Invoice indisponível. Usa o checkout cripto." });
+      if (invoiceUrl) window.location.href = invoiceUrl;
+      else navigate(`/crypto-checkout.html?plan=${planId}&challenge=${challenge.id}`);
+    } catch (error) {
+      toast.error("Erro ao iniciar pagamento", { description: error instanceof Error ? error.message : "Tenta novamente." });
+      setIsProcessing(false);
+    }
   }
 
   return (
-    <div className="mx-auto max-w-4xl p-4 sm:p-6">
-      <h1 className="mb-8 text-3xl font-bold tracking-tight">Checkout</h1>
-
-      <div className="grid gap-8 md:grid-cols-3">
-        <div className="space-y-6 md:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Bitcoin className="h-5 w-5 text-primary" /> Pagamento por Criptomoeda</CardTitle>
-              <CardDescription>Crypto-only nesta fase. Recomendamos USDT TRC20 para taxas baixas e ativação rápida.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <RadioGroup value={cryptoMethod} onValueChange={setCryptoMethod} className="space-y-3">
-                {CRYPTO_METHODS.map((item) => (
-                  <div key={item.id} className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-colors ${cryptoMethod === item.id ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`} onClick={() => setCryptoMethod(item.id)}>
-                    <RadioGroupItem value={item.id} id={item.id} />
-                    <Label htmlFor={item.id} className="flex flex-1 cursor-pointer items-center gap-3">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-lg font-black text-primary">{item.icon}</span>
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2 font-medium"><span>{item.label}</span><span className="text-xs text-muted-foreground">{item.network}</span><span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-black text-primary">{item.badge}</span></div>
-                        <div className="text-xs text-muted-foreground">{item.note}</div>
-                      </div>
-                    </Label>
-                  </div>
-                ))}
-              </RadioGroup>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base"><Tag className="h-4 w-4" /> Código de Desconto</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {appliedCode ? (
-                <div className="flex items-center justify-between rounded-lg border border-green-500/30 bg-green-500/10 p-3">
-                  <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /><span className="text-sm font-semibold text-green-500">{appliedCode}</span><span className="text-sm text-muted-foreground">— {discountPercent}% de desconto</span></div>
-                  <button onClick={handleRemoveCode} className="text-muted-foreground transition-colors hover:text-foreground"><X className="h-4 w-4" /></button>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <div className="flex-1">
-                    <Input placeholder="Insere o código de desconto" value={discountCode} onChange={(e) => { setDiscountCode(e.target.value.toUpperCase()); setCodeError(""); }} onKeyDown={(e) => e.key === "Enter" && handleApplyCode()} className={codeError ? "border-red-500" : ""} />
-                    {codeError && <p className="mt-1 text-xs text-red-500">{codeError}</p>}
-                  </div>
-                  <Button variant="outline" onClick={handleApplyCode}>Aplicar</Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+    <div className="min-h-screen overflow-hidden bg-background text-foreground">
+      <main className="relative mx-auto max-w-6xl px-6 py-8 md:py-12">
+        <Link href="/challenges" className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground transition hover:text-foreground">
+          <ArrowLeft className="h-4 w-4" />Voltar aos desafios
+        </Link>
+        <div className="mt-8 grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+          <section className="rounded-[2rem] border border-white/10 bg-card/80 p-6 shadow-2xl backdrop-blur md:p-9">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-black uppercase tracking-[0.2em] text-primary">Checkout QuantFund</div>
+            <h1 className="max-w-2xl text-4xl font-black leading-tight tracking-tight md:text-5xl">Confirma o teu desafio antes de avançar</h1>
+            <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">Criamos a challenge em modo pendente e seguimos para o pagamento cripto. Após confirmação, o terminal fica ativo.</p>
+          </section>
+          <aside className="rounded-[2rem] border border-primary/20 bg-card/90 p-6 shadow-2xl backdrop-blur md:p-7">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-primary">Resumo</p>
+            <h2 className="mt-1 text-2xl font-black">{plan.name}</h2>
+            <div className="mt-5 rounded-3xl border border-border bg-background/70 p-5">
+              <div className="flex items-center justify-between border-b border-border pb-4"><span className="text-muted-foreground">Desafio</span><strong>{plan.account}</strong></div>
+              <div className="flex items-center justify-between border-b border-border py-4"><span className="text-muted-foreground">Tipo</span><strong>1 fase</strong></div>
+              <div className="flex items-end justify-between pt-5"><span className="text-muted-foreground">Total</span><strong className="text-4xl font-black">${plan.price}</strong></div>
+            </div>
+            <button onClick={handleContinue} disabled={isProcessing} className="mt-6 w-full rounded-2xl bg-primary px-6 py-4 text-base font-black text-primary-foreground shadow-xl disabled:cursor-not-allowed disabled:opacity-60">
+              {isProcessing ? "A processar..." : "Continuar para pagamento"}
+            </button>
+          </aside>
         </div>
-
-        <div>
-          <Card className="sticky top-20">
-            <CardHeader><CardTitle>Resumo da Encomenda</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-start justify-between"><div><div className="font-semibold">{challenge.name}</div><div className="text-sm text-muted-foreground">${challenge.accountSize.toLocaleString()} Conta</div></div><div className="font-semibold">${basePrice}</div></div>
-              {discountPercent > 0 && <div className="flex items-center justify-between text-sm text-green-500"><span>Desconto ({appliedCode} -{discountPercent}%)</span><span>-${discountAmount.toFixed(2)}</span></div>}
-              <div className="border-t border-border pt-4"><div className="flex items-center justify-between text-lg font-bold"><span>Total</span><div className="text-right">{discountPercent > 0 && <div className="text-sm font-normal text-muted-foreground line-through">${basePrice}</div>}<span className={discountPercent > 0 ? "text-green-500" : ""}>${finalPrice}</span></div></div></div>
-              <div className="rounded border border-primary/20 bg-primary/10 p-3 text-xs text-primary"><div className="mb-1 flex items-center gap-2 font-black"><Zap className="h-4 w-4" /> Crypto selected</div><p>{selectedCrypto.label} · {selectedCrypto.network}</p></div>
-              <div className="flex items-start gap-2 rounded bg-muted p-3 text-xs text-muted-foreground"><ShieldCheck className="h-4 w-4 shrink-0" /><p>Sem cartão e sem chargebacks. Envia apenas pela rede selecionada.</p></div>
-            </CardContent>
-            <CardFooter>
-              <Button className="w-full" size="lg" onClick={handleSubmit} disabled={submitPayment.isPending}>{submitPayment.isPending ? "A criar pagamento..." : `Criar pagamento $${finalPrice}`}</Button>
-            </CardFooter>
-          </Card>
-        </div>
-      </div>
+      </main>
     </div>
   );
 }
