@@ -1,13 +1,29 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link } from "wouter";
+import { useEffect, useRef, useState } from "react";
+import { Link, useRoute } from "wouter";
 import { UserButton, useUser } from "@clerk/react";
-import { ChevronDown, ChevronLeft, ChevronRight, Wallet } from "lucide-react";
-import { useAccount } from "@/hooks/useAccount";
+import { ChevronDown, ChevronLeft, Wallet, TrendingUp, TrendingDown, X } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 type Side = "BUY" | "SELL";
 type Tab = "open" | "history";
 type Asset = { label: string; name: string; value: string; base: number; decimals: number; multiplier: number; change: string; category: string };
 type Position = { id: string; symbol: string; side: Side; lots: number; entry: number; current: number; pnl: number; stopLoss?: number; takeProfit?: number; status: "open" | "closed"; openedAt: string; closedAt?: string; reason?: string };
+type AccountData = {
+  id: number;
+  challengeName: string | null;
+  status: string;
+  initialBalance: number;
+  currentBalance: number;
+  equity: number;
+  floatingPnl: number;
+  totalPnl: number;
+  dailyPnl: number;
+  profitTarget: number;
+  maxDailyDrawdown: number;
+  maxTotalDrawdown: number;
+  minTradingDays: number;
+  tradingDays: number;
+};
 
 const assets: Asset[] = [
   { label: "XAU/USD", name: "Gold", value: "OANDA:XAUUSD", base: 2356.4, decimals: 2, multiplier: 100, change: "+0.82%", category: "Metals" },
@@ -28,100 +44,190 @@ function floatingPrice(asset: Asset, tick: number) { return asset.base + Math.si
 function positionPnl(position: Position, tick: number) { const asset = assets.find((item) => item.label === position.symbol) ?? assets[0]; const current = floatingPrice(asset, tick); const direction = position.side === "BUY" ? 1 : -1; return (current - position.entry) * direction * position.lots * asset.multiplier; }
 
 function TradingViewChart({ asset }: { asset: Asset }) {
-  const config = encodeURIComponent(JSON.stringify({
-    autosize: true,
-    symbol: asset.value,
-    interval: "60",
-    timezone: "Europe/Lisbon",
-    theme: "dark",
-    style: "1",
-    locale: "pt",
-    withdateranges: true,
-    hide_side_toolbar: false,
-    allow_symbol_change: true,
-    save_image: false,
-    calendar: false,
-    support_host: "https://www.tradingview.com"
-  }));
-  return <iframe key={asset.value} title="TradingView realtime chart" src={`https://www.tradingview-widget.com/embed-widget/advanced-chart/?locale=pt#${config}`} className="absolute inset-0 h-full w-full border-0 bg-[#07111f]" allow="fullscreen" />;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const widgetRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    containerRef.current.innerHTML = "";
+
+    const script = document.createElement("script");
+    script.src = "https://s3.tradingview.com/tv.js";
+    script.async = true;
+    script.onload = () => {
+      if ((window as any).TradingView && containerRef.current) {
+        widgetRef.current = new (window as any).TradingView.widget({
+          autosize: true,
+          symbol: asset.value,
+          interval: "60",
+          timezone: "Europe/Lisbon",
+          theme: "dark",
+          style: "1",
+          locale: "pt",
+          container_id: containerRef.current.id,
+          hide_side_toolbar: false,
+          allow_symbol_change: true,
+          save_image: false,
+          calendar: false,
+          hide_top_toolbar: false,
+          studies: [],
+          show_popup_button: true,
+          popup_width: "1000",
+          popup_height: "650",
+          enable_publishing: false,
+          withdateranges: true,
+          range: "1D",
+        });
+      }
+    };
+    containerRef.current.appendChild(script);
+
+    return () => {
+      if (containerRef.current) containerRef.current.innerHTML = "";
+    };
+  }, [asset.value]);
+
+  return <div id={`tv-chart-${asset.label.replace(/[^a-zA-Z0-9]/g, "-")}`} ref={containerRef} className="w-full h-full min-h-[400px]" />;
+}
+
+function useAccount(accountId?: number) {
+  return useQuery<AccountData>({
+    queryKey: ["account", accountId],
+    queryFn: async () => {
+      if (!accountId) throw new Error("No account ID");
+      const res = await fetch(`/api/accounts/${accountId}`);
+      if (!res.ok) throw new Error("Failed to fetch account");
+      return res.json();
+    },
+    enabled: !!accountId,
+    refetchInterval: 5000,
+  });
+}
+
+function useAccounts() {
+  return useQuery<AccountData[]>({
+    queryKey: ["accounts"],
+    queryFn: async () => {
+      const res = await fetch("/api/accounts");
+      if (!res.ok) throw new Error("Failed to fetch accounts");
+      return res.json();
+    },
+  });
 }
 
 export default function TerminalPage() {
   const { user } = useUser();
-  const { data: account } = useAccount(1);
+  const [match, params] = useRoute("/terminal/:accountId");
   const [selectedAsset, setSelectedAsset] = useState<Asset>(assets[0]);
-  const [assetMenuOpen, setAssetMenuOpen] = useState(false);
-  const [lotSize, setLotSize] = useState("0.10");
+  const [side, setSide] = useState<Side>("BUY");
+  const [lots, setLots] = useState(0.01);
   const [stopLoss, setStopLoss] = useState("");
   const [takeProfit, setTakeProfit] = useState("");
+  const [tab, setTab] = useState<Tab>("open");
+  const [positions, setPositions] = useState<Position[]>([]);
   const [tick, setTick] = useState(0);
-  const [lastAction, setLastAction] = useState("Nenhuma ordem enviada nesta sessão.");
-  const [activeTab, setActiveTab] = useState<Tab>("open");
-  const [historyCollapsed, setHistoryCollapsed] = useState(false);
-  const [orderPanelOpen, setOrderPanelOpen] = useState(true);
-  const [positions, setPositions] = useState<Position[]>([
-    { id: "seed-1", symbol: "EUR/USD", side: "BUY", lots: 0.2, entry: 1.0812, current: 1.0842, pnl: 420, status: "open", openedAt: "Demo" },
-    { id: "seed-2", symbol: "BTC/USD", side: "BUY", lots: 0.03, entry: 66110, current: 67420, pnl: 312, status: "open", openedAt: "Demo" },
-    { id: "seed-3", symbol: "XAU/USD", side: "SELL", lots: 0.1, entry: 2361, current: 2356.4, pnl: 95, status: "open", openedAt: "Demo" },
-  ]);
+  const [showAssetDropdown, setShowAssetDropdown] = useState(false);
 
-  useEffect(() => { const id = window.setInterval(() => setTick((value) => value + 1), 1200); return () => window.clearInterval(id); }, []);
+  const accountId = match && params?.accountId ? parseInt(params.accountId) : undefined;
+  const { data: account } = useAccount(accountId);
+  const { data: accountsList } = useAccounts();
+  const activeAccount = account || accountsList?.find((a) => a.status === "active");
 
-  const price = floatingPrice(selectedAsset, tick);
-  const lots = Math.max(0.01, Number(lotSize) || 0.01);
-  const operationValue = price * lots * selectedAsset.multiplier;
-  const estimatedMargin = Math.max(operationValue / 100, 1);
-  const enrichedPositions = useMemo(() => positions.map((position) => {
-    if (position.status === "closed") return position;
-    const asset = assets.find((item) => item.label === position.symbol) ?? selectedAsset;
-    const current = floatingPrice(asset, tick);
-    return { ...position, current, pnl: positionPnl(position, tick) };
-  }), [positions, selectedAsset, tick]);
-  const openPositions = enrichedPositions.filter((position) => position.status === "open");
-  const closedPositions = enrichedPositions.filter((position) => position.status === "closed");
-  const floatingPnl = openPositions.reduce((sum, position) => sum + position.pnl, 0);
-  const realizedPnl = closedPositions.reduce((sum, position) => sum + position.pnl, 0);
-  const balance = (account?.currentBalance ?? account?.initialBalance ?? 100000) + realizedPnl;
-  const equity = (account?.equity ?? balance) + floatingPnl;
-  const usedMargin = openPositions.reduce((sum, position) => { const asset = assets.find((item) => item.label === position.symbol) ?? selectedAsset; return sum + Math.max((position.current * position.lots * asset.multiplier) / 100, 1); }, 0);
-  const freeMargin = equity - usedMargin;
-
-  function sendOrder(side: Side) {
-    const newPosition: Position = { id: `${Date.now()}-${side}`, symbol: selectedAsset.label, side, lots, entry: price, current: price, pnl: 0, stopLoss: Number(stopLoss) || undefined, takeProfit: Number(takeProfit) || undefined, status: "open", openedAt: new Date().toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" }) };
-    setPositions((current) => [newPosition, ...current]);
-    setLastAction(`${side} ${lots.toFixed(2)} lot em ${selectedAsset.label} aberto a ${priceText(price, selectedAsset.decimals)}.`);
-  }
-  function closePosition(id: string, reason = "Manual") {
-    setPositions((current) => current.map((position) => {
-      if (position.id !== id || position.status !== "open") return position;
-      const asset = assets.find((item) => item.label === position.symbol) ?? selectedAsset;
-      const currentPrice = floatingPrice(asset, tick);
-      return { ...position, current: currentPrice, pnl: positionPnl(position, tick), status: "closed", closedAt: new Date().toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" }), reason };
-    }));
-  }
   useEffect(() => {
-    for (const position of openPositions) {
-      if (position.side === "BUY" && position.stopLoss && position.current <= position.stopLoss) closePosition(position.id, "SL");
-      if (position.side === "BUY" && position.takeProfit && position.current >= position.takeProfit) closePosition(position.id, "TP");
-      if (position.side === "SELL" && position.stopLoss && position.current >= position.stopLoss) closePosition(position.id, "SL");
-      if (position.side === "SELL" && position.takeProfit && position.current <= position.takeProfit) closePosition(position.id, "TP");
-    }
-  }, [tick]);
+    const interval = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(interval);
+  }, []);
 
-  const rows = activeTab === "open" ? openPositions : closedPositions;
+  const currentPrice = floatingPrice(selectedAsset, tick);
+
+  const openPosition = () => {
+    if (!activeAccount) return;
+    const newPosition: Position = {
+      id: Date.now().toString(),
+      symbol: selectedAsset.label,
+      side,
+      lots,
+      entry: currentPrice,
+      current: currentPrice,
+      pnl: 0,
+      stopLoss: stopLoss ? parseFloat(stopLoss) : undefined,
+      takeProfit: takeProfit ? parseFloat(takeProfit) : undefined,
+      status: "open",
+      openedAt: new Date().toISOString(),
+    };
+    setPositions((prev) => [newPosition, ...prev]);
+  };
+
+  const closePosition = (id: string) => {
+    setPositions((prev) => prev.map((p) => p.id === id ? { ...p, status: "closed", closedAt: new Date().toISOString(), reason: "Manual close" } : p));
+  };
+
+  const openPositions = positions.filter((p) => p.status === "open");
+  const closedPositions = positions.filter((p) => p.status === "closed");
+  const totalFloatingPnl = openPositions.reduce((sum, p) => sum + positionPnl(p, tick), 0);
+  const equity = (activeAccount?.currentBalance ?? 10000) + totalFloatingPnl;
+  const balance = activeAccount?.currentBalance ?? 10000;
+  const initialBalance = activeAccount?.initialBalance ?? 10000;
+  const progress = initialBalance > 0 ? ((balance - initialBalance) / initialBalance) * 100 : 0;
+
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-[#050a14] text-white">
-      <header className="shrink-0 border-b border-[#1e2a3a] bg-[#0a0e1a] px-4 py-3"><div className="flex items-center justify-between"><div><p className="text-xs font-black uppercase tracking-[0.25em] text-primary">QuantFund Terminal</p><h1 className="text-xl font-black md:text-2xl">Trading Terminal</h1></div><div className="flex items-center gap-4"><div className="hidden text-right md:block"><p className="text-xs text-slate-500">Conta</p><p className="text-sm font-bold">{user?.primaryEmailAddress?.emailAddress}</p></div><Link href="/admin" className="text-sm text-slate-400 hover:text-white">Admin</Link><UserButton afterSignOutUrl="/" /></div></div></header>
-      <section className="grid shrink-0 grid-cols-2 gap-3 border-b border-[#1e2a3a] bg-[#050a14] p-3 md:grid-cols-6"><Metric label="Saldo" value={money(balance)} /><Metric label="Equity" value={money(equity)} /><Metric label="Margem" value={money(usedMargin)} /><Metric label="Floating PnL" value={`${floatingPnl >= 0 ? "+" : ""}${money(floatingPnl)}`} tone={floatingPnl >= 0 ? "green" : "red"} /><Metric label="Margem livre" value={money(freeMargin)} /><Metric label="Posições" value={String(openPositions.length)} /></section>
-      <main className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_auto] overflow-hidden">
-        <section className="flex min-w-0 flex-col overflow-hidden p-3 pr-0"><div className="relative min-h-0 flex-1 overflow-hidden rounded-3xl border border-[#1e2a3a] bg-[#07111f] shadow-2xl"><TradingViewChart asset={selectedAsset} /><div className="pointer-events-none absolute left-6 top-6 z-10 rounded-2xl border border-[#1e2a3a] bg-[#0a0e1a]/80 px-4 py-3 backdrop-blur"><p className="text-[10px] uppercase tracking-[0.2em] text-slate-500">TradingView realtime</p><h2 className="font-mono text-3xl font-black text-white">{selectedAsset.label}</h2></div><div className="absolute left-6 top-28 z-20"><button onClick={() => setAssetMenuOpen((value) => !value)} className="flex items-center gap-2 rounded-xl border border-[#334155] bg-[#0a0e1a]/90 px-4 py-2 font-mono text-sm font-bold text-white shadow-xl">{selectedAsset.label}<ChevronDown className="h-4 w-4 text-slate-400" /></button>{assetMenuOpen && <div className="mt-2 max-h-80 w-72 overflow-y-auto rounded-2xl border border-[#1e2a3a] bg-[#0a0e1a] p-2 shadow-2xl">{assets.map((asset) => <button key={asset.value} onClick={() => { setSelectedAsset(asset); setAssetMenuOpen(false); }} className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm hover:bg-[#1e2a3a]"><span><strong>{asset.label}</strong><span className="ml-2 text-xs text-slate-500">{asset.name}</span></span><span className={asset.change.startsWith("+") ? "text-emerald-400" : "text-red-400"}>{asset.change}</span></button>)}</div>}</div></div>
-          <div className={`${historyCollapsed ? "h-10" : "h-48"} mt-3 shrink-0 overflow-hidden rounded-2xl border border-[#1e2a3a] bg-[#0a0e1a] transition-all`}><div className="flex items-center gap-4 border-b border-[#1e2a3a] px-4"><button onClick={() => setActiveTab("open")} className={`border-b-2 py-2 text-xs font-bold uppercase tracking-wider ${activeTab === "open" ? "border-primary text-white" : "border-transparent text-slate-500"}`}>Posições abertas ({openPositions.length})</button><button onClick={() => setActiveTab("history")} className={`border-b-2 py-2 text-xs font-bold uppercase tracking-wider ${activeTab === "history" ? "border-primary text-white" : "border-transparent text-slate-500"}`}>Histórico ({closedPositions.length})</button><button onClick={() => setHistoryCollapsed((value) => !value)} className="ml-auto text-xs text-slate-400 hover:text-white">{historyCollapsed ? "Expandir" : "Recolher"}</button>{openPositions.length > 0 && <button onClick={() => openPositions.forEach((position) => closePosition(position.id))} className="rounded border border-red-500/40 px-2 py-1 text-[10px] uppercase text-red-400">Fechar Tudo</button>}</div>{!historyCollapsed && <OrdersTable rows={rows} activeTab={activeTab} onClose={closePosition} />}</div></section>
-        <button onClick={() => setOrderPanelOpen((value) => !value)} className="w-6 border-l border-[#1e2a3a] bg-[#0a0e1a] text-slate-500 hover:bg-[#1e2a3a]">{orderPanelOpen ? <ChevronRight className="mx-auto h-4 w-4" /> : <ChevronLeft className="mx-auto h-4 w-4" />}</button>
-        {orderPanelOpen && <aside className="flex w-80 shrink-0 flex-col overflow-y-auto border-l border-[#1e2a3a] bg-[#0a0e1a] p-4"><div className="rounded-3xl border border-[#1e2a3a] bg-[#050a14] p-5 shadow-xl"><p className="text-xs font-black uppercase tracking-[0.2em] text-primary">Ordem de mercado</p><h2 className="mt-1 text-2xl font-black">{selectedAsset.label}</h2><p className="mt-1 text-sm text-slate-400">Preço: <strong className="text-white tabular-nums">{priceText(price, selectedAsset.decimals)}</strong></p><div className="mt-5 space-y-3"><div><label className="text-xs text-slate-400">Lot size</label><input value={lotSize} onChange={(event) => setLotSize(event.target.value)} className="mt-1 w-full rounded-xl border border-[#1e2a3a] bg-[#07111f] px-3 py-3 text-sm font-bold outline-none" /></div><div className="grid grid-cols-2 gap-2"><div><label className="text-xs text-red-400">Stop Loss</label><input value={stopLoss} onChange={(event) => setStopLoss(event.target.value)} placeholder="0.00000" className="mt-1 w-full rounded-xl border border-[#1e2a3a] bg-[#07111f] px-3 py-3 text-xs font-mono outline-none" /></div><div><label className="text-xs text-emerald-400">Take Profit</label><input value={takeProfit} onChange={(event) => setTakeProfit(event.target.value)} placeholder="0.00000" className="mt-1 w-full rounded-xl border border-[#1e2a3a] bg-[#07111f] px-3 py-3 text-xs font-mono outline-none" /></div></div></div><div className="mt-4 grid grid-cols-2 gap-3 rounded-2xl border border-[#1e2a3a] bg-[#07111f] p-3 text-center text-sm"><div><p className="text-xs text-slate-500">Valor operação</p><p className="font-black">{money(operationValue)}</p></div><div><p className="text-xs text-slate-500">Margem est.</p><p className="font-black">{money(estimatedMargin)}</p></div></div><div className="mt-4 grid grid-cols-2 gap-3"><button onClick={() => sendOrder("BUY")} className="rounded-2xl bg-emerald-500 px-4 py-5 text-lg font-black text-white shadow-lg hover:bg-emerald-400">BUY</button><button onClick={() => sendOrder("SELL")} className="rounded-2xl bg-red-500 px-4 py-5 text-lg font-black text-white shadow-lg hover:bg-red-400">SELL</button></div><p className="mt-4 rounded-2xl border border-[#1e2a3a] bg-[#07111f] p-3 text-xs text-slate-400">{lastAction}</p></div><div className="mt-3 rounded-3xl border border-[#1e2a3a] bg-[#050a14] p-5 shadow-xl"><Wallet className="mb-3 h-6 w-6 text-primary" /><p className="text-sm text-slate-400">Conta QuantFund</p><p className="text-4xl font-black">{money(equity)}</p><p className={`mt-1 text-sm ${floatingPnl >= 0 ? "text-emerald-400" : "text-red-400"}`}>{floatingPnl >= 0 ? "+" : ""}{money(floatingPnl)} floating PnL</p></div></aside>}
-      </main>
+    <div className="min-h-screen bg-[#0a0e1a] text-white flex flex-col">
+      <header className="h-14 border-b border-white/10 flex items-center justify-between px-4 bg-[#0f1629]">
+        <div className="flex items-center gap-4">
+          <Link href="/dashboard" className="flex items-center gap-2 text-white/70 hover:text-white transition"><ChevronLeft className="w-4 h-4" /><span className="text-sm">Dashboard</span></Link>
+          <div className="h-6 w-px bg-white/10" />
+          <h1 className="font-semibold text-lg">POP Terminal</h1>
+          {user?.primaryEmailAddress?.emailAddress && <span className="text-xs text-white/40">{user.primaryEmailAddress.emailAddress}</span>}
+        </div>
+        <div className="flex items-center gap-6">
+          {activeAccount ? (
+            <div className="flex items-center gap-4">
+              <div className="text-right"><div className="text-xs text-white/50">{activeAccount.challengeName || "Challenge Account"}</div><div className="font-mono font-bold text-lg">{money(balance)}</div></div>
+              <div className="text-right"><div className="text-xs text-white/50">Equity</div><div className={`font-mono font-bold text-lg ${equity >= initialBalance ? "text-emerald-400" : "text-rose-400"}`}>{money(equity)}</div></div>
+              <div className="text-right"><div className="text-xs text-white/50">P&L</div><div className={`font-mono font-bold text-sm ${totalFloatingPnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>{totalFloatingPnl >= 0 ? "+" : ""}{money(totalFloatingPnl)}</div></div>
+              <div className="w-32"><div className="flex justify-between text-xs text-white/50 mb-1"><span>Progress</span><span>{progress.toFixed(1)}%</span></div><div className="h-1.5 bg-white/10 rounded-full overflow-hidden"><div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${Math.min(Math.max(progress, 0), 100)}%` }} /></div></div>
+            </div>
+          ) : <div className="flex items-center gap-2 text-white/50"><Wallet className="w-4 h-4" /><span className="text-sm">No active account</span></div>}
+          <div className="h-6 w-px bg-white/10" />
+          <UserButton afterSignOutUrl="/" />
+        </div>
+      </header>
+
+      <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex flex-col min-w-0">
+          <div className="h-10 border-b border-white/10 flex items-center px-4 gap-2 bg-[#0f1629]">
+            <div className="relative">
+              <button onClick={() => setShowAssetDropdown(!showAssetDropdown)} className="flex items-center gap-2 px-3 py-1.5 rounded bg-white/5 hover:bg-white/10 transition text-sm"><span className="font-medium">{selectedAsset.label}</span><span className="text-white/50 text-xs">{selectedAsset.name}</span><ChevronDown className="w-3 h-3 text-white/50" /></button>
+              {showAssetDropdown && <div className="absolute top-full left-0 mt-1 w-64 bg-[#1a1f2e] border border-white/10 rounded-lg shadow-xl z-50 max-h-80 overflow-auto">{assets.map((asset) => <button key={asset.label} onClick={() => { setSelectedAsset(asset); setShowAssetDropdown(false); }} className={`w-full flex items-center justify-between px-4 py-2.5 hover:bg-white/5 transition text-left ${selectedAsset.label === asset.label ? "bg-white/5" : ""}`}><div><div className="text-sm font-medium">{asset.label}</div><div className="text-xs text-white/50">{asset.name}</div></div><div className="text-right"><div className="text-sm font-mono">{priceText(asset.base, asset.decimals)}</div><div className={`text-xs ${asset.change.startsWith("+") ? "text-emerald-400" : "text-rose-400"}`}>{asset.change}</div></div></button>)}</div>}
+            </div>
+            <div className="text-2xl font-mono font-bold">{priceText(currentPrice, selectedAsset.decimals)}</div>
+            <div className={`text-sm font-medium ${selectedAsset.change.startsWith("+") ? "text-emerald-400" : "text-rose-400"}`}>{selectedAsset.change}</div>
+          </div>
+          <div className="flex-1 min-h-0"><TradingViewChart asset={selectedAsset} /></div>
+        </div>
+
+        <div className="w-80 border-l border-white/10 bg-[#0f1629] flex flex-col">
+          <div className="p-4 border-b border-white/10">
+            <div className="flex gap-2 mb-4">
+              <button onClick={() => setSide("BUY")} className={`flex-1 py-2 rounded-lg font-medium text-sm transition ${side === "BUY" ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-white/5 text-white/50 hover:bg-white/10"}`}><TrendingUp className="w-4 h-4 inline mr-1" />BUY</button>
+              <button onClick={() => setSide("SELL")} className={`flex-1 py-2 rounded-lg font-medium text-sm transition ${side === "SELL" ? "bg-rose-500/20 text-rose-400 border border-rose-500/30" : "bg-white/5 text-white/50 hover:bg-white/10"}`}><TrendingDown className="w-4 h-4 inline mr-1" />SELL</button>
+            </div>
+            <div className="space-y-3">
+              <div><label className="text-xs text-white/50 mb-1 block">Volume (lots)</label><div className="flex items-center gap-2"><button onClick={() => setLots(Math.max(0.01, lots - 0.01))} className="w-8 h-8 rounded bg-white/5 hover:bg-white/10 flex items-center justify-center text-lg">-</button><input type="number" value={lots} onChange={(e) => setLots(parseFloat(e.target.value) || 0)} className="flex-1 bg-white/5 border border-white/10 rounded px-3 py-2 text-center font-mono" step="0.01" min="0.01" /><button onClick={() => setLots(lots + 0.01)} className="w-8 h-8 rounded bg-white/5 hover:bg-white/10 flex items-center justify-center text-lg">+</button></div></div>
+              <div><label className="text-xs text-white/50 mb-1 block">Stop Loss</label><input type="number" value={stopLoss} onChange={(e) => setStopLoss(e.target.value)} placeholder="0.00000" className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 font-mono" /></div>
+              <div><label className="text-xs text-white/50 mb-1 block">Take Profit</label><input type="number" value={takeProfit} onChange={(e) => setTakeProfit(e.target.value)} placeholder="0.00000" className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 font-mono" /></div>
+              <div className="pt-2"><div className="flex justify-between text-xs text-white/50 mb-2"><span>Margin Required</span><span className="font-mono">{money(currentPrice * lots * selectedAsset.multiplier / 100)}</span></div><button onClick={openPosition} disabled={!activeAccount} className={`w-full py-3 rounded-lg font-bold text-sm transition ${side === "BUY" ? "bg-emerald-500 hover:bg-emerald-600" : "bg-rose-500 hover:bg-rose-600"} ${!activeAccount ? "opacity-50 cursor-not-allowed" : ""}`}>{side} {selectedAsset.label}</button></div>
+            </div>
+          </div>
+
+          <div className="flex-1 flex flex-col min-h-0">
+            <div className="flex border-b border-white/10"><button onClick={() => setTab("open")} className={`flex-1 py-2 text-sm font-medium transition ${tab === "open" ? "text-white border-b-2 border-blue-500" : "text-white/50 hover:text-white"}`}>Open ({openPositions.length})</button><button onClick={() => setTab("history")} className={`flex-1 py-2 text-sm font-medium transition ${tab === "history" ? "text-white border-b-2 border-blue-500" : "text-white/50 hover:text-white"}`}>History ({closedPositions.length})</button></div>
+            <div className="flex-1 overflow-auto p-2 space-y-2">
+              {tab === "open" ? openPositions.length === 0 ? <div className="text-center text-white/30 py-8 text-sm">No open positions</div> : openPositions.map((pos) => { const pnl = positionPnl(pos, tick); const asset = assets.find((a) => a.label === pos.symbol) || assets[0]; return <div key={pos.id} className="bg-white/5 rounded-lg p-3 border border-white/5"><div className="flex justify-between items-start mb-2"><div><div className="font-medium text-sm">{pos.symbol}</div><div className={`text-xs ${pos.side === "BUY" ? "text-emerald-400" : "text-rose-400"}`}>{pos.side} {pos.lots} lots</div></div><button onClick={() => closePosition(pos.id)} className="text-white/30 hover:text-white/70 transition"><X className="w-4 h-4" /></button></div><div className="flex justify-between text-xs text-white/50 mb-1"><span>Entry: {priceText(pos.entry, asset.decimals)}</span><span>Current: {priceText(floatingPrice(asset, tick), asset.decimals)}</span></div><div className={`font-mono font-bold text-sm ${pnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>{pnl >= 0 ? "+" : ""}{money(pnl)}</div></div>; }) : closedPositions.length === 0 ? <div className="text-center text-white/30 py-8 text-sm">No history</div> : closedPositions.map((pos) => <div key={pos.id} className="bg-white/5 rounded-lg p-3 border border-white/5 opacity-60"><div className="flex justify-between items-start mb-1"><div className="font-medium text-sm">{pos.symbol}</div><div className="text-xs text-white/50">{pos.reason}</div></div><div className="text-xs text-white/50">{pos.side} {pos.lots} lots @ {priceText(pos.entry, 5)}</div></div>)}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
-
-function Metric({ label, value, tone }: { label: string; value: string; tone?: "green" | "red" }) { return <div className="rounded-2xl border border-[#1e2a3a] bg-[#0a0e1a] px-4 py-3 shadow-xl"><p className="text-xs text-slate-500">{label}</p><p className={`mt-1 text-xl font-black ${tone === "green" ? "text-emerald-400" : tone === "red" ? "text-red-400" : ""}`}>{value}</p></div>; }
-function OrdersTable({ rows, activeTab, onClose }: { rows: Position[]; activeTab: Tab; onClose: (id: string) => void }) { return <div className="h-[calc(100%-37px)] overflow-y-auto"><table className="w-full text-xs"><thead className="sticky top-0 bg-[#0a0e1a] text-left text-slate-500"><tr><th className="px-3 py-2">Symbol</th><th>Side</th><th className="text-right">Lots</th><th className="text-right">Entry</th><th className="text-right">Current/Close</th><th className="text-right">SL</th><th className="text-right">TP</th><th className="text-right">PnL</th><th className="pr-3 text-right">Action</th></tr></thead><tbody>{rows.map((position) => <tr key={position.id} className="border-t border-[#1e2a3a]/60 hover:bg-[#1e2a3a]/20"><td className="px-3 py-2 font-bold">{position.symbol}</td><td><span className={position.side === "BUY" ? "text-emerald-400" : "text-red-400"}>{position.side}</span></td><td className="text-right font-mono">{position.lots.toFixed(2)}</td><td className="text-right font-mono">{position.entry.toFixed(5)}</td><td className="text-right font-mono">{position.current.toFixed(5)}</td><td className="text-right font-mono text-red-300">{position.stopLoss ? position.stopLoss.toFixed(5) : "—"}</td><td className="text-right font-mono text-emerald-300">{position.takeProfit ? position.takeProfit.toFixed(5) : "—"}</td><td className={`text-right font-mono font-bold ${position.pnl >= 0 ? "text-emerald-400" : "text-red-400"}`}>{position.pnl >= 0 ? "+" : ""}{money(position.pnl)}</td><td className="pr-3 text-right">{position.status === "open" ? <button onClick={() => onClose(position.id)} className="rounded border border-slate-700 px-2 py-1 text-[10px] text-slate-400 hover:border-red-500 hover:text-red-400">Fechar</button> : <span className="text-slate-500">{position.reason ?? "Manual"}</span>}</td></tr>)}{rows.length === 0 && <tr><td colSpan={9} className="px-4 py-8 text-center text-slate-500">{activeTab === "open" ? "Sem posições abertas" : "Sem histórico de negociação"}</td></tr>}</tbody></table></div>; }
