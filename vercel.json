@@ -4,6 +4,17 @@
   "outputDirectory": "artifacts/prop-firm/dist/public",
   "cleanUrls": true,
   "trailingSlash": false,
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://s3.tradingview.com https://www.tradingview.com https://*.tradingview.com https://*.clerk.accounts.dev https://challenges.cloudflare.com; connect-src 'self' https://*.tradingview.com wss://*.tradingview.com https://*.clerk.accounts.dev; frame-src 'self' https://*.tradingview.com https://challenges.cloudflare.com; img-src 'self' data: https://*.tradingview.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:;"
+        }
+      ]
+    }
+  ],
   "rewrites": [
     {
       "source": "/((?!assets/|favicon.ico|robots.txt).*)",
