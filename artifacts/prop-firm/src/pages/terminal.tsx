@@ -102,7 +102,6 @@ function TradingChart({ asset, tick }: { asset: Asset; tick: number }) {
     });
 
     // Criar série de candlesticks
-    import { CandlestickSeries } from "lightweight-charts";
 
     const series = chart.addSeries(CandlestickSeries, {
   upColor: "#26a69a",
