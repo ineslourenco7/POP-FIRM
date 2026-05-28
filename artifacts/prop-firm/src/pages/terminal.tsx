@@ -101,13 +101,7 @@ function TradingChart({ asset, tick }: { asset: Asset; tick: number }) {
     });
 
     // Criar série de candlesticks
-    const series = chart.addCandlestickSeries({
-      upColor: "#26a69a",
-      downColor: "#ef5350",
-      borderVisible: false,
-      wickUpColor: "#26a69a",
-      wickDownColor: "#ef5350",
-    });
+    import { CandlestickSeries } from "lightweight-charts";
 
     // Gerar dados iniciais (últimas 100 barras)
     const now = Math.floor(Date.now() / 1000);
