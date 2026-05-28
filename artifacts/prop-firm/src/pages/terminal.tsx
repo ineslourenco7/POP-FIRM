@@ -1,8 +1,13 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { Link, useRoute } from "wouter";
 import { UserButton, useUser } from "@clerk/react";
-import { ChevronDown, ChevronLeft, ChevronRight, Wallet, TrendingUp, TrendingDown, X, AlertTriangle } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Wallet, TrendingUp, TrendingDown, X, ExternalLink } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+
+// ============================================
+// IMPORT DO LIGHTWEIGHT CHARTS (biblioteca local)
+// ============================================
+import { createChart, ColorType, IChartApi, ISeriesApi, CandlestickData, Time } from "lightweight-charts";
 
 type Side = "BUY" | "SELL";
 type Tab = "open" | "history";
@@ -44,187 +49,139 @@ function floatingPrice(asset: Asset, tick: number) { return asset.base + Math.si
 function positionPnl(position: Position, tick: number) { const asset = assets.find((item) => item.label === position.symbol) ?? assets[0]; const current = floatingPrice(asset, tick); const direction = position.side === "BUY" ? 1 : -1; return (current - position.entry) * direction * position.lots * asset.multiplier; }
 
 // ============================================
-// TRADINGVIEW CHART - VERSÃO FINAL (3 MÉTODOS)
+// GRÁFICO COM LIGHTWEIGHT CHARTS (SOLUÇÃO DEFINITIVA)
 // ============================================
-declare global {
-  interface Window {
-    TradingView: any;
-    createTradingViewWidget: any;
-  }
-}
+function TradingChart({ asset, tick }: { asset: Asset; tick: number }) {
+  const chartContainerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useRef<IChartApi | null>(null);
+  const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const dataRef = useRef<CandlestickData<Time>[]>([]);
+  const lastPriceRef = useRef(asset.base);
 
-type ChartMode = "widget" | "iframe" | "error";
-
-function TradingViewChart({ asset }: { asset: Asset }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const widgetRef = useRef<any>(null);
-  const scriptLoaded = useRef(false);
-  const [chartMode, setChartMode] = useState<ChartMode>("widget");
-  const [errorMsg, setErrorMsg] = useState("");
-
-  // MÉTODO 1: Widget TradingView (preferido)
   useEffect(() => {
-    if (chartMode !== "widget") return;
-    if (!containerRef.current) return;
+    if (!chartContainerRef.current) return;
 
-    const loadWidget = () => {
-      if (!containerRef.current || !window.TradingView) {
-        setChartMode("iframe");
-        return;
-      }
+    // Criar gráfico
+    const chart = createChart(chartContainerRef.current, {
+      layout: {
+        background: { type: ColorType.Solid, color: "#0a0e1a" },
+        textColor: "rgba(255, 255, 255, 0.5)",
+      },
+      grid: {
+        vertLines: { color: "rgba(255, 255, 255, 0.05)" },
+        horzLines: { color: "rgba(255, 255, 255, 0.05)" },
+      },
+      crosshair: {
+        mode: 1,
+        vertLine: {
+          color: "rgba(255, 255, 255, 0.2)",
+          labelBackgroundColor: "#2962FF",
+        },
+        horzLine: {
+          color: "rgba(255, 255, 255, 0.2)",
+          labelBackgroundColor: "#2962FF",
+        },
+      },
+      rightPriceScale: {
+        borderColor: "rgba(255, 255, 255, 0.1)",
+      },
+      timeScale: {
+        borderColor: "rgba(255, 255, 255, 0.1)",
+        timeVisible: true,
+        secondsVisible: false,
+      },
+      autoSize: true,
+    });
 
-      containerRef.current.innerHTML = "";
+    // Criar série de candlesticks
+    const series = chart.addCandlestickSeries({
+      upColor: "#26a69a",
+      downColor: "#ef5350",
+      borderVisible: false,
+      wickUpColor: "#26a69a",
+      wickDownColor: "#ef5350",
+    });
 
-      const containerId = `tv-chart-${asset.label.replace(/[^a-zA-Z0-9]/g, "-")}-${Date.now()}`;
+    // Gerar dados iniciais (últimas 100 barras)
+    const now = Math.floor(Date.now() / 1000);
+    const initialData: CandlestickData<Time>[] = [];
+    let price = asset.base;
 
-      const div = document.createElement("div");
-      div.id = containerId;
-      div.style.width = "100%";
-      div.style.height = "100%";
-      containerRef.current.appendChild(div);
+    for (let i = 100; i >= 0; i--) {
+      const time = (now - i * 3600) as Time;
+      const volatility = price * 0.001;
+      const open = price + (Math.random() - 0.5) * volatility;
+      const close = open + (Math.random() - 0.5) * volatility;
+      const high = Math.max(open, close) + Math.random() * volatility * 0.5;
+      const low = Math.min(open, close) - Math.random() * volatility * 0.5;
 
-      try {
-        widgetRef.current = new window.TradingView.widget({
-          container_id: containerId,
-          autosize: true,
-          symbol: asset.value,
-          interval: "60",
-          timezone: "Europe/Lisbon",
-          theme: "dark",
-          style: "1",
-          locale: "pt",
-          toolbar_bg: "#0f1629",
-          enable_publishing: false,
-          hide_top_toolbar: false,
-          hide_legend: false,
-          save_image: false,
-          calendar: false,
-          hide_side_toolbar: false,
-          allow_symbol_change: true,
-          withdateranges: true,
-          range: "1D",
-          details: true,
-          hotlist: false,
-          news: ["headlines"],
-          studies: ["RSI@tv-basicstudies", "MASimple@tv-basicstudies"],
-          show_popup_button: true,
-          popup_width: "1000",
-          popup_height: "650",
-          disabled_features: [
-            "use_localstorage_for_settings",
-            "header_symbol_search",
-            "symbol_info",
-            "border_around_the_chart",
-            "header_compare",
-            "header_undo_redo",
-            "header_screenshot",
-            "header_fullscreen_button",
-            "left_toolbar",
-          ],
-          enabled_features: [
-            "study_templates",
-            "hide_left_toolbar_by_default",
-          ],
-          overrides: {
-            "mainSeriesProperties.showCountdown": true,
-            "paneProperties.background": "#0a0e1a",
-            "paneProperties.vertGridProperties.color": "rgba(255,255,255,0.05)",
-            "paneProperties.horzGridProperties.color": "rgba(255,255,255,0.05)",
-            "scalesProperties.textColor": "rgba(255,255,255,0.5)",
-            "scalesProperties.lineColor": "rgba(255,255,255,0.1)",
-          },
-        });
-      } catch (err: any) {
-        console.error("TradingView widget error:", err);
-        setErrorMsg(err?.message || "Widget failed");
-        setChartMode("iframe");
-      }
-    };
-
-    if (!scriptLoaded.current && !window.TradingView) {
-      const script = document.createElement("script");
-      script.src = "https://s3.tradingview.com/tv.js";
-      script.async = true;
-      script.onload = () => {
-        scriptLoaded.current = true;
-        loadWidget();
-      };
-      script.onerror = () => {
-        setErrorMsg("Failed to load TradingView script");
-        setChartMode("iframe");
-      };
-      document.head.appendChild(script);
-    } else {
-      loadWidget();
+      initialData.push({ time, open, high, low, close });
+      price = close;
     }
 
+    series.setData(initialData);
+    dataRef.current = initialData;
+    lastPriceRef.current = price;
+
+    chart.timeScale().fitContent();
+
+    chartRef.current = chart;
+    seriesRef.current = series;
+
     return () => {
-      if (widgetRef.current && widgetRef.current.remove) {
-        widgetRef.current.remove();
-      }
-      if (containerRef.current) {
-        containerRef.current.innerHTML = "";
-      }
+      chart.remove();
     };
-  }, [asset.value, chartMode]);
+  }, [asset.value]);
 
-  // MÉTODO 2: Iframe (fallback)
-  if (chartMode === "iframe") {
-    // Usar o embed direto do TradingView (URL pública sem restrições)
-    const embedUrl = `https://www.tradingview.com/chart/?symbol=${encodeURIComponent(asset.value)}&interval=60&theme=dark`;
+  // Atualizar com novo preço a cada tick
+  useEffect(() => {
+    if (!seriesRef.current || dataRef.current.length === 0) return;
 
-    return (
-      <div className="w-full h-full min-h-[400px] bg-[#0a0e1a] relative">
-        <iframe
-          src={embedUrl}
-          className="w-full h-full border-0"
-          title="TradingView Chart"
-          sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-          onError={() => setChartMode("error")}
-        />
-        <button 
-          onClick={() => setChartMode("widget")}
-          className="absolute top-2 right-2 text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded hover:bg-blue-500/30 transition"
-        >
-          Try Widget Mode
-        </button>
-      </div>
-    );
-  }
+    const currentPrice = floatingPrice(asset, tick);
+    const lastCandle = dataRef.current[dataRef.current.length - 1];
+    const now = Math.floor(Date.now() / 1000) as Time;
 
-  // MÉTODO 3: Erro (último recurso)
-  if (chartMode === "error") {
-    return (
-      <div className="w-full h-full min-h-[400px] bg-[#0a0e1a] flex flex-col items-center justify-center text-white/50">
-        <AlertTriangle className="w-12 h-12 mb-4 text-yellow-500" />
-        <p className="text-lg font-medium mb-2">TradingView Unavailable</p>
-        <p className="text-sm mb-4">{errorMsg || "Could not load chart"}</p>
-        <div className="flex gap-2">
-          <button 
-            onClick={() => { setChartMode("widget"); setErrorMsg(""); }}
-            className="px-4 py-2 bg-blue-500/20 text-blue-400 rounded hover:bg-blue-500/30 transition text-sm"
-          >
-            Retry Widget
-          </button>
-          <a 
-            href={`https://www.tradingview.com/chart/?symbol=${encodeURIComponent(asset.value)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-4 py-2 bg-white/10 text-white rounded hover:bg-white/20 transition text-sm"
-          >
-            Open in TradingView
-          </a>
-        </div>
-      </div>
-    );
-  }
+    // Se passou mais de 1 hora, criar nova vela
+    if (now > (lastCandle.time as number) + 3600) {
+      const newCandle: CandlestickData<Time> = {
+        time: now,
+        open: lastCandle.close,
+        high: Math.max(lastCandle.close, currentPrice),
+        low: Math.min(lastCandle.close, currentPrice),
+        close: currentPrice,
+      };
+      dataRef.current.push(newCandle);
+      seriesRef.current.update(newCandle);
+    } else {
+      // Atualizar vela atual
+      const updatedCandle: CandlestickData<Time> = {
+        time: lastCandle.time,
+        open: lastCandle.open,
+        high: Math.max(lastCandle.high, currentPrice),
+        low: Math.min(lastCandle.low, currentPrice),
+        close: currentPrice,
+      };
+      dataRef.current[dataRef.current.length - 1] = updatedCandle;
+      seriesRef.current.update(updatedCandle);
+    }
 
-  // MODO WIDGET (padrão)
+    lastPriceRef.current = currentPrice;
+  }, [tick, asset]);
+
   return (
-    <div 
-      ref={containerRef} 
-      className="w-full h-full min-h-[400px] bg-[#0a0e1a]"
-    />
+    <div className="w-full h-full min-h-[400px] bg-[#0a0e1a] relative">
+      <div ref={chartContainerRef} className="w-full h-full" />
+      {/* Botão para abrir TradingView externo */}
+      <a
+        href={`https://www.tradingview.com/chart/?symbol=${encodeURIComponent(asset.value)}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white/70 hover:text-white text-xs rounded-lg transition backdrop-blur-sm"
+      >
+        <ExternalLink className="w-3 h-3" />
+        Open in TradingView
+      </a>
+    </div>
   );
 }
 
@@ -414,8 +371,9 @@ export default function TerminalPage() {
             </div>
           </div>
 
+          {/* GRÁFICO LIGHTWEIGHT CHARTS - SEM BLOQUEIOS */}
           <div className="flex-1 min-h-0">
-            <TradingViewChart asset={selectedAsset} />
+            <TradingChart asset={selectedAsset} tick={tick} />
           </div>
         </div>
 
