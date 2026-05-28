@@ -3,7 +3,7 @@ import { Link, useRoute } from "wouter";
 import { UserButton, useUser } from "@clerk/react";
 import { ChevronDown, ChevronLeft, ChevronRight, Wallet, TrendingUp, TrendingDown, X, ExternalLink } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-
+import TradingViewChart from "@/components/TradingViewChart";
 // ============================================
 // IMPORT DO LIGHTWEIGHT CHARTS (biblioteca local)
 // ============================================
@@ -378,11 +378,10 @@ export default function TerminalPage() {
             </div>
           </div>
 
-          {/* GRÁFICO LIGHTWEIGHT CHARTS - SEM BLOQUEIOS */}
-          <div className="flex-1 min-h-0">
-            <TradingChart asset={selectedAsset} tick={tick} />
-          </div>
-        </div>
+{/* TRADINGVIEW REAL */}
+<div className="flex-1 min-h-0">
+  <TradingViewChart symbol={selectedAsset.value} />
+</div>
 
         <div className="w-80 border-l border-white/10 bg-[#0f1629] flex flex-col">
           <div className="p-4 border-b border-white/10">
