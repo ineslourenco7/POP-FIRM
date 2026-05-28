@@ -15,11 +15,11 @@ import Terms from "@/pages/terms";
 import Support from "@/pages/support";
 import AdminDashboard from "@/pages/admin-dashboard";
 import CheckoutPage from "@/pages/checkout";
-import TerminalPage from "@/pages/terminal";
+import TerminalFullPage from "@/pages/terminal-full";
 import SupportChat from "@/components/SupportChat";
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
-const appVersion = "quantfund-api-routes-2026-05-28";
+const appVersion = "quantfund-terminal-hotfix-2026-05-28";
 const adminEmail = "ineslourencop7" + "@" + "gmail.com";
 
 function SignInPage() {
@@ -51,7 +51,7 @@ function NotFoundPage() {
 }
 
 function App() {
-  return <WouterRouter base={basePath}><QueryClientProvider client={queryClient}><TooltipProvider><div data-app-version={appVersion}><Switch><Route path="/" component={Landing} /><Route path="/demo" component={Demo} /><Route path="/challenges" component={Challenges} /><Route path="/terms" component={Terms} /><Route path="/support" component={Support} /><Route path="/sign-in/:rest*" component={SignInPage} /><Route path="/sign-in" component={SignInPage} /><Route path="/sign-up/:rest*" component={SignUpPage} /><Route path="/sign-up" component={SignUpPage} /><Route path="/checkout/:id"><RequireLogin><CheckoutPage /></RequireLogin></Route><Route path="/terminal"><RequireLogin><TerminalPage /></RequireLogin></Route><Route path="/trade/:accountId"><RequireLogin><Trade /></RequireLogin></Route><Route path="/admin"><RequireAdmin><AdminDashboard /></RequireAdmin></Route><Route component={NotFoundPage} /></Switch><SupportChat /><Toaster /><SonnerToaster position="bottom-right" theme="dark" richColors /></div></TooltipProvider></QueryClientProvider></WouterRouter>;
+  return <WouterRouter base={basePath}><QueryClientProvider client={queryClient}><TooltipProvider><div data-app-version={appVersion}><Switch><Route path="/" component={Landing} /><Route path="/demo" component={Demo} /><Route path="/challenges" component={Challenges} /><Route path="/terms" component={Terms} /><Route path="/support" component={Support} /><Route path="/sign-in/:rest*" component={SignInPage} /><Route path="/sign-in" component={SignInPage} /><Route path="/sign-up/:rest*" component={SignUpPage} /><Route path="/sign-up" component={SignUpPage} /><Route path="/checkout/:id"><RequireLogin><CheckoutPage /></RequireLogin></Route><Route path="/terminal"><RequireLogin><TerminalFullPage /></RequireLogin></Route><Route path="/trade/:accountId"><RequireLogin><Trade /></RequireLogin></Route><Route path="/admin"><RequireAdmin><AdminDashboard /></RequireAdmin></Route><Route component={NotFoundPage} /></Switch><SupportChat /><Toaster /><SonnerToaster position="bottom-right" theme="dark" richColors /></div></TooltipProvider></QueryClientProvider></WouterRouter>;
 }
 
 export default App;
