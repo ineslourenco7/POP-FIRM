@@ -7,7 +7,14 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 // ============================================
 // IMPORT DO LIGHTWEIGHT CHARTS (biblioteca local)
 // ============================================
-import { createChart, ColorType, IChartApi, ISeriesApi, CandlestickData, Time } from "lightweight-charts";
+import {
+  createChart,
+  ColorType,
+  type IChartApi,
+  type ISeriesApi,
+  type CandlestickData,
+  type Time,
+} from "lightweight-charts";
 
 type Side = "BUY" | "SELL";
 type Tab = "open" | "history";
