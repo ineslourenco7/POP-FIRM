@@ -1,60 +1,55 @@
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useRef } from "react";
 
-type TradingViewChartProps = {
-  symbol: string;
+interface TradingViewChartProps {
+  symbol?: string;
   interval?: string;
-};
-
-const scriptSrc = ["https:", "", "s3.tradingview.com", "tv.js"].join("/");
-
-function normalizeTradingViewSymbol(symbol: string) {
-  if (symbol.includes(":")) return symbol;
-  const clean = symbol.replace(/[^A-Z0-9]/gi, "").toUpperCase();
-  if (["XAUUSD", "XAGUSD"].includes(clean)) return `OANDA:${clean}`;
-  if (["BTCUSD", "ETHUSD"].includes(clean)) return `BINANCE:${clean.replace("USD", "USDT")}`;
-  if (["NAS100", "NDX"].includes(clean)) return "NASDAQ:NDX";
-  if (["US30", "DJI"].includes(clean)) return "DJ:DJI";
-  if (["SPX500", "SP500", "SPX"].includes(clean)) return "SP:SPX";
-  if (["USOIL", "OIL", "CRUDE"].includes(clean)) return "TVC:USOIL";
-  return `FX:${clean}`;
 }
 
-export default function TradingViewChart({ symbol, interval = "60" }: TradingViewChartProps) {
+const scriptSrc = "https://s3.tradingview.com/tv.js";
+
+export default function TradingViewChart({ symbol = "OANDA:XAUUSD", interval = "15" }: TradingViewChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const reactId = useId().replace(/:/g, "");
-  const containerId = `tradingview_${reactId}`;
 
   useEffect(() => {
-    let cancelled = false;
-    const container = containerRef.current;
-    if (!container) return;
+    if (!containerRef.current) return;
 
-    container.id = containerId;
-    container.innerHTML = "";
+    let cancelled = false;
+    const widgetId = `tv-widget-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+    containerRef.current.innerHTML = "";
+
+    const widgetDiv = document.createElement("div");
+    widgetDiv.id = widgetId;
+    widgetDiv.style.width = "100%";
+    widgetDiv.style.height = "100%";
+    containerRef.current.appendChild(widgetDiv);
 
     const createWidget = () => {
-      if (cancelled || !containerRef.current || !(window as any).TradingView) return;
-      containerRef.current.innerHTML = "";
+      if (cancelled || !(window as any).TradingView) return;
+
       new (window as any).TradingView.widget({
-        autosize: true,
-        symbol: normalizeTradingViewSymbol(symbol),
+        width: "100%",
+        height: "100%",
+        symbol,
         interval,
         timezone: "Europe/Lisbon",
         theme: "dark",
         style: "1",
         locale: "pt",
-        toolbar_bg: "#131722",
+        toolbar_bg: "#0B0E14",
         enable_publishing: false,
-        hide_side_toolbar: false,
         allow_symbol_change: true,
+        container_id: widgetId,
+        hide_side_toolbar: false,
+        hide_legend: false,
         save_image: true,
         calendar: false,
-        withdateranges: true,
+        hide_volume: false,
+        support_host: "https://www.tradingview.com",
         studies: ["RSI@tv-basicstudies", "MACD@tv-basicstudies", "MASimple@tv-basicstudies"],
         show_popup_button: true,
         popup_width: "1000",
         popup_height: "650",
-        container_id: containerId,
       });
     };
 
@@ -77,7 +72,7 @@ export default function TradingViewChart({ symbol, interval = "60" }: TradingVie
       cancelled = true;
       if (containerRef.current) containerRef.current.innerHTML = "";
     };
-  }, [containerId, interval, symbol]);
+  }, [symbol, interval]);
 
-  return <div ref={containerRef} className="h-full min-h-[500px] w-full bg-[#050a14]" />;
+  return <div ref={containerRef} style={{ width: "100%", height: "100%", minHeight: "100%" }} />;
 }
