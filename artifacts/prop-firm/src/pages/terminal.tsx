@@ -382,6 +382,9 @@ export default function TerminalPage() {
 <div className="flex-1 min-h-0">
   <TradingViewChart symbol={selectedAsset.value} />
 </div>
+</div>
+
+<div className="w-80 border-l border-white/10 bg-[#0f1629] flex flex-col">
 
         <div className="w-80 border-l border-white/10 bg-[#0f1629] flex flex-col">
           <div className="p-4 border-b border-white/10">
