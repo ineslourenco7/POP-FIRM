@@ -386,7 +386,6 @@ export default function TerminalPage() {
 
 <div className="w-80 border-l border-white/10 bg-[#0f1629] flex flex-col">
 
-        <div className="w-80 border-l border-white/10 bg-[#0f1629] flex flex-col">
           <div className="p-4 border-b border-white/10">
             <div className="flex gap-2 mb-4">
               <button 
