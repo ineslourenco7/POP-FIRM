@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useRoute } from "wouter";
 import { UserButton, useUser } from "@clerk/react";
 import { toast } from "sonner";
@@ -134,7 +134,7 @@ export default function Trade() {
   const favoriteAssets = assets.filter((asset) => favorites.includes(asset.symbol));
   const winRate = closedOrders.length ? Math.round((closedOrders.filter((order) => order.pnl > 0).length / closedOrders.length) * 100) : 0;
   const tvInterval = timeframe === "1H" ? "60" : timeframe.replace("m", "");
-  const tvUrl = `https://s.tradingview.com/widgetembed/?symbol=${encodeURIComponent(selectedAsset.tv)}&interval=${encodeURIComponent(tvInterval)}&theme=dark&style=1&timezone=Europe%2FLisbon&withdateranges=1&hide_side_toolbar=0&allow_symbol_change=1&save_image=0&locale=pt`;
+
 
   useEffect(() => {
     async function syncToBackend() {
