@@ -1,930 +1,131 @@
-import { useEffect, useRef, useState } from "react";
-import { useParams, useLocation } from "wouter";
-import {
-  useGetAccount,
-  useListOrders,
-  useCreateOrder,
-  useCloseOrder,
-  useGetMarketPrice,
-  getMarketPrice,
-  getGetMarketPriceQueryKey,
-  getListOrdersQueryKey,
-  getGetAccountQueryKey,
-  type Order,
-} from "@workspace/api-client-react";
-import { useQueryClient, useQueries } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useRoute } from "wouter";
+import { UserButton, useUser } from "@clerk/react";
+import { ChevronDown, ChevronLeft, ChevronRight, Search, Star, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown, ChevronLeft, ChevronRight, Search, Star, X } from "lucide-react";
-import PriceTicker from "@/components/PriceTicker";
 
-declare global {
-  interface Window {
-    TradingView: any;
-  }
-}
+type Side = "buy" | "sell";
+type Tab = "positions" | "history";
+type OrderStatus = "open" | "closed";
+type SymbolItem = { value: string; label: string; category: string; base: number; decimals: number; multiplier: number; tv: string };
+type Order = { id: string; symbol: string; side: Side; size: number; openPrice: number; currentPrice: number; stopLoss?: number; takeProfit?: number; pnl: number; status: OrderStatus; openedAt: string; closedAt?: string; closePrice?: number; closeReason?: "Manual" | "SL" | "TP" };
+type Persisted = { balance: number; orders: Order[]; favorites: string[]; savedAt: string };
 
-const SYMBOLS = [
-  { value: "EURUSD", label: "EUR/USD", category: "Forex" },
-  { value: "GBPUSD", label: "GBP/USD", category: "Forex" },
-  { value: "USDJPY", label: "USD/JPY", category: "Forex" },
-  { value: "USDCHF", label: "USD/CHF", category: "Forex" },
-  { value: "AUDUSD", label: "AUD/USD", category: "Forex" },
-  { value: "USDCAD", label: "USD/CAD", category: "Forex" },
-  { value: "NZDUSD", label: "NZD/USD", category: "Forex" },
-  { value: "EURGBP", label: "EUR/GBP", category: "Forex" },
-  { value: "EURJPY", label: "EUR/JPY", category: "Forex" },
-  { value: "GBPJPY", label: "GBP/JPY", category: "Forex" },
-  { value: "XAUUSD", label: "XAU/USD (Gold)", category: "Metals" },
-  { value: "XAGUSD", label: "XAG/USD (Silver)", category: "Metals" },
-  { value: "BTCUSD", label: "BTC/USD", category: "Crypto" },
-  { value: "ETHUSD", label: "ETH/USD", category: "Crypto" },
-  { value: "NAS100", label: "NASDAQ 100", category: "Indices" },
-  { value: "US30", label: "Dow Jones 30", category: "Indices" },
-  { value: "SP500", label: "S&P 500", category: "Indices" },
-  { value: "CRUDE", label: "Crude Oil", category: "Commodities" },
+const SYMBOLS: SymbolItem[] = [
+  { value: "EURUSD", label: "EUR/USD", category: "Forex", base: 1.0842, decimals: 5, multiplier: 100000, tv: "FX:EURUSD" },
+  { value: "GBPUSD", label: "GBP/USD", category: "Forex", base: 1.271, decimals: 5, multiplier: 100000, tv: "FX:GBPUSD" },
+  { value: "USDJPY", label: "USD/JPY", category: "Forex", base: 156.82, decimals: 3, multiplier: 100000, tv: "FX:USDJPY" },
+  { value: "USDCHF", label: "USD/CHF", category: "Forex", base: 0.9124, decimals: 5, multiplier: 100000, tv: "FX:USDCHF" },
+  { value: "AUDUSD", label: "AUD/USD", category: "Forex", base: 0.6631, decimals: 5, multiplier: 100000, tv: "FX:AUDUSD" },
+  { value: "USDCAD", label: "USD/CAD", category: "Forex", base: 1.364, decimals: 5, multiplier: 100000, tv: "FX:USDCAD" },
+  { value: "NZDUSD", label: "NZD/USD", category: "Forex", base: 0.611, decimals: 5, multiplier: 100000, tv: "FX:NZDUSD" },
+  { value: "EURGBP", label: "EUR/GBP", category: "Forex", base: 0.853, decimals: 5, multiplier: 100000, tv: "FX:EURGBP" },
+  { value: "XAUUSD", label: "XAU/USD (Gold)", category: "Metals", base: 2356.4, decimals: 2, multiplier: 100, tv: "OANDA:XAUUSD" },
+  { value: "XAGUSD", label: "XAG/USD (Silver)", category: "Metals", base: 30.12, decimals: 3, multiplier: 5000, tv: "OANDA:XAGUSD" },
+  { value: "BTCUSD", label: "BTC/USD", category: "Crypto", base: 67420, decimals: 2, multiplier: 1, tv: "BINANCE:BTCUSDT" },
+  { value: "ETHUSD", label: "ETH/USD", category: "Crypto", base: 3520.8, decimals: 2, multiplier: 1, tv: "BINANCE:ETHUSDT" },
+  { value: "NAS100", label: "NASDAQ 100", category: "Indices", base: 18724.2, decimals: 2, multiplier: 10, tv: "NASDAQ:NDX" },
+  { value: "US30", label: "Dow Jones 30", category: "Indices", base: 39128.6, decimals: 2, multiplier: 10, tv: "DJ:DJI" },
+  { value: "SP500", label: "S&P 500", category: "Indices", base: 5304.1, decimals: 2, multiplier: 10, tv: "SP:SPX" },
+  { value: "CRUDE", label: "Crude Oil", category: "Commodities", base: 78.42, decimals: 2, multiplier: 1000, tv: "TVC:USOIL" },
 ];
 
-const TV_SYMBOL_MAP: Record<string, string> = {
-  EURUSD: "FX:EURUSD",
-  GBPUSD: "FX:GBPUSD",
-  USDJPY: "FX:USDJPY",
-  USDCHF: "FX:USDCHF",
-  AUDUSD: "FX:AUDUSD",
-  USDCAD: "FX:USDCAD",
-  NZDUSD: "FX:NZDUSD",
-  EURGBP: "FX:EURGBP",
-  EURJPY: "FX:EURJPY",
-  GBPJPY: "FX:GBPJPY",
-  XAUUSD: "OANDA:XAUUSD",
-  XAGUSD: "OANDA:XAGUSD",
-  BTCUSD: "BINANCE:BTCUSDT",
-  ETHUSD: "BINANCE:ETHUSDT",
-  NAS100: "NASDAQ:NDX",
-  US30: "DJ:DJI",
-  SP500: "SP:SPX",
-  CRUDE: "TVC:USOIL",
+const PLANS: Record<string, { name: string; balance: number; label: string }> = {
+  "1": { name: "POP Launch", balance: 10000, label: "$10K" },
+  "2": { name: "POP Starter", balance: 25000, label: "$25K" },
+  "3": { name: "POP Growth", balance: 50000, label: "$50K" },
+  "4": { name: "POP Pro", balance: 100000, label: "$100K" },
+  "5": { name: "POP Elite", balance: 200000, label: "$200K" },
+  "6": { name: "POP Titan", balance: 400000, label: "$400K" },
+  "7": { name: "POP Sovereign", balance: 1000000, label: "$1M" },
+  "8": { name: "POP Institutional", balance: 3000000, label: "$3M" },
 };
 
-const TIMEFRAMES = [
-  { label: "1m", value: "1" },
-  { label: "5m", value: "5" },
-  { label: "15m", value: "15" },
-  { label: "30m", value: "30" },
-  { label: "1H", value: "60" },
-  { label: "4H", value: "240" },
-  { label: "1D", value: "D" },
-  { label: "1W", value: "W" },
-];
+const TIMEFRAMES = ["1m", "5m", "15m", "30m", "1H", "4H", "1D", "1W"];
 
-function SymbolRow({
-  s,
-  selected,
-  isFav,
-  onSelect,
-  onToggleFav,
-}: {
-  s: { value: string; label: string; category: string };
-  selected: boolean;
-  isFav: boolean;
-  onSelect: () => void;
-  onToggleFav: (e: React.MouseEvent) => void;
-}) {
-  return (
-    <div
-      className={`w-full text-left px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-[#1e2a3a] transition-colors cursor-pointer ${
-        selected ? "text-primary" : "text-[#94a3b8]"
-      }`}
-    >
-      <button
-        onClick={onToggleFav}
-        className="shrink-0 p-0.5 rounded hover:text-yellow-400 transition-colors"
-        title={isFav ? "Remover dos favoritos" : "Adicionar aos favoritos"}
-      >
-        <Star
-          className={`w-3 h-3 ${isFav ? "fill-yellow-400 text-yellow-400" : "text-[#475569]"}`}
-        />
-      </button>
-      <button onClick={onSelect} className="flex-1 flex items-center justify-between min-w-0">
-        <span className="font-semibold font-mono">{s.value}</span>
-        <span className="text-[#64748b] text-[10px] truncate ml-2">{s.label.replace(s.value, "").trim()}</span>
-      </button>
-    </div>
-  );
+function money(value: number) { return value.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 }); }
+function nowLabel() { return new Date().toLocaleString("pt-PT", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }); }
+function storageKey(userId: string | undefined, planId: string) { return `quantfund-terminal-v4-${userId || "guest"}-${planId}`; }
+function symbolOf(value: string) { return SYMBOLS.find((s) => s.value === value) ?? SYMBOLS[0]; }
+function formatPrice(symbol: string, value: number) { return value.toFixed(symbolOf(symbol).decimals); }
+function livePrice(symbol: string, tick: number) { const s = symbolOf(symbol); return Math.max(0.00001, s.base + Math.sin(tick / 3 + s.base) * s.base * 0.00065 + Math.cos(tick / 7 + s.value.length) * s.base * 0.00035); }
+function calcPnl(order: Order, tick: number) { const s = symbolOf(order.symbol); const current = livePrice(order.symbol, tick); const direction = order.side === "buy" ? 1 : -1; return (current - order.openPrice) * direction * order.size * s.multiplier; }
+function calcMargin(order: Order) { const s = symbolOf(order.symbol); return Math.max(1, (order.openPrice * order.size * s.multiplier) / 100); }
+
+function SymbolRow({ item, selected, isFav, onSelect, onToggleFav }: { item: SymbolItem; selected: boolean; isFav: boolean; onSelect: () => void; onToggleFav: (event: React.MouseEvent) => void }) {
+  return <div className={`w-full px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-[#1e2a3a] transition-colors ${selected ? "text-primary" : "text-[#94a3b8]"}`}><button onClick={onToggleFav} className="shrink-0 p-0.5 rounded hover:text-yellow-400"><Star className={`w-3 h-3 ${isFav ? "fill-yellow-400 text-yellow-400" : "text-[#475569]"}`} /></button><button onClick={onSelect} className="flex-1 flex items-center justify-between min-w-0"><span className="font-semibold font-mono">{item.value}</span><span className="text-[#64748b] text-[10px] truncate ml-2">{item.label}</span></button></div>;
 }
 
-function calcLivePnl(side: string, openPrice: number, currentPrice: number, size: number) {
-  return side === "buy"
-    ? (currentPrice - openPrice) * size * 1000
-    : (openPrice - currentPrice) * size * 1000;
-}
-
-function priceDecimals(symbol: string) {
-  if (["USDJPY", "EURJPY", "GBPJPY"].includes(symbol)) return 3;
-  if (["BTCUSD", "NAS100", "US30", "SP500"].includes(symbol)) return 2;
-  if (["XAUUSD", "ETHUSD", "CRUDE"].includes(symbol)) return 2;
-  if (symbol === "XAGUSD") return 3;
-  return 5;
+function FallbackChart({ symbol, tick }: { symbol: string; tick: number }) {
+  const points = Array.from({ length: 80 }, (_, i) => livePrice(symbol, tick - 80 + i));
+  const min = Math.min(...points), max = Math.max(...points), range = Math.max(0.00001, max - min);
+  const poly = points.map((p, i) => `${(i / 79) * 100},${100 - ((p - min) / range) * 80 - 10}`).join(" ");
+  const current = points[points.length - 1];
+  return <div className="absolute inset-0 bg-[#07111f]"><svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-full w-full"><defs><linearGradient id="qfChart" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="rgb(34 211 238 / .35)" /><stop offset="100%" stopColor="rgb(34 211 238 / 0)" /></linearGradient></defs>{[20,40,60,80].map(y => <line key={y} x1="0" x2="100" y1={y} y2={y} stroke="rgb(51 65 85 / .45)" strokeWidth=".2" />)}<polyline points={`0,100 ${poly} 100,100`} fill="url(#qfChart)" /><polyline points={poly} fill="none" stroke="rgb(34 211 238)" strokeWidth=".6" vectorEffect="non-scaling-stroke" /></svg><div className="absolute left-6 top-6"><p className="text-xs uppercase tracking-[0.2em] text-slate-500">Live fallback chart</p><h2 className="font-mono text-4xl font-black text-white">{symbol}</h2><p className="mt-1 font-mono text-2xl text-emerald-300">{formatPrice(symbol, current)}</p></div></div>;
 }
 
 export default function Trade() {
-  const { accountId } = useParams();
-  const [, setLocation] = useLocation();
-  const id = parseInt(accountId || "0", 10);
-  const queryClient = useQueryClient();
-
-  const { data: account } = useGetAccount(id, {
-    query: { enabled: !!id, queryKey: getGetAccountQueryKey(id), refetchInterval: 2000 },
-  });
-  const { data: orders } = useListOrders(id, {
-    query: { enabled: !!id, queryKey: getListOrdersQueryKey(id), refetchInterval: 2000 },
-  });
-
+  const [, params] = useRoute("/trade/:accountId");
+  const planId = params?.accountId ?? "1";
+  const plan = PLANS[planId] ?? PLANS["1"];
+  const { user } = useUser();
   const [symbol, setSymbol] = useState("EURUSD");
-  const [timeframe, setTimeframe] = useState("60");
+  const [timeframe, setTimeframe] = useState("1H");
   const [symbolSearch, setSymbolSearch] = useState("");
   const [showSymbolDropdown, setShowSymbolDropdown] = useState(false);
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
-  const [activeTab, setActiveTab] = useState<"positions" | "history">("positions");
-  const [showTicker, setShowTicker] = useState(true);
-
-  const { data: marketPrice } = useGetMarketPrice(
-    { symbol },
-    { query: { enabled: true, refetchInterval: 1000 } }
-  );
-
-  const createOrderMut = useCreateOrder();
-  const closeOrderMut = useCloseOrder();
-  const [size, setSize] = useState("1.0");
+  const [historyCollapsed, setHistoryCollapsed] = useState(false);
+  const [activeTab, setActiveTab] = useState<Tab>("positions");
+  const [showTradingView, setShowTradingView] = useState(true);
+  const [size, setSize] = useState("1.00");
   const [sl, setSl] = useState("");
   const [tp, setTp] = useState("");
+  const [tick, setTick] = useState(0);
+  const [balance, setBalance] = useState(plan.balance);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [favorites, setFavorites] = useState<string[]>(["EURUSD", "XAUUSD"]);
 
-  // Favorites stored in localStorage
-  const [favorites, setFavorites] = useState<string[]>(() => {
-    try { return JSON.parse(localStorage.getItem("qf_fav_symbols") || '["EURUSD","XAUUSD"]'); }
-    catch { return ["EURUSD", "XAUUSD"]; }
-  });
+  useEffect(() => { const id = window.setInterval(() => setTick((value) => value + 1), 1000); return () => window.clearInterval(id); }, []);
+  useEffect(() => { const raw = localStorage.getItem(storageKey(user?.id, planId)); if (!raw) return; try { const data = JSON.parse(raw) as Persisted; setBalance(data.balance ?? plan.balance); setOrders(data.orders ?? []); setFavorites(data.favorites ?? ["EURUSD", "XAUUSD"]); } catch {} }, [user?.id, planId, plan.balance]);
+  useEffect(() => { const payload: Persisted = { balance, orders, favorites, savedAt: new Date().toISOString() }; localStorage.setItem(storageKey(user?.id, planId), JSON.stringify(payload)); }, [user?.id, planId, balance, orders, favorites]);
 
-  // Refs for real-time notifications
-  const prevStatusRef = useRef<string | undefined>(undefined);
-  const prevOpenIdsRef = useRef<Set<number>>(new Set());
-  const manuallyClosedRef = useRef<Set<number>>(new Set());
-
-  const tvContainerRef = useRef<HTMLDivElement>(null);
-  const tvScriptLoaded = useRef(false);
-  const widgetRef = useRef<any>(null);
+  const currentPrice = livePrice(symbol, tick);
+  const enrichedOrders = useMemo(() => orders.map((order) => order.status === "open" ? { ...order, currentPrice: livePrice(order.symbol, tick), pnl: calcPnl(order, tick) } : order), [orders, tick]);
+  const openOrders = enrichedOrders.filter((order) => order.status === "open");
+  const closedOrders = enrichedOrders.filter((order) => order.status === "closed");
+  const floatingPnl = openOrders.reduce((sum, order) => sum + order.pnl, 0);
+  const realizedPnl = closedOrders.reduce((sum, order) => sum + order.pnl, 0);
+  const usedMargin = openOrders.reduce((sum, order) => sum + calcMargin(order), 0);
+  const equity = balance + floatingPnl;
+  const freeMargin = equity - usedMargin;
+  const target = plan.balance * 0.1;
+  const totalDD = Math.max(0, plan.balance - equity);
+  const dailyDD = Math.max(0, -floatingPnl);
+  const winRate = closedOrders.length ? Math.round((closedOrders.filter((o) => o.pnl > 0).length / closedOrders.length) * 100) : 0;
+  const challengeStatus = totalDD >= plan.balance * 0.1 || dailyDD >= plan.balance * 0.1 ? "Failed" : equity - plan.balance >= target ? "Passed" : "In Progress";
 
   useEffect(() => {
-    const containerId = "tv_chart_container";
-
-    const initWidget = () => {
-      if (!window.TradingView) return;
-      const container = document.getElementById(containerId);
-      if (!container) return;
-      container.innerHTML = "";
-      widgetRef.current = new window.TradingView.widget({
-        autosize: true,
-        symbol: TV_SYMBOL_MAP[symbol] || `FX:${symbol}`,
-        interval: timeframe,
-        timezone: "Etc/UTC",
-        theme: "dark",
-        style: "1",
-        locale: "en",
-        toolbar_bg: "#0a0e1a",
-        enable_publishing: false,
-        hide_top_toolbar: false,
-        hide_side_toolbar: false,
-        allow_symbol_change: true,
-        save_image: true,
-        drawings_access: { type: "all" },
-        container_id: containerId,
-      });
-    };
-
-    if (window.TradingView) {
-      initWidget();
-    } else if (!tvScriptLoaded.current) {
-      tvScriptLoaded.current = true;
-      const script = document.createElement("script");
-      script.src = "https://s3.tradingview.com/tv.js";
-      script.async = true;
-      script.onload = initWidget;
-      document.head.appendChild(script);
-    } else {
-      const interval = setInterval(() => {
-        if (window.TradingView) {
-          clearInterval(interval);
-          initWidget();
-        }
-      }, 200);
-      return () => clearInterval(interval);
-    }
-  }, [symbol, timeframe]);
-
-  // ── Account status change notifications ──────────────────────────────────
-  useEffect(() => {
-    if (!account) return;
-    const prev = prevStatusRef.current;
-    const curr = account.status;
-    if (prev !== undefined && prev !== curr) {
-      if (curr === "passed") {
-        toast.success("Conta Aprovada!", { description: "Passaste o desafio! Parabéns." });
-      } else if (curr === "funded") {
-        toast.success("Conta Financiada!", { description: "A tua conta está financiada. Começa a operar!" });
-      } else if (curr === "failed") {
-        toast.error("Conta Falhada", { description: "O limite de drawdown foi atingido. A conta foi encerrada." });
-      }
-    }
-    prevStatusRef.current = curr;
-  }, [account?.status]);
-
-  // ── Order close / SL-TP notifications ────────────────────────────────────
-  useEffect(() => {
-    if (!orders) return;
-    const currentOpenIds = new Set<number>(orders.filter((o: Order) => o.status === "open").map((o: Order) => o.id));
-    const prevIds = prevOpenIdsRef.current;
-
-    if (prevIds.size > 0) {
-      prevIds.forEach((oid) => {
-        if (!currentOpenIds.has(oid)) {
-          const closed = orders.find((o: Order) => o.id === oid);
-          if (!closed) return;
-          const pnl = closed.pnl ?? 0;
-          const desc = `${closed.symbol} ${closed.side === "buy" ? "COMPRA" : "VENDA"} · PnL: ${pnl >= 0 ? "+" : ""}$${pnl.toFixed(2)}`;
-          const isManual = manuallyClosedRef.current.has(oid);
-          if (isManual) {
-            manuallyClosedRef.current.delete(oid);
-            pnl >= 0
-              ? toast.success("Posição Fechada", { description: desc })
-              : toast.error("Posição Fechada", { description: desc });
-          } else {
-            pnl >= 0
-              ? toast.success("Take Profit Atingido", { description: desc })
-              : toast.error("Stop Loss Atingido", { description: desc });
-          }
-        }
-      });
-    }
-    prevOpenIdsRef.current = currentOpenIds;
-  }, [orders]);
-
-  const handleOrder = (side: "buy" | "sell") => {
-    const slVal = sl.trim() ? parseFloat(sl) : undefined;
-    const tpVal = tp.trim() ? parseFloat(tp) : undefined;
-    createOrderMut.mutate(
-      { accountId: id, data: { symbol, side, size: parseFloat(size), stopLoss: slVal, takeProfit: tpVal } },
-      {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getListOrdersQueryKey(id) });
-          queryClient.invalidateQueries({ queryKey: getGetAccountQueryKey(id) });
-        },
-      }
-    );
-  };
-
-  const handleClose = (orderId: number) => {
-    manuallyClosedRef.current.add(orderId);
-    closeOrderMut.mutate(
-      { accountId: id, orderId },
-      {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getListOrdersQueryKey(id) });
-          queryClient.invalidateQueries({ queryKey: getGetAccountQueryKey(id) });
-        },
-      }
-    );
-  };
-
-  const handleCloseAll = () => {
-    const open = orders?.filter((o: Order) => o.status === "open") ?? [];
-    open.forEach((o: Order) => {
-      manuallyClosedRef.current.add(o.id);
-      closeOrderMut.mutate(
-        { accountId: id, orderId: o.id },
-        {
-          onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: getListOrdersQueryKey(id) });
-            queryClient.invalidateQueries({ queryKey: getGetAccountQueryKey(id) });
-          },
-        }
-      );
+    const toClose = openOrders.find((order) => {
+      if (order.side === "buy") return (order.stopLoss && order.currentPrice <= order.stopLoss) || (order.takeProfit && order.currentPrice >= order.takeProfit);
+      return (order.stopLoss && order.currentPrice >= order.stopLoss) || (order.takeProfit && order.currentPrice <= order.takeProfit);
     });
-  };
+    if (!toClose) return;
+    closeOrder(toClose.id, toClose.stopLoss ? "SL" : "TP");
+  }, [tick]);
 
-  const openOrders = (orders?.filter((o: Order) => o.status === "open") || []) as Order[];
-  const closedOrders = (orders?.filter((o: Order) => o.status === "closed") || []) as Order[];
-  const currentPrice = marketPrice?.price ?? 0;
-
-  // Fetch live prices for all unique symbols in open orders (excluding current symbol already fetched above)
-  const openOrderSymbols = [...new Set(openOrders.map((o: Order) => o.symbol))].filter((s) => s !== symbol);
-  const extraPriceResults = useQueries({
-    queries: openOrderSymbols.map((sym) => ({
-      queryKey: getGetMarketPriceQueryKey({ symbol: sym }),
-      queryFn: () => getMarketPrice({ symbol: sym }),
-      refetchInterval: 1000,
-    })),
-  });
-  const livePrices: Record<string, number> = { [symbol]: currentPrice };
-  extraPriceResults.forEach((q, i) => {
-    if (q.data) livePrices[openOrderSymbols[i]] = q.data.price;
-  });
-
-  // Floating PnL for ALL open positions across all symbols
-  const totalFloatingPnl = openOrders.reduce((sum: number, o: Order) => {
-    const price = livePrices[o.symbol] ?? o.currentPrice ?? o.openPrice;
-    return sum + calcLivePnl(o.side, o.openPrice, price, o.size);
-  }, 0);
-
-  // Drawdown calculations (using real challenge limits from account)
-  const maxDailyDD  = account?.maxDailyDrawdown  ?? 5;
-  const maxTotalDD  = account?.maxTotalDrawdown   ?? 10;
-  const profitTarget = account?.profitTarget      ?? 8;
-
-  const totalDrawdownPct = account
-    ? ((account.initialBalance - account.currentBalance) / account.initialBalance) * 100
-    : 0;
-  const dailyDrawdownPct = account && account.dailyPnl < 0
-    ? (Math.abs(account.dailyPnl) / account.initialBalance) * 100
-    : 0;
-  const profitPct = account
-    ? ((account.currentBalance - account.initialBalance) / account.initialBalance) * 100
-    : 0;
-
-  const totalDDUsed  = Math.min((totalDrawdownPct / maxTotalDD) * 100, 100);
-  const dailyDDUsed  = Math.min((dailyDrawdownPct / maxDailyDD) * 100, 100);
-  const profitUsed   = Math.min((Math.max(profitPct, 0) / profitTarget) * 100, 100);
-
-  type Level = "safe" | "warn" | "danger";
-  function ddLevel(used: number): Level {
-    if (used >= 90) return "danger";
-    if (used >= 60) return "warn";
-    return "safe";
-  }
-  const totalDDLevel = ddLevel(totalDDUsed);
-  const dailyDDLevel = ddLevel(dailyDDUsed);
-  const hasWarning = totalDDLevel !== "safe" || dailyDDLevel !== "safe";
-
-  const toggleFavorite = (sym: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setFavorites((prev) => {
-      const next = prev.includes(sym) ? prev.filter((s) => s !== sym) : [...prev, sym];
-      localStorage.setItem("qf_fav_symbols", JSON.stringify(next));
-      return next;
-    });
-  };
-
-  const filteredSymbols = SYMBOLS.filter(
-    (s) =>
-      s.value.toLowerCase().includes(symbolSearch.toLowerCase()) ||
-      s.label.toLowerCase().includes(symbolSearch.toLowerCase()) ||
-      s.category.toLowerCase().includes(symbolSearch.toLowerCase())
-  );
-
+  const filteredSymbols = SYMBOLS.filter((s) => `${s.value} ${s.label} ${s.category}`.toLowerCase().includes(symbolSearch.toLowerCase()));
   const favoriteSymbols = SYMBOLS.filter((s) => favorites.includes(s.value));
-  const hasFavorites = favoriteSymbols.length > 0 && !symbolSearch;
-
   const categories = [...new Set(filteredSymbols.map((s) => s.category))];
+  const selected = symbolOf(symbol);
+  const tradingViewUrl = `https://s.tradingview.com/widgetembed/?symbol=${encodeURIComponent(selected.tv)}&interval=${encodeURIComponent(timeframe === "1H" ? "60" : timeframe.replace("m", ""))}&theme=dark&style=1&timezone=Europe%2FLisbon&withdateranges=1&hide_side_toolbar=0&allow_symbol_change=1&save_image=0&locale=pt`;
 
-  const selectedSymbolLabel = SYMBOLS.find((s) => s.value === symbol)?.label || symbol;
+  function toggleFavorite(sym: string, event: React.MouseEvent) { event.stopPropagation(); setFavorites((prev) => prev.includes(sym) ? prev.filter((item) => item !== sym) : [...prev, sym]); }
+  function openOrder(side: Side) { const qty = Math.max(0.01, Number(size) || 0.01); const order: Order = { id: crypto.randomUUID(), symbol, side, size: qty, openPrice: currentPrice, currentPrice, stopLoss: Number(sl) || undefined, takeProfit: Number(tp) || undefined, pnl: 0, status: "open", openedAt: nowLabel() }; setOrders((current) => [order, ...current]); }
+  function closeOrder(id: string, reason: "Manual" | "SL" | "TP" = "Manual") { const order = enrichedOrders.find((item) => item.id === id); if (!order || order.status !== "open") return; const closePrice = livePrice(order.symbol, tick); const pnl = calcPnl(order, tick); setBalance((value) => value + pnl); setOrders((current) => current.map((item) => item.id === id ? { ...item, currentPrice: closePrice, closePrice, pnl, status: "closed", closedAt: nowLabel(), closeReason: reason } : item)); }
+  function closeAll() { openOrders.forEach((order) => closeOrder(order.id)); }
+  function resetTerminal() { setBalance(plan.balance); setOrders([]); setSl(""); setTp(""); }
 
-  return (
-    <div className="h-screen flex flex-col bg-[#050a14] overflow-hidden">
-      <PriceTicker visible={showTicker} onToggle={() => setShowTicker(v => !v)} />
-
-      {/* Top Bar */}
-      <div className="h-14 border-b border-[#1e2a3a] flex items-center px-4 justify-between bg-[#0a0e1a] shrink-0">
-        <div className="flex items-center gap-4">
-          {/* Logo + back to dashboard */}
-          <button
-            onClick={() => setLocation("/dashboard")}
-            className="flex items-center gap-2 hover:opacity-80 transition-opacity mr-1"
-            title="Voltar ao menu"
-          >
-            <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="QuantFund" className="w-7 h-7" />
-            <span className="font-bold text-sm text-white hidden sm:block">QuantFund</span>
-          </button>
-          <span className="text-[#1e2a3a] select-none">|</span>
-          <button
-            onClick={() => setLocation("/dashboard")}
-            className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
-            Menu
-          </button>
-
-          {/* Symbol + Price */}
-          <div className="font-mono text-xl font-bold text-white">{symbol}</div>
-          <div
-            className={`font-mono text-lg font-semibold tabular-nums ${
-              marketPrice && marketPrice.change >= 0 ? "text-green-400" : "text-red-400"
-            }`}
-          >
-            {currentPrice > 0 ? currentPrice.toFixed(priceDecimals(symbol)) : "—"}
-          </div>
-          <div
-            className={`text-xs font-mono px-2 py-0.5 rounded ${
-              marketPrice && marketPrice.change >= 0
-                ? "bg-green-500/10 text-green-400"
-                : "bg-red-500/10 text-red-400"
-            }`}
-          >
-            {marketPrice && marketPrice.change >= 0 ? "+" : ""}
-            {marketPrice?.change?.toFixed(5) ?? "0.00000"}
-          </div>
-
-          {/* Timeframes */}
-          <div className="flex items-center gap-0.5 ml-2">
-            {TIMEFRAMES.map((tf) => (
-              <button
-                key={tf.value}
-                onClick={() => setTimeframe(tf.value)}
-                className={`px-2 py-1 text-xs rounded transition-colors font-mono ${
-                  timeframe === tf.value
-                    ? "bg-primary text-white"
-                    : "text-[#64748b] hover:text-white hover:bg-[#1e2a3a]"
-                }`}
-              >
-                {tf.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {account && (
-          <div className="flex items-center gap-6 text-sm">
-            <div className="flex flex-col items-end">
-              <span className="text-[#64748b] text-xs">Balance</span>
-              <span className="font-mono font-semibold">${account.currentBalance.toFixed(2)}</span>
-            </div>
-            <div className="flex flex-col items-end">
-              <span className="text-[#64748b] text-xs">Equity</span>
-              <span className="font-mono font-semibold">${account.equity.toFixed(2)}</span>
-            </div>
-            <div className="flex flex-col items-end">
-              <span className="text-[#64748b] text-xs">Float PnL</span>
-              <span
-                className={`font-mono font-semibold ${
-                  totalFloatingPnl >= 0 ? "text-green-400" : "text-red-400"
-                }`}
-              >
-                {totalFloatingPnl >= 0 ? "+" : ""}${totalFloatingPnl.toFixed(2)}
-              </span>
-            </div>
-            <div className="flex flex-col items-end">
-              <span className="text-[#64748b] text-xs">Day PnL</span>
-              <span
-                className={`font-mono font-semibold ${
-                  account.dailyPnl >= 0 ? "text-green-400" : "text-red-400"
-                }`}
-              >
-                {account.dailyPnl >= 0 ? "+" : ""}${account.dailyPnl.toFixed(2)}
-              </span>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Drawdown Warning Strip */}
-      {account && (
-        <div className={`shrink-0 border-b flex items-center gap-0 text-[11px] font-mono ${
-          hasWarning
-            ? totalDDLevel === "danger" || dailyDDLevel === "danger"
-              ? "border-red-500/40 bg-red-500/5"
-              : "border-yellow-500/30 bg-yellow-500/5"
-            : "border-[#1e2a3a] bg-[#050a14]"
-        }`}>
-          {/* Total Drawdown */}
-          <div className={`flex items-center gap-2 px-3 py-1.5 border-r border-[#1e2a3a] min-w-[170px]`}>
-            <span className="text-[#64748b] shrink-0">DD Total</span>
-            <div className="flex-1 h-1.5 bg-[#1e2a3a] rounded-full overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all duration-500 ${
-                  totalDDLevel === "danger" ? "bg-red-500" : totalDDLevel === "warn" ? "bg-yellow-500" : "bg-green-500"
-                }`}
-                style={{ width: `${totalDDUsed}%` }}
-              />
-            </div>
-            <span className={`tabular-nums shrink-0 ${totalDDLevel === "danger" ? "text-red-400" : totalDDLevel === "warn" ? "text-yellow-400" : "text-[#64748b]"}`}>
-              {totalDrawdownPct.toFixed(2)}% / {maxTotalDD}%
-            </span>
-            {totalDDLevel === "danger" && <span className="text-red-400 font-bold animate-pulse">⚠</span>}
-          </div>
-
-          {/* Daily Drawdown */}
-          <div className={`flex items-center gap-2 px-3 py-1.5 border-r border-[#1e2a3a] min-w-[170px]`}>
-            <span className="text-[#64748b] shrink-0">DD Diário</span>
-            <div className="flex-1 h-1.5 bg-[#1e2a3a] rounded-full overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all duration-500 ${
-                  dailyDDLevel === "danger" ? "bg-red-500" : dailyDDLevel === "warn" ? "bg-yellow-500" : "bg-green-500"
-                }`}
-                style={{ width: `${dailyDDUsed}%` }}
-              />
-            </div>
-            <span className={`tabular-nums shrink-0 ${dailyDDLevel === "danger" ? "text-red-400" : dailyDDLevel === "warn" ? "text-yellow-400" : "text-[#64748b]"}`}>
-              {dailyDrawdownPct.toFixed(2)}% / {maxDailyDD}%
-            </span>
-            {dailyDDLevel === "danger" && <span className="text-red-400 font-bold animate-pulse">⚠</span>}
-          </div>
-
-          {/* Profit Target */}
-          <div className="flex items-center gap-2 px-3 py-1.5 min-w-[170px]">
-            <span className="text-[#64748b] shrink-0">Lucro Alvo</span>
-            <div className="flex-1 h-1.5 bg-[#1e2a3a] rounded-full overflow-hidden">
-              <div
-                className="h-full rounded-full bg-blue-500 transition-all duration-500"
-                style={{ width: `${profitUsed}%` }}
-              />
-            </div>
-            <span className={`tabular-nums shrink-0 ${profitPct >= profitTarget ? "text-green-400" : "text-[#64748b]"}`}>
-              {profitPct.toFixed(2)}% / {profitTarget}%
-            </span>
-            {profitPct >= profitTarget && <span className="text-green-400">✓</span>}
-          </div>
-
-          {/* Account status badge if not active */}
-          {account.status !== "active" && (
-            <div className={`ml-auto px-3 py-1 text-xs font-bold uppercase tracking-wider ${
-              account.status === "passed" || account.status === "funded"
-                ? "text-green-400"
-                : "text-red-400"
-            }`}>
-              Conta {account.status === "passed" ? "APROVADA" : account.status === "funded" ? "FINANCIADA" : "FALHADA"}
-            </div>
-          )}
-        </div>
-      )}
-
-      <div className="flex-1 flex overflow-hidden min-h-0">
-        {/* Chart + Positions Area */}
-        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          {/* TradingView Chart */}
-          <div className="flex-1 min-h-0" ref={tvContainerRef}>
-            <div id="tv_chart_container" className="w-full h-full" />
-          </div>
-
-          {/* Positions / History Panel */}
-          <div className="h-44 border-t border-[#1e2a3a] bg-[#0a0e1a] flex flex-col shrink-0">
-            <div className="px-4 py-0 border-b border-[#1e2a3a] flex items-center gap-4 shrink-0">
-              <button
-                onClick={() => setActiveTab("positions")}
-                className={`py-2 text-xs font-semibold uppercase tracking-wider border-b-2 transition-colors ${
-                  activeTab === "positions"
-                    ? "border-primary text-white"
-                    : "border-transparent text-[#64748b] hover:text-white"
-                }`}
-              >
-                Posições Abertas ({openOrders.length})
-              </button>
-              <button
-                onClick={() => setActiveTab("history")}
-                className={`py-2 text-xs font-semibold uppercase tracking-wider border-b-2 transition-colors ${
-                  activeTab === "history"
-                    ? "border-primary text-white"
-                    : "border-transparent text-[#64748b] hover:text-white"
-                }`}
-              >
-                Histórico ({closedOrders.length})
-              </button>
-              {activeTab === "positions" && openOrders.length > 0 && (
-                <div className="ml-auto flex items-center gap-3">
-                  <span
-                    className={`text-xs font-mono font-semibold ${
-                      totalFloatingPnl >= 0 ? "text-green-400" : "text-red-400"
-                    }`}
-                  >
-                    Float: {totalFloatingPnl >= 0 ? "+" : ""}${totalFloatingPnl.toFixed(2)}
-                  </span>
-                  <button
-                    onClick={handleCloseAll}
-                    disabled={closeOrderMut.isPending}
-                    className="text-[10px] px-2.5 py-1 rounded border border-red-500/40 text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50 font-semibold uppercase tracking-wide"
-                  >
-                    Fechar Tudo
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <div className="flex-1 overflow-y-auto">
-              {activeTab === "positions" ? (
-                <table className="w-full text-xs">
-                  <thead className="text-left text-[#64748b] sticky top-0 bg-[#0a0e1a]">
-                    <tr>
-                      <th className="font-normal px-3 py-1.5">Symbol</th>
-                      <th className="font-normal px-3 py-1.5">Side</th>
-                      <th className="font-normal px-3 py-1.5 text-right">Size</th>
-                      <th className="font-normal px-3 py-1.5 text-right">Open</th>
-                      <th className="font-normal px-3 py-1.5 text-right">Current</th>
-                      <th className="font-normal px-3 py-1.5 text-right">Float PnL</th>
-                      <th className="font-normal px-3 py-1.5 text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {openOrders.map((order: Order) => {
-                      const liveCurrent = livePrices[order.symbol] ?? order.currentPrice ?? order.openPrice;
-                      const livePnl = calcLivePnl(order.side, order.openPrice, liveCurrent, order.size);
-                      const dec = priceDecimals(order.symbol);
-                      return (
-                        <tr key={order.id} className="border-t border-[#1e2a3a]/50 hover:bg-[#1e2a3a]/20">
-                          <td className="px-3 py-1.5 font-semibold text-white">{order.symbol}</td>
-                          <td className="px-3 py-1.5">
-                            <Badge
-                              variant="outline"
-                              className={`text-[10px] px-1.5 py-0 ${
-                                order.side === "buy"
-                                  ? "text-green-400 border-green-500/30"
-                                  : "text-red-400 border-red-500/30"
-                              }`}
-                            >
-                              {order.side.toUpperCase()}
-                            </Badge>
-                          </td>
-                          <td className="px-3 py-1.5 text-right font-mono">{order.size}</td>
-                          <td className="px-3 py-1.5 text-right font-mono">{order.openPrice.toFixed(dec)}</td>
-                          <td className="px-3 py-1.5 text-right font-mono">{liveCurrent.toFixed(dec)}</td>
-                          <td className={`px-3 py-1.5 text-right font-mono font-semibold ${livePnl >= 0 ? "text-green-400" : "text-red-400"}`}>
-                            {livePnl >= 0 ? "+" : ""}${livePnl.toFixed(2)}
-                          </td>
-                          <td className="px-3 py-1.5 text-right">
-                            <button
-                              onClick={() => handleClose(order.id)}
-                              disabled={closeOrderMut.isPending}
-                              className="text-[10px] px-2 py-0.5 rounded border border-[#334155] text-[#94a3b8] hover:border-red-500/50 hover:text-red-400 transition-colors disabled:opacity-50"
-                            >
-                              Fechar
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                    {openOrders.length === 0 && (
-                      <tr>
-                        <td colSpan={7} className="px-4 py-6 text-center text-[#64748b]">
-                          Sem posições abertas
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              ) : (
-                <table className="w-full text-xs">
-                  <thead className="text-left text-[#64748b] sticky top-0 bg-[#0a0e1a]">
-                    <tr>
-                      <th className="font-normal px-3 py-1.5">Symbol</th>
-                      <th className="font-normal px-3 py-1.5">Side</th>
-                      <th className="font-normal px-3 py-1.5 text-right">Size</th>
-                      <th className="font-normal px-3 py-1.5 text-right">Open</th>
-                      <th className="font-normal px-3 py-1.5 text-right">Close</th>
-                      <th className="font-normal px-3 py-1.5 text-right">PnL</th>
-                      <th className="font-normal px-3 py-1.5 text-right">Data</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[...closedOrders].reverse().map((order) => {
-                      const dec = priceDecimals(order.symbol);
-                      const pnl = order.pnl ?? 0;
-                      return (
-                        <tr key={order.id} className="border-t border-[#1e2a3a]/50 hover:bg-[#1e2a3a]/20">
-                          <td className="px-3 py-1.5 font-semibold text-white">{order.symbol}</td>
-                          <td className="px-3 py-1.5">
-                            <Badge
-                              variant="outline"
-                              className={`text-[10px] px-1.5 py-0 ${
-                                order.side === "buy"
-                                  ? "text-green-400 border-green-500/30"
-                                  : "text-red-400 border-red-500/30"
-                              }`}
-                            >
-                              {order.side.toUpperCase()}
-                            </Badge>
-                          </td>
-                          <td className="px-3 py-1.5 text-right font-mono">{order.size}</td>
-                          <td className="px-3 py-1.5 text-right font-mono">{order.openPrice.toFixed(dec)}</td>
-                          <td className="px-3 py-1.5 text-right font-mono">{order.closePrice?.toFixed(dec) ?? "—"}</td>
-                          <td className={`px-3 py-1.5 text-right font-mono font-semibold ${pnl >= 0 ? "text-green-400" : "text-red-400"}`}>
-                            {pnl >= 0 ? "+" : ""}${pnl.toFixed(2)}
-                          </td>
-                          <td className="px-3 py-1.5 text-right text-[#64748b]">
-                            {order.closedAt ? new Date(order.closedAt).toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—"}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                    {closedOrders.length === 0 && (
-                      <tr>
-                        <td colSpan={7} className="px-4 py-6 text-center text-[#64748b]">
-                          Sem histórico de negociação
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Collapse Toggle Button */}
-        <button
-          onClick={() => setRightPanelCollapsed(!rightPanelCollapsed)}
-          className="w-6 bg-[#0a0e1a] border-l border-[#1e2a3a] flex items-center justify-center hover:bg-[#1e2a3a] transition-colors shrink-0 text-[#64748b] hover:text-white"
-          title={rightPanelCollapsed ? "Expandir painel" : "Recolher painel"}
-        >
-          {rightPanelCollapsed ? <ChevronLeft className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-        </button>
-
-        {/* Right Panel */}
-        {!rightPanelCollapsed && (
-          <div className="w-72 bg-[#0a0e1a] flex flex-col shrink-0 border-l border-[#1e2a3a]">
-            {/* Order Form */}
-            <div className="p-4 border-b border-[#1e2a3a] shrink-0">
-              <h3 className="font-semibold mb-3 text-sm text-white">Nova Ordem</h3>
-              <div className="space-y-3">
-                {/* Symbol Selector */}
-                <div className="relative">
-                  <label className="text-[11px] text-[#64748b] mb-1.5 block uppercase tracking-wider">Instrumento</label>
-                  <button
-                    onClick={() => setShowSymbolDropdown(!showSymbolDropdown)}
-                    className="w-full h-9 px-3 border border-[#1e2a3a] bg-[#050a14] rounded text-sm text-left flex items-center justify-between hover:border-[#334155] transition-colors"
-                  >
-                    <span className="font-mono font-semibold text-white">{symbol}</span>
-                    <ChevronDown className={`w-4 h-4 text-[#64748b] transition-transform ${showSymbolDropdown ? "rotate-180" : ""}`} />
-                  </button>
-                  {showSymbolDropdown && (
-                    <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-[#0d1526] border border-[#1e2a3a] rounded-lg shadow-xl">
-                      <div className="p-2 border-b border-[#1e2a3a] flex items-center gap-2">
-                        <Search className="w-3.5 h-3.5 text-[#64748b] shrink-0" />
-                        <input
-                          autoFocus
-                          type="text"
-                          placeholder="Pesquisar instrumento..."
-                          value={symbolSearch}
-                          onChange={(e) => setSymbolSearch(e.target.value)}
-                          className="flex-1 bg-transparent text-xs text-white outline-none placeholder:text-[#64748b]"
-                        />
-                        {symbolSearch && (
-                          <button onClick={() => setSymbolSearch("")} className="text-[#64748b] hover:text-white">
-                            <X className="w-3 h-3" />
-                          </button>
-                        )}
-                      </div>
-                      <div className="max-h-64 overflow-y-auto py-1">
-                        {/* Favorites section */}
-                        {hasFavorites && (
-                          <div>
-                            <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-yellow-500/80 font-semibold flex items-center gap-1">
-                              <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
-                              Favoritos
-                            </div>
-                            {favoriteSymbols.map((s) => (
-                              <SymbolRow
-                                key={`fav-${s.value}`}
-                                s={s}
-                                selected={symbol === s.value}
-                                isFav={true}
-                                onSelect={() => { setSymbol(s.value); setShowSymbolDropdown(false); setSymbolSearch(""); }}
-                                onToggleFav={(e) => toggleFavorite(s.value, e)}
-                              />
-                            ))}
-                            <div className="mx-3 my-1 border-t border-[#1e2a3a]" />
-                          </div>
-                        )}
-                        {/* All categories */}
-                        {categories.map((cat) => (
-                          <div key={cat}>
-                            <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[#64748b] font-semibold">
-                              {cat}
-                            </div>
-                            {filteredSymbols
-                              .filter((s) => s.category === cat)
-                              .map((s) => (
-                                <SymbolRow
-                                  key={s.value}
-                                  s={s}
-                                  selected={symbol === s.value}
-                                  isFav={favorites.includes(s.value)}
-                                  onSelect={() => { setSymbol(s.value); setShowSymbolDropdown(false); setSymbolSearch(""); }}
-                                  onToggleFav={(e) => toggleFavorite(s.value, e)}
-                                />
-                              ))}
-                          </div>
-                        ))}
-                        {filteredSymbols.length === 0 && (
-                          <div className="px-3 py-4 text-center text-xs text-[#64748b]">Sem resultados</div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <label className="text-[11px] text-[#64748b] mb-1.5 block uppercase tracking-wider">
-                    Volume (Lotes)
-                  </label>
-                  <div className="flex gap-1.5">
-                    <button
-                      className="h-9 w-9 border border-[#1e2a3a] bg-[#050a14] text-white rounded flex items-center justify-center hover:border-[#334155] shrink-0"
-                      onClick={() => setSize((Math.max(0.01, parseFloat(size) - 0.1)).toFixed(2))}
-                    >
-                      -
-                    </button>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={size}
-                      onChange={(e) => setSize(e.target.value)}
-                      className="h-9 text-center font-mono border-[#1e2a3a] bg-[#050a14] text-sm"
-                    />
-                    <button
-                      className="h-9 w-9 border border-[#1e2a3a] bg-[#050a14] text-white rounded flex items-center justify-center hover:border-[#334155] shrink-0"
-                      onClick={() => setSize((parseFloat(size) + 0.1).toFixed(2))}
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="text-[11px] text-red-400/80 mb-1 block uppercase tracking-wider">Stop Loss</label>
-                    <Input
-                      type="number"
-                      step="any"
-                      placeholder="0.00000"
-                      value={sl}
-                      onChange={(e) => setSl(e.target.value)}
-                      className="h-8 text-center font-mono border-[#1e2a3a] bg-[#050a14] text-xs placeholder:text-[#334155]"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[11px] text-green-400/80 mb-1 block uppercase tracking-wider">Take Profit</label>
-                    <Input
-                      type="number"
-                      step="any"
-                      placeholder="0.00000"
-                      value={tp}
-                      onChange={(e) => setTp(e.target.value)}
-                      className="h-8 text-center font-mono border-[#1e2a3a] bg-[#050a14] text-xs placeholder:text-[#334155]"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 pt-1">
-                  <Button
-                    className="h-14 bg-red-500 hover:bg-red-600 text-white flex flex-col items-center justify-center gap-0.5 rounded-lg"
-                    onClick={() => handleOrder("sell")}
-                    disabled={createOrderMut.isPending}
-                  >
-                    <span className="text-[11px] uppercase font-bold tracking-wider">Vender</span>
-                    <span className="font-mono text-xs">
-                      {currentPrice > 0 ? currentPrice.toFixed(priceDecimals(symbol)) : "—"}
-                    </span>
-                  </Button>
-                  <Button
-                    className="h-14 bg-green-500 hover:bg-green-600 text-white flex flex-col items-center justify-center gap-0.5 rounded-lg"
-                    onClick={() => handleOrder("buy")}
-                    disabled={createOrderMut.isPending}
-                  >
-                    <span className="text-[11px] uppercase font-bold tracking-wider">Comprar</span>
-                    <span className="font-mono text-xs">
-                      {currentPrice > 0 ? currentPrice.toFixed(priceDecimals(symbol)) : "—"}
-                    </span>
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Account Stats */}
-            {account && (
-              <div className="p-4 grid grid-cols-2 gap-3">
-                <div className="bg-[#050a14] rounded-lg p-3 border border-[#1e2a3a]">
-                  <div className="text-[10px] text-[#64748b] uppercase tracking-wider mb-1">Balance</div>
-                  <div className="font-mono text-sm font-semibold text-white">${account.currentBalance.toFixed(2)}</div>
-                </div>
-                <div className="bg-[#050a14] rounded-lg p-3 border border-[#1e2a3a]">
-                  <div className="text-[10px] text-[#64748b] uppercase tracking-wider mb-1">Equity</div>
-                  <div className="font-mono text-sm font-semibold text-white">${account.equity.toFixed(2)}</div>
-                </div>
-                <div className="bg-[#050a14] rounded-lg p-3 border border-[#1e2a3a]">
-                  <div className="text-[10px] text-[#64748b] uppercase tracking-wider mb-1">PnL Total</div>
-                  <div className={`font-mono text-sm font-semibold ${account.totalPnl >= 0 ? "text-green-400" : "text-red-400"}`}>
-                    {account.totalPnl >= 0 ? "+" : ""}${account.totalPnl.toFixed(2)}
-                  </div>
-                </div>
-                <div className="bg-[#050a14] rounded-lg p-3 border border-[#1e2a3a]">
-                  <div className="text-[10px] text-[#64748b] uppercase tracking-wider mb-1">PnL Dia</div>
-                  <div className={`font-mono text-sm font-semibold ${account.dailyPnl >= 0 ? "text-green-400" : "text-red-400"}`}>
-                    {account.dailyPnl >= 0 ? "+" : ""}${account.dailyPnl.toFixed(2)}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
+  return <div className="h-screen flex flex-col bg-[#050a14] overflow-hidden text-white"><div className="h-8 border-b border-[#1e2a3a] bg-[#0a0e1a] flex items-center gap-7 px-4 font-mono text-xs overflow-hidden shrink-0">{SYMBOLS.slice(0, 10).map((s) => { const p = livePrice(s.value, tick); const diff = p - s.base; return <button key={s.value} onClick={() => setSymbol(s.value)} className="flex items-center gap-2 whitespace-nowrap"><span className="text-slate-300">{s.value}</span><span className={diff >= 0 ? "text-green-400" : "text-red-400"}>{diff >= 0 ? "+" : ""}{diff.toFixed(s.decimals)}</span></button>; })}</div><div className="h-14 border-b border-[#1e2a3a] flex items-center px-4 justify-between bg-[#0a0e1a] shrink-0"><div className="flex items-center gap-4"><Link href="/terminal" className="flex items-center gap-2 hover:opacity-80"><img src={`${import.meta.env.BASE_URL}logo.svg`} alt="QuantFund" className="w-7 h-7" /><span className="font-bold text-sm hidden sm:block">QuantFund</span></Link><span className="text-[#1e2a3a]">|</span><Link href="/terminal" className="text-xs text-slate-400 hover:text-white">Menu</Link><div className="font-mono text-xl font-bold">{symbol}</div><div className="font-mono text-lg text-emerald-300">{currentPrice.toFixed(selected.decimals)}</div><div className="flex items-center gap-0.5 ml-2">{TIMEFRAMES.map((tf) => <button key={tf} onClick={() => setTimeframe(tf)} className={`px-2 py-1 text-xs rounded font-mono ${timeframe === tf ? "bg-primary text-white" : "text-[#64748b] hover:text-white hover:bg-[#1e2a3a]"}`}>{tf}</button>)}</div></div><div className="flex items-center gap-6 text-sm"><div className="hidden md:flex flex-col items-end"><span className="text-[#64748b] text-xs">Account</span><span className="font-mono font-semibold">{plan.name} {plan.label}</span></div><div className="hidden md:flex flex-col items-end"><span className="text-[#64748b] text-xs">Equity</span><span className="font-mono font-semibold">{money(equity)}</span></div><div className="hidden md:flex flex-col items-end"><span className="text-[#64748b] text-xs">Float PnL</span><span className={`font-mono font-semibold ${floatingPnl >= 0 ? "text-green-400" : "text-red-400"}`}>{floatingPnl >= 0 ? "+" : ""}{money(floatingPnl)}</span></div><button onClick={resetTerminal} className="rounded-lg border border-[#334155] px-3 py-1 text-xs text-slate-400 hover:text-white">Reset</button><UserButton afterSignOutUrl="/" /></div></div><div className="shrink-0 border-b border-[#1e2a3a] bg-[#050a14] flex items-center text-[11px] font-mono overflow-x-auto"><div className="flex items-center gap-2 px-3 py-1.5 border-r border-[#1e2a3a] min-w-[210px]"><span className="text-[#64748b]">Target 10%</span><div className="flex-1 h-1.5 bg-[#1e2a3a] rounded-full overflow-hidden"><div className="h-full bg-blue-500" style={{ width: `${Math.min(100, Math.max(0, ((equity - plan.balance) / target) * 100))}%` }} /></div><span>{money(Math.max(0, equity - plan.balance))} / {money(target)}</span></div><div className="flex items-center gap-2 px-3 py-1.5 border-r border-[#1e2a3a] min-w-[210px]"><span className="text-[#64748b]">Max DD</span><div className="flex-1 h-1.5 bg-[#1e2a3a] rounded-full overflow-hidden"><div className="h-full bg-red-500" style={{ width: `${Math.min(100, (totalDD / (plan.balance * 0.1)) * 100)}%` }} /></div><span>{money(totalDD)} / {money(plan.balance * 0.1)}</span></div><div className="flex items-center gap-2 px-3 py-1.5 min-w-[180px]"><span className="text-[#64748b]">Status</span><span className={challengeStatus === "Passed" ? "text-green-400 font-bold" : challengeStatus === "Failed" ? "text-red-400 font-bold" : "text-yellow-300 font-bold"}>{challengeStatus}</span></div></div><div className="flex-1 flex overflow-hidden min-h-0"><div className="flex-1 flex flex-col min-w-0 overflow-hidden"><div className="flex-1 min-h-0 relative bg-[#07111f]"><FallbackChart symbol={symbol} tick={tick} />{showTradingView && <iframe title="TradingView Live Chart" src={tradingViewUrl} className="absolute inset-0 h-full w-full border-0 bg-transparent" allowFullScreen />}<button onClick={() => setShowTradingView((value) => !value)} className="absolute right-4 top-4 rounded-lg border border-[#334155] bg-[#0a0e1a]/90 px-3 py-2 text-xs text-slate-300 hover:text-white">{showTradingView ? "Fallback chart" : "TradingView"}</button></div><div className={`${historyCollapsed ? "h-10" : "h-44"} border-t border-[#1e2a3a] bg-[#0a0e1a] flex flex-col shrink-0 transition-all`}><div className="px-4 border-b border-[#1e2a3a] flex items-center gap-4 shrink-0"><button onClick={() => setActiveTab("positions")} className={`py-2 text-xs font-semibold uppercase tracking-wider border-b-2 ${activeTab === "positions" ? "border-primary text-white" : "border-transparent text-[#64748b]"}`}>Posições Abertas ({openOrders.length})</button><button onClick={() => setActiveTab("history")} className={`py-2 text-xs font-semibold uppercase tracking-wider border-b-2 ${activeTab === "history" ? "border-primary text-white" : "border-transparent text-[#64748b]"}`}>Histórico ({closedOrders.length})</button><button onClick={() => setHistoryCollapsed((value) => !value)} className="ml-auto text-xs text-slate-400 hover:text-white">{historyCollapsed ? "Expandir" : "Recolher"}</button>{activeTab === "positions" && openOrders.length > 0 && <button onClick={closeAll} className="text-[10px] px-2.5 py-1 rounded border border-red-500/40 text-red-400 hover:bg-red-500/10 uppercase">Fechar Tudo</button>}</div>{!historyCollapsed && <div className="flex-1 overflow-y-auto"><table className="w-full text-xs"><thead className="text-left text-[#64748b] sticky top-0 bg-[#0a0e1a]"><tr><th className="px-3 py-1.5">Symbol</th><th>Side</th><th className="text-right">Size</th><th className="text-right">Open</th><th className="text-right">Current/Close</th><th className="text-right">PnL</th><th className="text-right">Action</th></tr></thead><tbody>{(activeTab === "positions" ? openOrders : closedOrders).map((order) => <tr key={order.id} className="border-t border-[#1e2a3a]/50 hover:bg-[#1e2a3a]/20"><td className="px-3 py-1.5 font-semibold">{order.symbol}</td><td><Badge variant="outline" className={order.side === "buy" ? "text-green-400 border-green-500/30" : "text-red-400 border-red-500/30"}>{order.side.toUpperCase()}</Badge></td><td className="text-right font-mono">{order.size.toFixed(2)}</td><td className="text-right font-mono">{formatPrice(order.symbol, order.openPrice)}</td><td className="text-right font-mono">{formatPrice(order.symbol, order.status === "open" ? order.currentPrice : order.closePrice ?? order.currentPrice)}</td><td className={`text-right font-mono font-semibold ${order.pnl >= 0 ? "text-green-400" : "text-red-400"}`}>{order.pnl >= 0 ? "+" : ""}{money(order.pnl)}</td><td className="text-right pr-3">{order.status === "open" ? <button onClick={() => closeOrder(order.id)} className="text-[10px] px-2 py-0.5 rounded border border-[#334155] text-[#94a3b8] hover:border-red-500/50 hover:text-red-400">Fechar</button> : <span className="text-[#64748b]">{order.closeReason ?? "Manual"}</span>}</td></tr>))}{(activeTab === "positions" ? openOrders : closedOrders).length === 0 && <tr><td colSpan={7} className="px-4 py-6 text-center text-[#64748b]">{activeTab === "positions" ? "Sem posições abertas" : "Sem histórico de negociação"}</td></tr>}</tbody></table></div>}</div></div><button onClick={() => setRightPanelCollapsed(!rightPanelCollapsed)} className="w-6 bg-[#0a0e1a] border-l border-[#1e2a3a] flex items-center justify-center hover:bg-[#1e2a3a] shrink-0 text-[#64748b]">{rightPanelCollapsed ? <ChevronLeft className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}</button>{!rightPanelCollapsed && <div className="w-72 bg-[#0a0e1a] flex flex-col shrink-0 border-l border-[#1e2a3a]"><div className="p-4 border-b border-[#1e2a3a] shrink-0"><h3 className="font-semibold mb-3 text-sm">Nova Ordem</h3><div className="space-y-3"><div className="relative"><label className="text-[11px] text-[#64748b] mb-1.5 block uppercase tracking-wider">Instrumento</label><button onClick={() => setShowSymbolDropdown(!showSymbolDropdown)} className="w-full h-9 px-3 border border-[#1e2a3a] bg-[#050a14] rounded text-sm text-left flex items-center justify-between hover:border-[#334155]"><span className="font-mono font-semibold">{symbol}</span><ChevronDown className={`w-4 h-4 text-[#64748b] ${showSymbolDropdown ? "rotate-180" : ""}`} /></button>{showSymbolDropdown && <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-[#0d1526] border border-[#1e2a3a] rounded-lg shadow-xl"><div className="p-2 border-b border-[#1e2a3a] flex items-center gap-2"><Search className="w-3.5 h-3.5 text-[#64748b]" /><input autoFocus placeholder="Pesquisar instrumento..." value={symbolSearch} onChange={(e) => setSymbolSearch(e.target.value)} className="flex-1 bg-transparent text-xs outline-none placeholder:text-[#64748b]" />{symbolSearch && <button onClick={() => setSymbolSearch("")}><X className="w-3 h-3" /></button>}</div><div className="max-h-64 overflow-y-auto py-1">{favoriteSymbols.length > 0 && !symbolSearch && <div><div className="px-3 py-1 text-[10px] uppercase tracking-wider text-yellow-500/80 font-semibold flex items-center gap-1"><Star className="w-3 h-3 fill-yellow-500" />Favoritos</div>{favoriteSymbols.map((s) => <SymbolRow key={`fav-${s.value}`} item={s} selected={symbol === s.value} isFav onSelect={() => { setSymbol(s.value); setShowSymbolDropdown(false); }} onToggleFav={(e) => toggleFavorite(s.value, e)} />)}<div className="mx-3 my-1 border-t border-[#1e2a3a]" /></div>}{categories.map((cat) => <div key={cat}><div className="px-3 py-1 text-[10px] uppercase tracking-wider text-[#64748b] font-semibold">{cat}</div>{filteredSymbols.filter((s) => s.category === cat).map((s) => <SymbolRow key={s.value} item={s} selected={symbol === s.value} isFav={favorites.includes(s.value)} onSelect={() => { setSymbol(s.value); setShowSymbolDropdown(false); setSymbolSearch(""); }} onToggleFav={(e) => toggleFavorite(s.value, e)} />)}</div>)}</div></div>}</div><div><label className="text-[11px] text-[#64748b] mb-1.5 block uppercase tracking-wider">Volume (Lotes)</label><div className="flex gap-1.5"><button className="h-9 w-9 border border-[#1e2a3a] bg-[#050a14] rounded" onClick={() => setSize((Math.max(0.01, parseFloat(size) - 0.1)).toFixed(2))}>-</button><Input type="number" step="0.01" value={size} onChange={(e) => setSize(e.target.value)} className="h-9 text-center font-mono border-[#1e2a3a] bg-[#050a14] text-sm" /><button className="h-9 w-9 border border-[#1e2a3a] bg-[#050a14] rounded" onClick={() => setSize((parseFloat(size) + 0.1).toFixed(2))}>+</button></div></div><div className="grid grid-cols-2 gap-2"><div><label className="text-[11px] text-red-400/80 mb-1 block uppercase tracking-wider">Stop Loss</label><Input type="number" step="any" placeholder="0.00000" value={sl} onChange={(e) => setSl(e.target.value)} className="h-8 text-center font-mono border-[#1e2a3a] bg-[#050a14] text-xs" /></div><div><label className="text-[11px] text-green-400/80 mb-1 block uppercase tracking-wider">Take Profit</label><Input type="number" step="any" placeholder="0.00000" value={tp} onChange={(e) => setTp(e.target.value)} className="h-8 text-center font-mono border-[#1e2a3a] bg-[#050a14] text-xs" /></div></div><div className="grid grid-cols-2 gap-2 pt-1"><Button className="h-14 bg-red-500 hover:bg-red-600 text-white flex flex-col gap-0.5 rounded-lg" onClick={() => openOrder("sell")}><span className="text-[11px] uppercase font-bold">Vender</span><span className="font-mono text-xs">{currentPrice.toFixed(selected.decimals)}</span></Button><Button className="h-14 bg-green-500 hover:bg-green-600 text-white flex flex-col gap-0.5 rounded-lg" onClick={() => openOrder("buy")}><span className="text-[11px] uppercase font-bold">Comprar</span><span className="font-mono text-xs">{currentPrice.toFixed(selected.decimals)}</span></Button></div></div></div><div className="p-4 grid grid-cols-2 gap-3 text-xs"><div className="bg-[#050a14] rounded-lg p-3 border border-[#1e2a3a]"><div className="text-[10px] text-[#64748b] uppercase mb-1">Account Value</div><div className="font-mono font-semibold">{money(plan.balance)}</div></div><div className="bg-[#050a14] rounded-lg p-3 border border-[#1e2a3a]"><div className="text-[10px] text-[#64748b] uppercase mb-1">Balance</div><div className="font-mono font-semibold">{money(balance)}</div></div><div className="bg-[#050a14] rounded-lg p-3 border border-[#1e2a3a]"><div className="text-[10px] text-[#64748b] uppercase mb-1">Equity</div><div className="font-mono font-semibold">{money(equity)}</div></div><div className="bg-[#050a14] rounded-lg p-3 border border-[#1e2a3a]"><div className="text-[10px] text-[#64748b] uppercase mb-1">Free Margin</div><div className="font-mono font-semibold">{money(freeMargin)}</div></div><div className="bg-[#050a14] rounded-lg p-3 border border-[#1e2a3a]"><div className="text-[10px] text-[#64748b] uppercase mb-1">Used Margin</div><div className="font-mono font-semibold">{money(usedMargin)}</div></div><div className="bg-[#050a14] rounded-lg p-3 border border-[#1e2a3a]"><div className="text-[10px] text-[#64748b] uppercase mb-1">Win Rate</div><div className="font-mono font-semibold">{winRate}%</div></div><div className="col-span-2 bg-[#050a14] rounded-lg p-3 border border-[#1e2a3a]"><div className="text-[10px] text-[#64748b] uppercase mb-1">Challenge Monitor</div><div className={challengeStatus === "Passed" ? "text-green-400 font-black" : challengeStatus === "Failed" ? "text-red-400 font-black" : "text-yellow-300 font-black"}>{challengeStatus}</div><div className="mt-2 text-[#64748b]">PnL flutuante: <span className={floatingPnl >= 0 ? "text-green-400" : "text-red-400"}>{floatingPnl >= 0 ? "+" : ""}{money(floatingPnl)}</span></div><div className="text-[#64748b]">PnL realizado: <span className={realizedPnl >= 0 ? "text-green-400" : "text-red-400"}>{realizedPnl >= 0 ? "+" : ""}{money(realizedPnl)}</span></div></div></div></div>}</div></div>;
 }
