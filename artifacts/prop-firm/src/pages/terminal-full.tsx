@@ -1,5 +1,5 @@
-import TerminalPage from "./terminal";
+import Trade from "./trade";
 
 export default function TerminalFullPage() {
-  return <TerminalPage />;
+  return <Trade />;
 }
