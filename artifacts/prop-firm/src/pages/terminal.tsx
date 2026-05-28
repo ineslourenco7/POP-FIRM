@@ -10,6 +10,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createChart,
   ColorType,
+  CandlestickSeries,
   type IChartApi,
   type ISeriesApi,
   type CandlestickData,
@@ -103,7 +104,13 @@ function TradingChart({ asset, tick }: { asset: Asset; tick: number }) {
     // Criar série de candlesticks
     import { CandlestickSeries } from "lightweight-charts";
 
-    // Gerar dados iniciais (últimas 100 barras)
+    const series = chart.addSeries(CandlestickSeries, {
+  upColor: "#26a69a",
+  downColor: "#ef5350",
+  borderVisible: false,
+  wickUpColor: "#26a69a",
+  wickDownColor: "#ef5350",
+});
     const now = Math.floor(Date.now() / 1000);
     const initialData: CandlestickData<Time>[] = [];
     let price = asset.base;
