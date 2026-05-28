@@ -176,8 +176,8 @@ function TradingChart({ asset, tick }: { asset: Asset; tick: number }) {
   }, [tick, asset]);
 
   return (
-    <div className="w-full h-full min-h-[400px] bg-[#0a0e1a] relative">
-      <div ref={chartContainerRef} className="w-full h-full" />
+   <div className="relative h-full min-h-[500px] w-full bg-[#050a14]">
+  <div ref={chartContainerRef} className="absolute inset-0" />
       {/* Botão para abrir TradingView externo */}
       <a
         href={`https://www.tradingview.com/chart/?symbol=${encodeURIComponent(asset.value)}`}
