@@ -16,24 +16,27 @@ import Support from "@/pages/support";
 import AdminDashboard from "@/pages/admin-dashboard";
 import CheckoutPage from "@/pages/checkout";
 import TerminalFullPage from "@/pages/terminal-full";
+import WelcomePage from "@/pages/welcome";
+import AccountRouterPage from "@/pages/account-router";
+import AccountSelectPage from "@/pages/account-select";
 import SupportChat from "@/components/SupportChat";
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
-const appVersion = "quantfund-terminal-hotfix-2026-05-28";
+const appVersion = "quantfund-onboarding-flow-2026-05-29";
 const adminEmail = "ineslourencop7" + "@" + "gmail.com";
 
 function SignInPage() {
-  return <div className="flex min-h-screen items-center justify-center bg-background px-6 py-10"><SignIn routing="path" path="/sign-in" signUpUrl="/sign-up" fallbackRedirectUrl="/terminal" /></div>;
+  return <div className="flex min-h-screen items-center justify-center bg-background px-6 py-10"><SignIn routing="path" path="/sign-in" signUpUrl="/sign-up" fallbackRedirectUrl="/account-router" /></div>;
 }
 
 function SignUpPage() {
-  return <div className="flex min-h-screen items-center justify-center bg-background px-6 py-10"><SignUp routing="path" path="/sign-up" signInUrl="/sign-in" fallbackRedirectUrl="/terminal" /></div>;
+  return <div className="flex min-h-screen items-center justify-center bg-background px-6 py-10"><SignUp routing="path" path="/sign-up" signInUrl="/sign-in" fallbackRedirectUrl="/welcome" /></div>;
 }
 
 function RequireLogin({ children }: { children: ReactNode }) {
   const { isLoaded, isSignedIn } = useUser();
   if (!isLoaded) return <div className="flex min-h-screen items-center justify-center bg-background text-muted-foreground">A carregar sessão...</div>;
-  if (!isSignedIn) return <div className="flex min-h-screen items-center justify-center bg-background px-6 text-foreground"><div className="max-w-md rounded-3xl border border-border bg-card p-8 text-center shadow-2xl"><Lock className="mx-auto mb-4 h-10 w-10 text-primary" /><h1 className="mb-2 text-3xl font-black">Login necessário</h1><p className="mb-6 text-sm text-muted-foreground">Inicia sessão para aceder ao terminal QuantFund.</p><Link href="/sign-in" className="inline-flex rounded-xl bg-primary px-5 py-3 font-bold text-primary-foreground">Entrar</Link></div></div>;
+  if (!isSignedIn) return <div className="flex min-h-screen items-center justify-center bg-background px-6 text-foreground"><div className="max-w-md rounded-3xl border border-border bg-card p-8 text-center shadow-2xl"><Lock className="mx-auto mb-4 h-10 w-10 text-primary" /><h1 className="mb-2 text-3xl font-black">Login necessário</h1><p className="mb-6 text-sm text-muted-foreground">Inicia sessão para aceder à tua área QuantFund.</p><Link href="/sign-in" className="inline-flex rounded-xl bg-primary px-5 py-3 font-bold text-primary-foreground">Entrar</Link></div></div>;
   return <>{children}</>;
 }
 
@@ -51,7 +54,39 @@ function NotFoundPage() {
 }
 
 function App() {
-  return <WouterRouter base={basePath}><QueryClientProvider client={queryClient}><TooltipProvider><div data-app-version={appVersion}><Switch><Route path="/" component={Landing} /><Route path="/demo" component={Demo} /><Route path="/challenges" component={Challenges} /><Route path="/terms" component={Terms} /><Route path="/support" component={Support} /><Route path="/sign-in/:rest*" component={SignInPage} /><Route path="/sign-in" component={SignInPage} /><Route path="/sign-up/:rest*" component={SignUpPage} /><Route path="/sign-up" component={SignUpPage} /><Route path="/checkout/:id"><RequireLogin><CheckoutPage /></RequireLogin></Route><Route path="/terminal"><RequireLogin><TerminalFullPage /></RequireLogin></Route><Route path="/trade/:accountId"><RequireLogin><Trade /></RequireLogin></Route><Route path="/admin"><RequireAdmin><AdminDashboard /></RequireAdmin></Route><Route component={NotFoundPage} /></Switch><SupportChat /><Toaster /><SonnerToaster position="bottom-right" theme="dark" richColors /></div></TooltipProvider></QueryClientProvider></WouterRouter>;
+  return (
+    <WouterRouter base={basePath}>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <div data-app-version={appVersion}>
+            <Switch>
+              <Route path="/" component={Landing} />
+              <Route path="/demo" component={Demo} />
+              <Route path="/challenges" component={Challenges} />
+              <Route path="/terms" component={Terms} />
+              <Route path="/support" component={Support} />
+              <Route path="/sign-in/:rest*" component={SignInPage} />
+              <Route path="/sign-in" component={SignInPage} />
+              <Route path="/sign-up/:rest*" component={SignUpPage} />
+              <Route path="/sign-up" component={SignUpPage} />
+              <Route path="/welcome"><RequireLogin><WelcomePage /></RequireLogin></Route>
+              <Route path="/account-router"><RequireLogin><AccountRouterPage /></RequireLogin></Route>
+              <Route path="/accounts"><RequireLogin><AccountSelectPage /></RequireLogin></Route>
+              <Route path="/checkout/:id"><RequireLogin><CheckoutPage /></RequireLogin></Route>
+              <Route path="/terminal/:accountId"><RequireLogin><TerminalFullPage /></RequireLogin></Route>
+              <Route path="/terminal"><RequireLogin><AccountRouterPage /></RequireLogin></Route>
+              <Route path="/trade/:accountId"><RequireLogin><Trade /></RequireLogin></Route>
+              <Route path="/admin"><RequireAdmin><AdminDashboard /></RequireAdmin></Route>
+              <Route component={NotFoundPage} />
+            </Switch>
+            <SupportChat />
+            <Toaster />
+            <SonnerToaster position="bottom-right" theme="dark" richColors />
+          </div>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </WouterRouter>
+  );
 }
 
 export default App;
