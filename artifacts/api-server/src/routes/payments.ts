@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
-import { db, paymentsTable, challengesTable } from "@workspace/db";
+import { eq, and } from "drizzle-orm";
+import { db, paymentsTable, challengesTable, virtualAccountsTable } from "@workspace/db";
 import { requireAuth } from "../middlewares/requireAuth";
 import {
   ListMyPaymentsResponse,
@@ -12,18 +12,19 @@ import {
 
 const router: IRouter = Router();
 
-const cryptoCheckoutPlans: Record<string, { name: string; account: string; price: number }> = {
-  "1": { name: "Rookie", account: "$10K", price: 99 },
-  "2": { name: "Ascend", account: "$25K", price: 149 },
-  "3": { name: "Velocity", account: "$50K", price: 249 },
-  "4": { name: "Apex", account: "$100K", price: 399 },
-  "5": { name: "Dominance", account: "$200K", price: 749 },
-  "6": { name: "Legacy", account: "$400K", price: 1299 },
-  "7": { name: "Sovereign", account: "$1M", price: 2499 },
-  "8": { name: "Infinity", account: "$3M", price: 4999 },
+const cryptoCheckoutPlans: Record<string, { name: string; account: string; price: number; challengeId: number }> = {
+  "1": { name: "Rookie", account: "$10K", price: 99, challengeId: 1 },
+  "2": { name: "Ascend", account: "$25K", price: 149, challengeId: 2 },
+  "3": { name: "Velocity", account: "$50K", price: 249, challengeId: 3 },
+  "4": { name: "Apex", account: "$100K", price: 399, challengeId: 4 },
+  "5": { name: "Dominance", account: "$200K", price: 749, challengeId: 5 },
+  "6": { name: "Legacy", account: "$400K", price: 1299, challengeId: 6 },
+  "7": { name: "Sovereign", account: "$1M", price: 2499, challengeId: 7 },
+  "8": { name: "Infinity", account: "$3M", price: 4999, challengeId: 8 },
 };
 
 const allowedCryptoCurrencies = new Set(["btc", "eth"]);
+const paidStatuses = new Set(["finished", "confirmed", "sending", "partially_paid"]);
 
 async function formatPayment(p: typeof paymentsTable.$inferSelect) {
   const [challenge] = await db.select().from(challengesTable).where(eq(challengesTable.id, p.challengeId));
@@ -40,6 +41,38 @@ async function formatPayment(p: typeof paymentsTable.$inferSelect) {
     notes: p.notes ?? null,
     createdAt: p.createdAt.toISOString(),
   };
+}
+
+async function createAccountFromApprovedPayment(payment: typeof paymentsTable.$inferSelect) {
+  const [challenge] = await db.select().from(challengesTable).where(eq(challengesTable.id, payment.challengeId));
+  if (!challenge) return null;
+
+  const existing = await db.select().from(virtualAccountsTable).where(
+    and(
+      eq(virtualAccountsTable.userId, payment.userId),
+      eq(virtualAccountsTable.challengeId, payment.challengeId),
+      eq(virtualAccountsTable.status, "active"),
+    ),
+  );
+
+  if (existing.length > 0) return existing[0];
+
+  const [account] = await db.insert(virtualAccountsTable).values({
+    userId: payment.userId,
+    challengeId: payment.challengeId,
+    status: "active",
+    initialBalance: challenge.accountSize,
+    currentBalance: challenge.accountSize,
+    equity: challenge.accountSize,
+    floatingPnl: 0,
+    totalPnl: 0,
+    dailyPnl: 0,
+    maxDrawdownReached: 0,
+    profitTargetReached: false,
+    tradingDays: 0,
+  }).returning();
+
+  return account;
 }
 
 router.get("/payments", requireAuth, async (req, res): Promise<void> => {
@@ -136,8 +169,65 @@ router.post("/payments/crypto-invoice", requireAuth, async (req, res): Promise<v
 });
 
 router.post("/payments/nowpayments-webhook", async (req, res): Promise<void> => {
-  console.log("NOWPayments IPN", req.body);
-  res.json({ ok: true });
+  try {
+    const body = req.body ?? {};
+    const orderId = String(body.order_id ?? "");
+    const paymentStatus = String(body.payment_status ?? body.status ?? "").toLowerCase();
+
+    const match = orderId.match(/^pop-firm-(\d+)-(\d+)-([a-z]+)-/i);
+    if (!match) {
+      res.json({ ok: true, ignored: "unknown order id" });
+      return;
+    }
+
+    const userId = Number(match[1]);
+    const planId = match[2];
+    const plan = cryptoCheckoutPlans[planId];
+
+    if (!plan) {
+      res.json({ ok: true, ignored: "unknown plan" });
+      return;
+    }
+
+    if (!paidStatuses.has(paymentStatus)) {
+      res.json({ ok: true, status: paymentStatus || "pending" });
+      return;
+    }
+
+    const existingPayments = await db.select().from(paymentsTable).where(
+      and(
+        eq(paymentsTable.userId, userId),
+        eq(paymentsTable.challengeId, plan.challengeId),
+        eq(paymentsTable.method, "crypto"),
+      ),
+    );
+
+    let payment = existingPayments.find((p) => p.notes?.includes(orderId));
+
+    if (!payment) {
+      const [created] = await db.insert(paymentsTable).values({
+        userId,
+        challengeId: plan.challengeId,
+        amount: Number(body.price_amount ?? plan.price),
+        method: "crypto",
+        status: "approved",
+        notes: `NOWPayments ${orderId}`,
+      }).returning();
+      payment = created;
+    } else if (payment.status !== "approved") {
+      const [updated] = await db.update(paymentsTable)
+        .set({ status: "approved", notes: `NOWPayments ${orderId}` })
+        .where(eq(paymentsTable.id, payment.id))
+        .returning();
+      payment = updated;
+    }
+
+    const account = await createAccountFromApprovedPayment(payment);
+    res.json({ ok: true, paymentId: payment.id, accountId: account?.id ?? null });
+  } catch (error) {
+    console.error("NOWPayments webhook error", error);
+    res.status(500).json({ ok: false, error: "NOWPayments webhook error" });
+  }
 });
 
 router.post("/payments/:id/proof", requireAuth, async (req, res): Promise<void> => {
