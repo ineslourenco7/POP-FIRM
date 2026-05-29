@@ -180,9 +180,23 @@ function useAccounts() {
   return useQuery<AccountData[]>({
     queryKey: ["accounts"],
     queryFn: async () => {
-      const res = await fetch("/api/accounts");
-      if (!res.ok) throw new Error("Failed to fetch accounts");
-      return res.json();
+      if (!supabase) throw new Error("Supabase não configurada");
+
+const { error } = await supabase.from("orders").insert({
+  account_id: activeAccount.id,
+  symbol: selectedAsset.apiSymbol,
+  side: side.toLowerCase(),
+  size: lots,
+  open_price: currentPrice,
+  current_price: currentPrice,
+  stop_loss: stopLoss ? parseFloat(stopLoss) : null,
+  take_profit: takeProfit ? parseFloat(takeProfit) : null,
+  pnl: 0,
+  status: "open",
+});
+
+if (error) throw error;
+     
     },
     refetchInterval: 5000,
   });
