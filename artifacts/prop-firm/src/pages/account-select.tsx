@@ -3,6 +3,7 @@ import { UserButton, useUser } from "@clerk/react";
 import { ArrowRight, Loader2, Plus, Shield, TrendingUp, Wallet } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/lib/supabase";
 
 type AccountData = {
   id: number;
