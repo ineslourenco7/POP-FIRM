@@ -4,7 +4,7 @@ import { UserButton } from "@clerk/react";
 import { ArrowDownRight, ArrowUpRight, BarChart3, Bell, ChevronLeft, Clock, Layers, Search, Settings, TrendingDown, TrendingUp, Wallet, X, Zap } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import TradingViewChart from "@/components/TradingViewChart";
-
+import { supabase } from "@/lib/supabase";
 type Side = "BUY" | "SELL";
 type Tab = "open" | "history";
 type Timeframe = "1" | "5" | "15" | "30" | "60" | "240" | "D" | "W";
@@ -135,14 +135,41 @@ function apiOrderToPosition(order: ApiOrder): Position {
   };
 }
 
+function mapAccount(account: any): AccountData {
+  return {
+    id: Number(account.id),
+    challengeName: `Challenge #${account.challenge_id}`,
+    status: account.status ?? "active",
+    initialBalance: Number(account.initial_balance ?? 0),
+    currentBalance: Number(account.current_balance ?? 0),
+    equity: Number(account.equity ?? 0),
+    floatingPnl: 0,
+    totalPnl: Number(account.total_pnl ?? 0),
+    dailyPnl: Number(account.daily_pnl ?? 0),
+    profitTarget: 10000,
+    maxDailyDrawdown: 5000,
+    maxTotalDrawdown: 10000,
+    minTradingDays: 0,
+    tradingDays: Number(account.trading_days ?? 0),
+    phase: 1,
+    maxPhase: 2,
+  };
+}
+
 function useAccount(accountId?: number) {
   return useQuery<AccountData>({
     queryKey: ["account", accountId],
     queryFn: async () => {
-      if (!accountId) throw new Error("No account ID");
-      const res = await fetch(`/api/accounts/${accountId}`);
-      if (!res.ok) throw new Error("Failed to fetch account");
-      return res.json();
+      if (!accountId || !supabase) throw new Error("No account ID");
+
+      const { data, error } = await supabase
+        .from("virtual_accounts")
+        .select("*")
+        .eq("id", accountId)
+        .single();
+
+      if (error) throw error;
+      return mapAccount(data);
     },
     enabled: !!accountId,
     refetchInterval: 5000,
