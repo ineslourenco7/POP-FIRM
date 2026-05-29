@@ -144,7 +144,7 @@ router.post("/payments/crypto-invoice", requireAuth, async (req, res): Promise<v
         order_id: orderId,
         order_description: `POP FIRM ${plan.name} ${plan.account} · ${payCurrency.toUpperCase()}`,
         ipn_callback_url: `${origin}/api/payments/nowpayments-webhook`,
-        success_url: `${origin}/terminal`,
+        success_url: `${origin}/purchase-success`,
         cancel_url: `${origin}/challenges`,
       }),
     });
