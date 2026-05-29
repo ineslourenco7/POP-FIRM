@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { UserButton } from "@clerk/react";
+import { UserButton, useUser } from "@clerk/react";
 import { ArrowRight, Loader2, Plus, Shield, TrendingUp, Wallet } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -21,13 +21,31 @@ function money(value: number) {
 }
 
 export default function AccountSelectPage() {
+  const { user } = useUser();
   const { data: accounts = [], isLoading, isError } = useQuery<AccountData[]>({
     queryKey: ["accounts", "select"],
     queryFn: async () => {
-      const res = await fetch("/api/accounts");
-      if (!res.ok) throw new Error("Failed to fetch accounts");
-      return res.json();
-    },
+  if (!user?.id || !supabase) return [];
+
+  const { data, error } = await supabase
+    .from("virtual_accounts")
+    .select("*")
+    .eq("user_id", user.id);
+
+  if (error) throw error;
+
+  return (data ?? []).map((account: any) => ({
+    id: Number(account.id),
+    challengeName: `Challenge #${account.challenge_id}`,
+    status: account.status ?? "active",
+    initialBalance: Number(account.initial_balance ?? 0),
+    currentBalance: Number(account.current_balance ?? 0),
+    equity: Number(account.equity ?? 0),
+    floatingPnl: 0,
+    totalPnl: Number(account.total_pnl ?? 0),
+    tradingDays: Number(account.trading_days ?? 0),
+  }));
+},
   });
 
   const activeAccounts = accounts.filter((account) => account.status === "active");
