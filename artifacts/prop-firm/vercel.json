@@ -19,10 +19,14 @@
       "permanent": false
     }
   ],
-  "rewrites": [
-    {
-      "source": "/:path((?!api/).*)",
-      "destination": "/"
-    }
-  ]
+ "rewrites": [
+  {
+    "source": "/api/(.*)",
+    "destination": "/api"
+  },
+  {
+    "source": "/((?!assets/|favicon.ico|robots.txt|api/).*)",
+    "destination": "/index.html"
+  }
+]
 }
