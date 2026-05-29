@@ -192,10 +192,32 @@ function useOrders(accountId?: number) {
   return useQuery<ApiOrder[]>({
     queryKey: ["orders", accountId],
     queryFn: async () => {
-      if (!accountId) return [];
-      const res = await fetch(`/api/accounts/${accountId}/orders`);
-      if (!res.ok) throw new Error("Failed to fetch orders");
-      return res.json();
+      if (!accountId || !supabase) return [];
+
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("account_id", accountId)
+        .order("opened_at", { ascending: false });
+
+      if (error) throw error;
+
+      return (data ?? []).map((order: any) => ({
+        id: Number(order.id),
+        accountId: Number(order.account_id),
+        symbol: order.symbol,
+        side: order.side,
+        size: Number(order.size),
+        openPrice: Number(order.open_price),
+        closePrice: order.close_price,
+        currentPrice: order.current_price,
+        stopLoss: order.stop_loss,
+        takeProfit: order.take_profit,
+        pnl: order.pnl,
+        status: order.status,
+        openedAt: order.opened_at,
+        closedAt: order.closed_at,
+      }));
     },
     enabled: !!accountId,
     refetchInterval: 3000,
