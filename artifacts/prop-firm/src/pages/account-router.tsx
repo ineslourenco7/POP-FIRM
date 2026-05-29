@@ -29,10 +29,12 @@ export default function AccountRouterPage() {
       return;
     }
 
-    const activeAccount = accounts?.find((account) => account.status === "active");
+    const activeAccounts = accounts?.filter((account) => account.status === "active") ?? [];
 
-    if (activeAccount) {
-      navigate("/terminal", { replace: true });
+    if (activeAccounts.length === 1) {
+      navigate(`/terminal/${activeAccounts[0].id}`, { replace: true });
+    } else if (activeAccounts.length > 1) {
+      navigate("/accounts", { replace: true });
     } else {
       navigate("/welcome", { replace: true });
     }
