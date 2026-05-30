@@ -19,14 +19,14 @@
       "permanent": false
     }
   ],
- "rewrites": [
-  {
-    "source": "/api/(.*)",
-    "destination": "/api"
-  },
-  {
-    "source": "/((?!assets/|favicon.ico|robots.txt|api/).*)",
-    "destination": "/index.html"
-  }
-]
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://pop-firm-api-server.vercel.app/api/$1"
+    },
+    {
+      "source": "/((?!assets/|favicon.ico|robots.txt|api/).*)",
+      "destination": "/index.html"
+    }
+  ]
 }
