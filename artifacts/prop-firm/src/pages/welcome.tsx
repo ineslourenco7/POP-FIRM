@@ -29,7 +29,7 @@ export default function WelcomePage() {
           </h1>
 
           <p className="mt-5 max-w-2xl text-base leading-relaxed text-muted-foreground md:text-lg">
-            A tua conta foi criada com sucesso. O próximo passo é escolher o desafio que queres comprar. Depois do pagamento confirmado, o teu terminal fica ativo com o saldo correspondente ao challenge.
+            A tua conta foi criada com sucesso. Se já tens um challenge ativo, entra diretamente na tua área de contas para abrir o terminal de trading.
           </p>
 
           <div className="mt-10 grid gap-4 md:grid-cols-3">
@@ -46,15 +46,20 @@ export default function WelcomePage() {
             <div className="rounded-2xl border border-border bg-background/50 p-5">
               <Trophy className="mb-4 h-7 w-7 text-primary" />
               <h3 className="font-black">3. Entra no terminal</h3>
-              <p className="mt-2 text-sm text-muted-foreground">Só depois da compra o terminal fica pronto para operar com o challenge comprado.</p>
+              <p className="mt-2 text-sm text-muted-foreground">Depois da compra, o terminal fica pronto para operar com o challenge comprado.</p>
             </div>
           </div>
 
           <div className="mt-10 flex flex-col gap-3 sm:flex-row">
-            <Link href="/challenges">
+            <Link href="/accounts">
               <Button className="rounded-2xl px-8 py-4 text-base font-black">
-                Ver desafios
+                Entrar na área do trader
                 <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+            <Link href="/challenges">
+              <Button variant="outline" className="rounded-2xl px-8 py-4 text-base font-bold">
+                Ver desafios
               </Button>
             </Link>
             <Link href="/support">
@@ -66,7 +71,7 @@ export default function WelcomePage() {
 
           <div className="mt-8 flex items-center gap-2 text-sm text-muted-foreground">
             <CheckCircle className="h-4 w-4 text-green-400" />
-            O terminal de trading só deve ser usado depois de teres um challenge ativo.
+            Se já tens um challenge ativo, clica em “Entrar na área do trader”.
           </div>
         </section>
       </main>
